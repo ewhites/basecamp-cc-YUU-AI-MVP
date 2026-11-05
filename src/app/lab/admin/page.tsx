@@ -118,7 +118,7 @@ export default async function AdminCenter() {
             <SampleTag />
           </div>
           <p className="muted" style={{ margin: "0.3rem 0 0" }}>
-            Accounts, spend against the cap, the audit trail, safety flags and the coach&apos;s eval results. Everything here is read through your own session, so the database decides what you can see.
+            Spend, safety flags, the audit trail and how the coach scores on its evals.
           </p>
         </div>
       </div>

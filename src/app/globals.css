@@ -157,3 +157,8 @@ table.table td { padding: 0.5rem; border-bottom: 1px solid var(--border); vertic
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 .skeleton { background: var(--d2l-color-sylvite); border-radius: 8px; animation: pulse 1.2s ease-in-out infinite; }
 @keyframes pulse { 50% { opacity: 0.55; } }
+@media (max-width: 760px) {
+  .d2l-navbar-top { padding: 0 1rem; gap: 0.6rem; }
+  .d2l-course, .d2l-navbar-top .tag-sim { display: none; }
+  .d2l-org > span:last-child { display: none; }
+}
