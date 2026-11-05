@@ -6,10 +6,13 @@ Claude Corps / Basecamp build for Year Up United. Source PRD: "PRD: Year Up Unit
 
 One secure place, opened from a (simulated) Brightspace course, where Year Up students practice three AI skills with a Claude coach, and instructors see who understands what.
 
-- **Prompt Studio:** write a prompt for a workplace task, see the output, get scored and coached, retry.
-- **Model Arena:** run one prompt on Haiku, Sonnet and Opus side by side, pick the best and explain why.
-- **Agent Builder:** write a bot's instructions, test it on 3 scripted coworker messages, fix what breaks.
-- Around them: student home, skills portfolio and badge, instructor console, curriculum insights, admin and security center, a read-only MCP server.
+Flow: simulated Year Up sign-in (`/`, two accounts: Jasmine Carter, student; Ms. Rivera, instructor) -> Brightspace home (`/home`) -> the AI Lab, a Coursera-style course player (`/lab`, left syllabus from `src/lib/curriculum/course.ts`):
+
+- **Starting point check** (`/lab/check/start`): 4 short coached tasks, one per fluency skill, not graded. The **final check** (`/lab/check/final`) is a parallel form, so the lift is measured fairly (`src/lib/curriculum/skill-checks.ts`).
+- **Module 1, Writing prompts (Prompt Studio):** lesson with an annotated worked example, then 3 practice tasks: write a prompt, see the output, get scored and coached, retry.
+- **Module 2, Comparing models (Model Arena):** lesson, then a guided 3-step flow: one prompt on Haiku, Sonnet and Opus, compare, pick and explain why.
+- **Module 3, Building a bot (Agent Builder):** lesson, then write a bot's instructions, test it on 3 scripted coworker messages, fix what breaks.
+- Around them: the skills page and badge (`/lab/skills`), the instructor console (`/lab/instructor`), a read-only MCP server. Curriculum and admin roles exist in the data layer and access tests only (no screens in this demo).
 
 The one thing this prototype must prove: **a Claude coach can grade students' AI work reliably.** Gate: at least 80% agreement with human labels on yes/no rubric checks (held-out set), and 20/20 on the safety set.
 

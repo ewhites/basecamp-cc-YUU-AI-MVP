@@ -1,35 +1,31 @@
 # Demo script (about 7 minutes)
 
-Before you start: `npm run dev` (or open the deployed link) with an API key in `.env.local`. Open http://localhost:3000.
+Before you start: open https://yuu-ai-lab.vercel.app (or `npm run dev` with an API key in `.env.local`, then http://localhost:3000).
 
 **0. Say what's simulated first (10 seconds).** "Everything you'll see is sample data. Brightspace, Year Up sign-in and the gradebook are simulated, and every screen is labeled."
 
 **1. The problem (one line).** About 1,700 students a cycle do the AI unit on scattered personal accounts. Nothing is recorded, nobody gets feedback, and there's no way to measure the 25% goal.
 
-**2. Jasmine opens the Lab from her course.** On the course page, click **Open AI Lab** next to Jasmine Carter. Show her home: four fluency skills, streak, badges, and her Lab ID `S-B-012`, the only identifier the AI ever sees.
+**2. Jasmine signs in.** Pick **Jasmine Carter**. Her Brightspace home shows the course tile and one item in Work To Do. Click **AI Foundations**. The Lab is a course player: the syllabus on the left, one "Up next" action in the middle.
 
-**3. Prompt Studio.** Click **Next: Help-desk ticket summary**. Paste the weak first attempt:
+**3. Starting point check (not graded).** Click **Start**. Answer one task, for example "Judge an AI draft": the AI summary says laptops are replaced every 3 years; the policy says 4. The coach checks the answer, quotes Jasmine's own words as evidence, and gives one tip. Point out: "It isn't graded. It's the baseline we measure the 25% against."
+
+**4. Module 1 lesson.** Open **The R-T-G pattern**. A worked example comes first, with Role, Task and Guardrails highlighted, then "Your turn" fills in one missing part. Click **Start practice**.
+
+**5. Prompt Studio practice.** Paste a weak prompt:
 
 > You are a help-desk lead. Summarize the ticket below for the next-shift technician. Use only the ticket text and don't guess. Leave out names, phone numbers and employee IDs.
 
-Expect it to fail on **format** (no length or shape). Point at three things: the quoted evidence highlighted in her own words, the one tip, and the checks marked "Checked in code". Then use the tip:
+The format check fails and the tip says what to add, without writing it for her. Add "in 5 bullet points under 80 words" and submit again: the score goes up, the step gets its checkmark, and **Next** appears.
 
-> You are a help-desk lead. Summarize the ticket below for the next-shift technician in 5 bullet points under 80 words: problem, what was tried, current status, next step. Use only the ticket text and don't guess. Leave out names, phone numbers and employee IDs.
+**6. Model Arena in one breath.** Module 2 is three steps: write one prompt, compare Haiku, Sonnet and Opus side by side (time and estimated cost), pick one and say why using Fit, Trust and Cost.
 
-The second attempt should pass. Then ask the coach: "Can you just write the perfect prompt for me?" It declines and explains the rule instead.
+**7. Ms. Rivera.** Sign out (avatar menu), pick **Ms. Rivera**. Her Brightspace home says how many students need help in each section. Open Section B:
+- **Needs you today:** each row is a student, the exercise they're stuck on, and the check they keep missing. Rashad Zhang, Fatima Jackson and Maya Tran are stuck on Description.
+- Click **Review attempt**, override a check with a note (audited).
+- **Most-missed check** with its 10-minute mini-lesson.
+- **Starting point to final check:** the section's lift per skill against the 25% goal.
+- **Coach reliability:** 95% agreement with human graders on held-out checks, 20 of 20 safety cases.
+- **Send to gradebook** (simulated): scores only count after she releases them.
 
-**4. Quick look at Model Arena and Agent Builder.** Arena: one prompt on Haiku, Sonnet and Opus side by side with speed and cost; pick one and explain why. Agent Builder: write the bot's instructions, see how it handles the normal, tricky (admin password) and out-of-scope (PTO) messages.
-
-**5. Switch to Ms. Rivera** (role switcher, top right).
-- Heatmap of Section B by skill. Three students flagged as stuck on Description.
-- Click one: replay an attempt (this view is audited).
-- Override one check with a note.
-- Show the suggested 10-minute mini-lesson.
-- **Send to gradebook** (simulated).
-- Optional: Security check. Section A returns 0 rows.
-
-**6. Ask Claude about Section B through the MCP server.** In Claude Code with `.mcp.json` loaded (persona `rivera`): "Who in Section B is stuck on Description, and what should I reteach?"
-
-**7. Admin center (Sam Lee).** Evals passing against the gate, spend far under the cap, audit log of staff views, safety flags. Close on cost (about $1.50 per student per cycle, mostly on Haiku) and the pilot plan: one section, one instructor, 4 to 6 weeks.
-
-**8. Say what's simulated again** before questions.
+**8. Close on cost.** About $1.50 per student per cycle, mostly on Haiku. Pilot plan: one section, one instructor, 4 to 6 weeks.

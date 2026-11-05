@@ -1,39 +1,35 @@
 import { redirect } from "next/navigation";
-import { LabNav } from "@/components/LabNav";
+import { Syllabus } from "@/components/Syllabus";
+import { Topbar } from "@/components/Topbar";
+import { COURSE } from "@/lib/curriculum/course";
+import { persona } from "@/lib/personas";
+import { myProgress } from "@/lib/progress";
 import { getViewer } from "@/lib/session";
-
-const NAV: Record<string, { href: string; label: string }[]> = {
-  student: [
-    { href: "/lab", label: "My Lab" },
-    { href: "/lab/prompt-studio", label: "Prompt Studio" },
-    { href: "/lab/model-arena", label: "Model Arena" },
-    { href: "/lab/agent-builder", label: "Agent Builder" },
-    { href: "/lab/portfolio", label: "Skills portfolio" },
-    { href: "/lab/security-check", label: "Security check" },
-  ],
-  instructor: [
-    { href: "/lab/instructor", label: "Instructor console" },
-    { href: "/lab/security-check", label: "Security check" },
-  ],
-  curriculum: [
-    { href: "/lab/curriculum", label: "Curriculum insights" },
-    { href: "/lab/security-check", label: "Security check" },
-  ],
-  admin: [
-    { href: "/lab/admin", label: "Admin and security" },
-    { href: "/lab/security-check", label: "Security check" },
-  ],
-};
 
 export default async function LabLayout({ children }: { children: React.ReactNode }) {
   const v = await getViewer();
   if (!v) redirect("/");
-  const roleLabel = { student: "Student", instructor: "Instructor", curriculum: "Curriculum", admin: "Admin" }[v.role];
+  const p = persona(v.persona);
+  const user = { name: v.name, initials: p?.initials ?? v.name.slice(0, 2).toUpperCase(), detail: p?.description ?? "" };
+
+  if (v.role !== "student") {
+    return (
+      <>
+        <Topbar user={user} crumb="AI Foundations · Instructor" />
+        <main className="page">{children}</main>
+      </>
+    );
+  }
+  const progress = await myProgress();
   return (
     <>
-      <LabNav links={NAV[v.role] ?? []} user={{ name: v.name, role: roleLabel }} />
-      <main className="page">{children}</main>
+      <Topbar user={user} crumb="AI Foundations" />
+      <div className="player">
+        <Syllabus groups={COURSE} states={progress.states} done={progress.done} total={progress.total} />
+        <main className="player-main">
+          <div className="content">{children}</div>
+        </main>
+      </div>
     </>
   );
 }
-

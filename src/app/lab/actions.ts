@@ -22,8 +22,8 @@ type Result = { ok: true; attempt: AttemptView } | { ok: false; error: string };
 async function guard(fn: () => Promise<AttemptView>, path: string): Promise<Result> {
   try {
     const attempt = await fn();
-    revalidatePath(path);
-    revalidatePath("/lab");
+    revalidatePath(path, "layout");
+    revalidatePath("/lab", "layout");
     return { ok: true, attempt };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : String(e) };
@@ -68,6 +68,26 @@ export async function submitAgentAction(exerciseId: string, instructions: string
   if (instructions.length > 6000) return { ok: false, error: "Instructions are too long (6,000 characters max)." };
   const v = await student();
   return guard(() => submitAttempt(v, exerciseId, { studio: "agent", instructions }), STUDIO_PATHS.agent);
+}
+
+/** Marks a lesson finished (the "Start practice" button at the end of each lesson). */
+export async function markLessonDoneAction(stepId: string) {
+  const v = await student();
+  const { stepFor } = await import("@/lib/curriculum/course");
+  const step = stepFor(stepId);
+  if (!step || step.kind !== "lesson") return { ok: false };
+  const db = adminClient();
+  const { count } = await db.from("lesson_progress").select("step_id", { count: "exact", head: true }).eq("student_id", v.student.id).eq("step_id", stepId);
+  if (!count) await db.from("lesson_progress").insert({ student_id: v.student.id, step_id: stepId });
+  revalidatePath("/lab", "layout");
+  return { ok: true };
+}
+
+export async function submitCheckAction(exerciseId: string, answer: string): Promise<Result> {
+  if (!answer.trim()) return { ok: false, error: "Write your answer first." };
+  if (answer.length > 3000) return { ok: false, error: "Keep your answer under 3,000 characters." };
+  const v = await student();
+  return guard(() => submitAttempt(v, exerciseId, { studio: "check", answer }), "/lab/check");
 }
 
 export async function scorePendingAction() {

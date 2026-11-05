@@ -1,75 +1,44 @@
-import { BrightspaceChrome } from "@/components/BrightspaceChrome";
+import { redirect } from "next/navigation";
 import { SampleTag, SimulatedTag } from "@/components/Tags";
 import { PERSONAS } from "@/lib/personas";
+import { sessionPersona } from "@/lib/db";
+import { demoLoginEnabled } from "@/lib/demo/secret";
 
-/** SIMULATED Brightspace course home for "AI Foundations", with the "Open AI Lab" link. */
-export default async function CourseHome({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
-  const { error } = await searchParams;
+/** SIMULATED Year Up sign-in for Brightspace. In the pilot this is Year Up's single sign-on. */
+export default async function SignIn() {
+  if (await sessionPersona()) redirect("/home");
+  const enabled = demoLoginEnabled();
   return (
-    <>
-      <BrightspaceChrome
-        showSwitcher={false}
-        active="/"
-        links={[
-          { href: "/", label: "Course Home" },
-          { href: "/", label: "Content" },
-          { href: "/", label: "Assignments" },
-          { href: "/", label: "Grades" },
-          { href: "/", label: "Classlist" },
-        ]}
-      />
-      <main className="page">
-        {error && <div className="notice notice-fail" style={{ marginBottom: "1rem" }}>{error}</div>}
-        <div className="split">
-          <section className="card">
-            <div className="row" style={{ marginBottom: "0.4rem" }}>
-              <h1 style={{ margin: 0 }}>AI Foundations</h1>
-              <SimulatedTag what="course page" />
-            </div>
-            <p className="muted">Unit 4 · AI fluency: prompting, model comparison and agent building</p>
-            <div className="card card-muted">
-              <h2>Announcements</h2>
-              <p className="small">
-                <b>This week:</b> all AI-unit practice happens in the AI Lab. Open it from the link on the right. Your work
-                is saved, your coach scores every attempt, and your instructor can see your progress. Don&apos;t use personal AI
-                accounts for coursework.
-              </p>
-            </div>
-            <h2 style={{ marginTop: "1rem" }}>Unit 4 content</h2>
-            <ul className="small" style={{ paddingLeft: "1.1rem" }}>
-              <li>Module 01: Prompting foundations (R-T-G, the four-pass loop)</li>
-              <li>Module 02: Comparing AI models (Fit, Trust, Cost)</li>
-              <li>Module 03: Building an agent (Job, Tools, Stop rule, Handoff)</li>
-            </ul>
-          </section>
-
-          <section className="card">
-            <div className="row between">
-              <h2 style={{ margin: 0 }}>Open AI Lab</h2>
-              <SampleTag />
-            </div>
-            <p className="small muted" style={{ marginTop: "0.4rem" }}>
-              In the pilot, this link launches the Lab from Brightspace with your Year Up sign-in (LTI 1.3 + Azure SSO).
-              For the demo, pick an account. Each opens the Lab signed in with that role.
-            </p>
-            <div className="stack">
-              {PERSONAS.map((p) => (
-                <a key={p.key} href={`/launch?as=${p.key}`} className="card card-muted row between" style={{ textDecoration: "none", color: "inherit" }} data-testid={`launch-${p.key}`}>
-                  <span>
-                    <b>{p.name}</b>
-                    <br />
-                    <span className="small muted">{p.description}</span>
-                  </span>
-                  <span className="btn btn-primary">Open AI Lab</span>
-                </a>
-              ))}
-            </div>
-            <p className="small muted" style={{ marginTop: "0.8rem" }}>
-              All names are invented. Sign-in is simulated with one-time tokens; no passwords exist.
-            </p>
-          </section>
+    <main className="signin">
+      <div className="signin-card">
+        <div className="bs-logo" style={{ marginBottom: 28 }}>
+          <b>YEAR UP</b>
+          <span className="bar-v" />
+          <span style={{ color: "#494c4e" }}>Brightspace</span>
         </div>
-      </main>
-    </>
+        <h1 style={{ fontFamily: "inherit", fontSize: 24, fontWeight: 400, margin: "0 0 6px" }}>Sign in</h1>
+        <p style={{ color: "#6e7477", margin: "0 0 22px", fontSize: 15 }}>Choose an account to continue to Brightspace.</p>
+        {enabled ? (
+          PERSONAS.map((p) => (
+            <a key={p.key} href={`/launch?as=${p.key}`} className="account" data-testid={`signin-${p.key}`}>
+              <span className="bs-avatar" style={{ borderRadius: "50%", background: p.role === "student" ? "#8a1f53" : "#1d5f8f" }} aria-hidden>
+                {p.initials}
+              </span>
+              <span>
+                <span style={{ display: "block", fontSize: 16, fontWeight: 700 }}>{p.name}</span>
+                <span style={{ display: "block", fontSize: 14, color: "#6e7477" }}>{p.description}</span>
+              </span>
+              <span aria-hidden style={{ color: "#006fbf", fontSize: 20 }}>›</span>
+            </a>
+          ))
+        ) : (
+          <p className="notice notice-warn">Demo sign-in is turned off on this server.</p>
+        )}
+        <div className="row" style={{ marginTop: 24, gap: 8 }}>
+          <SimulatedTag what="Year Up sign-in" />
+          <SampleTag />
+        </div>
+      </div>
+    </main>
   );
 }

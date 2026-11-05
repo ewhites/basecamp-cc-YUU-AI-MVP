@@ -1,124 +1,80 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { SampleTag } from "@/components/Tags";
-import { EXERCISES } from "@/lib/curriculum/exercises";
-import { SKILL_BLURBS, SKILL_LABELS, SKILLS, STUDIO_LABELS } from "@/lib/curriculum/types";
-import { pct } from "@/lib/insights";
-import { PERSONAS, STUDIO_PATHS } from "@/lib/personas";
+import { SkillBars } from "@/components/SkillBars";
+import { COURSE } from "@/lib/curriculum/course";
 import { getViewer } from "@/lib/session";
-import { myAttempts, mySkillProfile } from "@/lib/student-data";
+import { myProgress } from "@/lib/progress";
+import { myCheckAnswers } from "@/lib/student-data";
 
-/** Student home: progress across the four fluency skills, next lesson, streak, badges. Staff go to their own home. */
-export default async function LabHome() {
+const KIND_LABEL = { check: "Skills check", lesson: "Lesson", practice: "Practice", skills: "Summary" } as const;
+
+/** Course home: one "Up next" action, how the course works, and your starting point once you have one. */
+export default async function CourseHome() {
   const v = await getViewer();
   if (!v) redirect("/");
-  if (v.role !== "student") redirect(PERSONAS.find((p) => p.role === v.role)?.landing ?? "/");
+  if (v.role !== "student") redirect("/lab/instructor");
 
-  const [profile, attempts] = await Promise.all([mySkillProfile(), myAttempts()]);
-  const done = new Set(attempts.filter((a) => a.status === "scored" && a.passed !== null && a.total !== null && a.passed / a.total >= 0.8).map((a) => a.exerciseId));
-  const next = EXERCISES.find((e) => !done.has(e.id));
-  const pending = attempts.filter((a) => a.status === "pending_score").length;
-  const badges = [
-    { name: "First prompt", earned: attempts.some((a) => a.exerciseId.startsWith("ps-")) },
-    { name: "Fair judge", earned: attempts.some((a) => a.exerciseId.startsWith("ma-") && (a.passed ?? 0) >= 5) },
-    { name: "Bot builder", earned: attempts.some((a) => a.exerciseId.startsWith("ab-") && (a.passed ?? 0) >= 6) },
-    { name: "AI Fluency badge", earned: SKILLS.every((s) => (profile.levels[s].current ?? 0) >= 0.8) },
-  ];
+  const [progress, checks] = await Promise.all([myProgress(), myCheckAnswers()]);
+  const first = v.student?.display_name.split(" ")[0];
+  const fresh = progress.done === 0;
+  const next = progress.next;
+  const tookStart = progress.states["check-start"]?.done;
 
   return (
-    <div className="stack">
-      <div className="page-head">
-        <div>
-          <div className="row">
-            <h1 style={{ margin: 0 }}>Welcome back, {v.student?.display_name.split(" ")[0]}</h1>
-            <SampleTag />
-          </div>
-          <p className="muted" style={{ margin: "0.3rem 0 0" }}>
-            {v.student?.track} track · Section {v.student?.section_id} · Your ID in the Lab: <code>{v.student?.id}</code> (the only ID the AI sees)
-          </p>
-        </div>
-        {next && (
-          <Link href={`${STUDIO_PATHS[next.studio]}?ex=${next.id}`} className="btn btn-primary" data-testid="next-step">
-            Next: {next.title} →
-          </Link>
-        )}
+    <div className="stack" style={{ gap: 24 }}>
+      <div>
+        <div className="eyebrow">AI Foundations · Fall 2026 · Section {v.student?.section_id}</div>
+        <h1>{fresh ? `Welcome, ${first}` : `Welcome back, ${first}`}</h1>
+        <p className="muted" style={{ margin: 0 }}>
+          Practice three AI skills on real workplace tasks. A Claude coach scores each try and gives you one tip.
+        </p>
       </div>
 
-      {pending > 0 && (
-        <div className="notice notice-info">
-          {pending} attempt{pending === 1 ? " is" : "s are"} saved and waiting for the coach. They are scored automatically when the coach is available.
-        </div>
+      {next ? (
+        <section className="up-next" data-testid="up-next">
+          <div>
+            <div className="eyebrow">Up next · {KIND_LABEL[next.kind]} · {next.minutes} min</div>
+            <h2 style={{ margin: "0 0 4px" }}>{next.title}</h2>
+            <p className="small muted" style={{ margin: 0 }}>
+              {next.id === "check-start"
+                ? "Four short tasks. It isn't graded: it shows where you're starting so you can see how far you've come."
+                : next.id === "check-final"
+                  ? "The same four skills as your starting point, with new tasks. See how far you've come."
+                  : COURSE.find((g) => g.steps.some((s) => s.id === next.id))?.blurb}
+            </p>
+          </div>
+          <Link href={next.href} className="btn btn-primary btn-lg" data-testid="next-step">
+            {progress.states[next.id]?.started ? "Continue" : "Start"}
+          </Link>
+        </section>
+      ) : (
+        <section className="up-next">
+          <div>
+            <h2 style={{ margin: "0 0 4px" }}>You finished the course</h2>
+            <p className="small muted" style={{ margin: 0 }}>See how your skills grew from your starting point.</p>
+          </div>
+          <Link href="/lab/skills" className="btn btn-primary btn-lg">See your skills</Link>
+        </section>
       )}
 
-      <div className="grid grid-4">
-        {SKILLS.map((s) => {
-          const l = profile.levels[s];
-          return (
-            <div key={s} className="card" data-testid={`skill-${s}`}>
-              <div className="stat-label">{SKILL_BLURBS[s]}</div>
-              <h2 style={{ margin: "0.2rem 0" }}>{SKILL_LABELS[s]}</h2>
-              <div className="stat">{pct(l.current)}</div>
-              <div className="bar" style={{ margin: "0.4rem 0" }}>
-                <span style={{ width: `${Math.round((l.current ?? 0) * 100)}%` }} />
-              </div>
-              <div className="small muted">First attempt: {pct(l.first)}</div>
-            </div>
-          );
-        })}
-      </div>
-
-      <div className="grid grid-3">
-        <div className="card">
-          <div className="stat-label">Practice streak</div>
-          <div className="stat">{profile.streakDays} day{profile.streakDays === 1 ? "" : "s"}</div>
-          <div className="small muted">{profile.attempts} coached attempts so far</div>
-        </div>
-        <div className="card" style={{ gridColumn: "span 2" }}>
-          <div className="stat-label">Badges</div>
-          <div className="row" style={{ marginTop: "0.4rem" }}>
-            {badges.map((b) => (
-              <span key={b.name} className={`tag ${b.earned ? "tag-pass" : ""}`} style={b.earned ? {} : { color: "var(--muted)", borderColor: "var(--border)" }}>
-                {b.earned ? "★" : "☆"} {b.name}
-              </span>
-            ))}
+      {tookStart ? (
+        <section className="card">
+          <div className="row between" style={{ marginBottom: 12 }}>
+            <h2 style={{ margin: 0 }}>Your starting point</h2>
+            <Link href="/lab/skills" className="small">See all your skills</Link>
           </div>
-          <div className="small muted" style={{ marginTop: "0.5rem" }}>
-            The AI Fluency badge needs 80% or better on all four skills. <Link href="/lab/portfolio">See your portfolio</Link>
-          </div>
-        </div>
-      </div>
-
-      <section className="card">
-        <h2>Your exercises</h2>
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Studio</th>
-              <th>Exercise</th>
-              <th>Track</th>
-              <th>Your best</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {EXERCISES.map((e) => {
-              const mine = attempts.filter((a) => a.exerciseId === e.id && a.passed !== null);
-              const best = mine.reduce<number | null>((m, a) => Math.max(m ?? 0, (a.passed ?? 0) / (a.total ?? 1)), null);
-              return (
-                <tr key={e.id}>
-                  <td>{STUDIO_LABELS[e.studio]}</td>
-                  <td>{e.title}</td>
-                  <td className="muted">{e.track}</td>
-                  <td>{best === null ? <span className="muted">Not started</span> : pct(best)}</td>
-                  <td>
-                    <Link href={`${STUDIO_PATHS[e.studio]}?ex=${e.id}`}>{best === null ? "Start" : "Practice again"}</Link>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </section>
+          <SkillBars start={checks.start} final={checks.final} />
+        </section>
+      ) : (
+        <section className="card card-muted">
+          <h2>How this course works</h2>
+          <ol className="small" style={{ margin: 0, display: "grid", gap: 6 }}>
+            <li><b>Starting point check.</b> 10 minutes, not graded.</li>
+            <li><b>Three modules.</b> Each starts with a 5-minute lesson and a worked example, then three practice tasks.</li>
+            <li><b>Final check.</b> The same skills with new tasks, so you can see your growth.</li>
+          </ol>
+        </section>
+      )}
     </div>
   );
 }
