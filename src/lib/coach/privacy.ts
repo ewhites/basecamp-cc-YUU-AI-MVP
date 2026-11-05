@@ -7,7 +7,7 @@
  * It errs toward removing too much (a false positive costs a word; a miss leaks data).
  */
 
-export type PiiKind = "name" | "email" | "phone" | "ssn" | "card" | "address";
+export type PiiKind = "name" | "email" | "phone" | "ssn" | "card" | "address" | "health";
 
 export interface ScrubResult {
   text: string;
@@ -27,6 +27,12 @@ const PATTERNS: { kind: Exclude<PiiKind, "name">; re: RegExp; token: string }[] 
     kind: "address",
     re: /\b\d{1,6}\s+(?:[NSEW]\.?\s+)?(?:[A-Z][a-z]+\s+){1,3}(?:Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Lane|Ln|Drive|Dr|Court|Ct|Way|Place|Pl|Terrace|Ter)\b\.?/g,
     token: "[ADDRESS REMOVED]",
+  },
+  // Health details: a named condition or medication phrase (deliberately broad; FERPA/HIPAA-style data never needs to reach Claude).
+  {
+    kind: "health",
+    re: /\b(?:(?:i|she|he|they|my \w+)\s+(?:have|has|had)|diagnosed with|suffer(?:s|ing)? from|medical (?:records?|history|condition)|takes?|taking|prescribed)\s+(?:a |an )?(?:epilepsy|seizures?|diabetes|asthma|cancer|hiv|aids|adhd|autism|bipolar(?: disorder)?|depression|anxiety(?: disorder)?|ptsd|schizophrenia|pregnan\w*|[a-z]+(?:pril|olol|statin|zepam|azole|mycin|oxetine|pram)|insulin|chemo\w*)\b/gi,
+    token: "[HEALTH INFO REMOVED]",
   },
 ];
 

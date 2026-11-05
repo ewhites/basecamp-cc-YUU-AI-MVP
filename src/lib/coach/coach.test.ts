@@ -24,6 +24,12 @@ describe("privacy scrub", () => {
     expect(r.text).toBe("Hi, I'm S-B-007. S-B-007 wrote this. Carterville is a town.");
   });
 
+  it("removes health details", () => {
+    const r = scrubPii("Use my cousin's case: she has epilepsy and was prescribed insulin. I was diagnosed with ADHD.");
+    expect(r.text).not.toMatch(/epilepsy|insulin|ADHD/i);
+    expect(r.removed.health).toBe(3);
+  });
+
   it("leaves normal workplace text alone", () => {
     const t = "Call the IT Service Desk at ext. 4400 and summarize ticket #48213 in 5 bullets under 80 words.";
     expect(scrubPii(t).text).toBe(t);

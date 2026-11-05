@@ -16,7 +16,8 @@
     "seed": "tsx scripts/seed.ts",
     "eval": "tsx eval/coach/run.ts",
     "mcp": "tsx mcp/server.ts",
-    "prepare": "git config core.hooksPath .githooks || true"
+    "prepare": "git config core.hooksPath .githooks || true",
+    "mcp:test": "tsx mcp/test-client.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "1.1.0",

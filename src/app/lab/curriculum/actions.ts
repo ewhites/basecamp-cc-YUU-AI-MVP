@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { runGradingEval } from "./_evalPending";
+import { runGradingEval } from "@/lib/evals/run";
 import { getExercise } from "@/lib/curriculum/exercises";
 import { requireRole } from "@/lib/session";
 import { adminClient } from "@/lib/supabase/admin";
