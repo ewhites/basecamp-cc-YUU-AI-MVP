@@ -1,3 +1,4 @@
+import { SKILL_CHECKS } from "./curriculum/skill-checks";
 import { SKILLS, type Skill } from "./curriculum/types";
 
 /**
@@ -12,6 +13,20 @@ export interface CheckRow {
   skill: Skill;
   check_key: string;
   pass: boolean;
+  /** Present when the caller selected it. Needed to tell practice apart from the skills checks. */
+  exercise_id?: string;
+}
+
+const SKILL_CHECK_IDS = new Set(SKILL_CHECKS.map((e) => e.id));
+
+/** The starting point and final check tasks (sp-*, fc-*). They measure lift, not practice. */
+export function isSkillCheck(exerciseId: string | undefined): boolean {
+  return !!exerciseId && SKILL_CHECK_IDS.has(exerciseId);
+}
+
+/** Practice rows only. Skills-check rows would skew the heatmap and the stuck rule. */
+export function practiceOnly<T extends { exercise_id?: string }>(rows: T[]): T[] {
+  return rows.filter((r) => !isSkillCheck(r.exercise_id));
 }
 
 export interface SkillLevel {
@@ -80,6 +95,51 @@ export function stuckStudents(levels: Map<string, Record<Skill, SkillLevel>>, sk
   }
   return flags.sort((a, b) => a.current - b.current);
 }
+
+export interface StuckDetail extends Flag {
+  /** The practice exercise of their latest attempt on this skill. */
+  exercise_id: string;
+  /** That latest attempt, for the replay link. */
+  attempt_id: string;
+  /** The check on this skill they fail most often. */
+  check_key: string;
+  failed: number;
+  tries: number;
+}
+
+/** What a stuck student is stuck on: the check on the skill they miss most, and their latest attempt that has it. */
+export function stuckDetail(rows: CheckRow[], flag: Flag): StuckDetail | null {
+  const mine = rows.filter((r) => r.student_id === flag.student_id && r.skill === flag.skill);
+  if (!mine.length) return null;
+  const byCheck = new Map<string, { failed: number; tries: number; latest: CheckRow }>();
+  for (const r of mine) {
+    const c = byCheck.get(r.check_key) ?? { failed: 0, tries: 0, latest: r };
+    c.tries++;
+    if (!r.pass) c.failed++;
+    if (r.created_at > c.latest.created_at) c.latest = r;
+    byCheck.set(r.check_key, c);
+  }
+  const [check_key, worst] = [...byCheck.entries()].sort(
+    (a, b) =>
+      b[1].failed / b[1].tries - a[1].failed / a[1].tries ||
+      b[1].failed - a[1].failed ||
+      b[1].latest.created_at.localeCompare(a[1].latest.created_at),
+  )[0]!;
+  return {
+    ...flag,
+    exercise_id: worst.latest.exercise_id ?? "",
+    attempt_id: worst.latest.attempt_id,
+    check_key,
+    failed: worst.failed,
+    tries: worst.tries,
+  };
+}
+
+/**
+ * When this many students are stuck on the same skill, it is a class-wide gap: teach it to the
+ * whole section instead of listing every student.
+ */
+export const CLASS_WIDE_MIN = 5;
 
 /** Most-failed checks across the rows, for the mini-lesson suggestion and curriculum insights. */
 export function hardestChecks(rows: { check_key: string; skill: string; pass: boolean }[], limit = 5) {

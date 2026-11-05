@@ -1,0 +1,93 @@
+/* Instructor pages. Uses the tokens in globals.css. Every class starts with ic-. */
+
+.ic { display: grid; gap: 20px; }
+.ic > .page-head { margin-bottom: 4px; }
+.ic h1 { margin-bottom: 6px; }
+.ic-num { font-variant-numeric: tabular-nums; }
+.ic-nowrap { white-space: nowrap; }
+.ic-center { text-align: center !important; }
+.ic-right { text-align: right; }
+.ic-gap { margin-top: 8px; }
+.ic-gap-l { margin-left: 6px; }
+.ic-gap-b { margin-bottom: 12px; }
+.ic-foot { margin: 14px 0 0; }
+.ic-card-head { margin-bottom: 4px; }
+.ic-card-head h2 { margin: 0; }
+.ic-pair { align-items: stretch; }
+.ic-pair > .card + .card { margin-top: 0; }
+.ic-actions { margin-top: 16px; }
+.ic-back { align-self: start; justify-self: start; margin-left: -8px; }
+
+/* ---------- section switcher ---------- */
+.ic-tabs { display: inline-flex; gap: 4px; padding: 4px; background: var(--surface-2); border-radius: var(--radius); align-self: center; }
+.ic-tab { padding: 6px 14px; border-radius: 6px; font-size: 15px; font-weight: 600; color: var(--muted); }
+.ic-tab:hover { color: var(--ink); text-decoration: none; }
+.ic-tab[aria-current="page"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(31, 36, 48, 0.08); }
+
+/* ---------- needs you today ---------- */
+.ic-needs { list-style: none; margin: 0; padding: 0; }
+.ic-need { display: grid; grid-template-columns: minmax(150px, 2fr) minmax(0, 6fr) auto; gap: 16px; align-items: center; padding: 14px 0; border-top: 1px solid var(--line); }
+.ic-needs:first-child > .ic-need:first-child { border-top: 0; }
+.ic-need-who { display: flex; flex-direction: column; min-width: 0; font-weight: 600; }
+.ic-need-what { display: grid; gap: 3px; min-width: 0; }
+.ic-need-head { gap: 8px; }
+.ic-need .btn { white-space: nowrap; }
+.ic-more > summary { cursor: pointer; color: var(--accent); font-weight: 600; font-size: 15px; padding: 10px 0 2px; border-top: 1px solid var(--line); list-style: none; }
+.ic-more > summary::-webkit-details-marker { display: none; }
+.ic-more[open] > summary { display: none; }
+.ic-more .ic-need:first-child { border-top: 1px solid var(--line); }
+@media (max-width: 720px) {
+  .ic-need { grid-template-columns: 1fr; gap: 6px; }
+  .ic-need .btn { justify-self: start; }
+}
+
+/* ---------- most-missed check ---------- */
+.ic-tip-label { color: var(--accent-ink); }
+
+/* ---------- starting point to now ---------- */
+.ic-lift-head { margin: 2px 0 14px; align-items: baseline; }
+.ic-lift { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.ic-lift-row { display: grid; grid-template-columns: minmax(0, 1fr) auto 3.5rem; gap: 12px; align-items: baseline; font-size: 15px; }
+.ic-lift-delta { text-align: right; font-weight: 600; color: var(--muted); }
+.ic-lift-delta.is-met { color: var(--ok); }
+.ic-bars { position: relative; display: grid; gap: 3px; margin-top: 6px; }
+.ic-bars .bar { height: 6px; }
+.ic-bar-start > span { background: var(--faint); }
+.ic-bar-final > span { background: var(--accent); }
+.ic-goal { position: absolute; top: -3px; bottom: -3px; width: 2px; margin-left: -1px; background: var(--ink-2); border-radius: 1px; }
+.ic-legend { margin-top: 14px; font-size: 13px; }
+.ic-legend-goal::before { width: 2px !important; height: 12px !important; border-radius: 1px !important; background: var(--ink-2) !important; }
+
+/* ---------- heatmap (collapsed by default) ---------- */
+.ic-heat > summary { cursor: pointer; list-style: none; display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.ic-heat > summary::-webkit-details-marker { display: none; }
+.ic-heat > summary::before { content: ""; width: 8px; height: 8px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(-45deg); margin-right: 2px; transition: transform 120ms ease; align-self: center; }
+.ic-heat[open] > summary::before { transform: rotate(45deg); }
+.ic-heat-title { font-size: 20px; font-weight: 600; }
+.ic-scroll { overflow-x: auto; margin-top: 12px; }
+.ic-heat table.table td { padding: 6px 10px; }
+.ic-heat .heat { min-width: 64px; }
+.ic-key { margin-top: 12px; gap: 8px; }
+.ic-key .heat { padding: 1px 8px; font-size: 13px; }
+
+/* ---------- coach reliability ---------- */
+.ic-kv { margin: 0 0 12px; display: grid; gap: 10px; }
+.ic-kv > div { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.ic-kv dt { font-size: 15px; color: var(--ink-2); }
+.ic-kv dd { margin: 0; display: flex; align-items: center; gap: 8px; font-weight: 600; }
+
+/* ---------- student page ---------- */
+.ic-skills { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 720px) { .ic-skills { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.ic-skill { display: grid; gap: 4px; }
+.ic-skill-heat { font-size: 18px; padding: 6px 0; }
+.ic-split { align-items: start; }
+.ic-split > .card + .card { margin-top: 0; }
+.ic-attempts { max-height: 640px; overflow-y: auto; margin: 0 -8px; }
+.ic-attempts table.table td { padding: 9px 8px; }
+.ic-attempts tr:last-child td { border-bottom: 0; }
+.ic-attempts tr.is-selected td { background: var(--accent-soft); }
+.ic-attempts tr.is-selected td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
+.ic-override { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 12px; }
+.ic-override > summary { cursor: pointer; font-weight: 600; color: var(--accent); }
+.ic-override[open] > summary { margin-bottom: 4px; }
