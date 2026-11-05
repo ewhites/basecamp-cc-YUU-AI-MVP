@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { randomInt, randomUUID } from "node:crypto";
 
 /**
  * In-memory demo database. The deployed demo has no backend: every table lives in this
@@ -59,6 +59,9 @@ const DEFAULTS: Partial<Record<TableName, (s: Store) => Row>> = {
 };
 
 function next(s: Store, t: string): number {
+  // Seed rows count up from 1 (identical on every server). Rows made later must stay unique
+  // across servers, so they get a time-based id: larger than any seed id and still in time order.
+  if (!s.seeding) return Date.now() * 1000 + randomInt(1000);
   s.seq[t] = (s.seq[t] ?? 0) + 1;
   return s.seq[t];
 }
@@ -127,7 +130,6 @@ export function applyChanges(s: Store, changes: Change[]) {
         delete row[RID];
         setRid(s, row, rid);
         s.tables[c.t].push(row);
-        if (typeof row.id === "number") s.seq[c.t] = Math.max(s.seq[c.t] ?? 0, row.id);
       }
     } else if (c.op === "u") {
       const row = s.byRid.get(c.rid);
