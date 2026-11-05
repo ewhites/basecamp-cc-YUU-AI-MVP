@@ -25,17 +25,19 @@ test("Prompt Studio: weak attempt is coached, tip applied, second attempt improv
     "You are a help-desk lead. Summarize the ticket below for the next-shift technician. Use only the ticket text and don't guess. Leave out names, phone numbers and employee IDs.",
   );
   await page.getByTestId("submit-prompt").click();
-  await expect(page.getByTestId("attempt-score")).toBeVisible();
-  await expect(page.getByTestId("check-format")).toHaveAttribute("data-state", "fail");
-  await expect(page.getByTestId("coach-tip")).toBeVisible();
-  const first = Number((await page.getByTestId("attempt-score").innerText()).split("/")[0]);
+  const latest = page.getByTestId("attempt-result").first();
+  await expect(latest.getByText("Attempt 1")).toBeVisible();
+  await expect(latest.getByTestId("check-format")).toHaveAttribute("data-state", "fail");
+  await expect(latest.getByTestId("coach-tip")).toBeVisible();
+  const first = Number((await latest.getByTestId("attempt-score").innerText()).split("/")[0]);
 
   await page.getByTestId("prompt-input").fill(
     "You are a help-desk lead. Summarize the ticket below for the next-shift technician in 5 bullet points under 80 words: problem, what was tried, current status, next step. Use only the ticket text and don't guess. Leave out names, phone numbers and employee IDs.",
   );
   await page.getByTestId("submit-prompt").click();
-  await expect(page.getByTestId("check-format")).toHaveAttribute("data-state", "pass");
-  const second = Number((await page.getByTestId("attempt-score").innerText()).split("/")[0]);
+  await expect(latest.getByText("Attempt 2")).toBeVisible();
+  await expect(latest.getByTestId("check-format")).toHaveAttribute("data-state", "pass");
+  const second = Number((await latest.getByTestId("attempt-score").innerText()).split("/")[0]);
   expect(second).toBeGreaterThan(first);
 });
 
