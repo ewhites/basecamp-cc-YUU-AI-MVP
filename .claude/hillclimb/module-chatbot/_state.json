@@ -1,0 +1,10 @@
+{
+  "flow": "module-chatbot",
+  "metrics": [
+    {"id": "grounded", "label": "Grounded", "kind": "binary", "higher_is_better": true},
+    {"id": "scope",    "label": "Scope",    "kind": "binary", "higher_is_better": true},
+    {"id": "citation", "label": "Citation", "kind": "binary", "higher_is_better": true},
+    {"id": "teaching", "label": "Teaching", "kind": "continuous", "higher_is_better": true}
+  ],
+  "perf_fields": ["latency_s", "usage", "retries"]
+}
