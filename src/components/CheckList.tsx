@@ -14,7 +14,7 @@ export interface CheckLike {
 }
 
 /** Rubric checks with pass/fail, the quoted evidence highlighted, and the reason. */
-export function CheckList({ exerciseId, checks }: { exerciseId: string; checks: CheckLike[] }) {
+export function CheckList({ exerciseId, checks, staff = false }: { exerciseId: string; checks: CheckLike[]; staff?: boolean }) {
   const ex = getExercise(exerciseId);
   const text = (k: string) => ex?.checks.find((c) => c.key === k)?.text ?? k;
   const order = (k: string) => ex?.checks.findIndex((c) => c.key === k) ?? 0;
@@ -39,7 +39,7 @@ export function CheckList({ exerciseId, checks }: { exerciseId: string; checks: 
                 </div>
                 {c.evidence && c.method !== "code" && (
                   <div className="small" style={{ marginTop: "0.2rem" }}>
-                    Your words: <span className="evidence">“{c.evidence}”</span>
+                    {staff ? "Student's words" : "Your words"}: <span className="evidence">“{c.evidence}”</span>
                   </div>
                 )}
                 <div className="small muted">{c.reason}</div>

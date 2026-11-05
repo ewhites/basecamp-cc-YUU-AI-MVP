@@ -412,7 +412,7 @@ function Replay({ attempt }: { attempt: AttemptReplay }) {
       {checks.length > 0 && (
         <>
           <h3 style={{ marginBottom: 0 }}>Coach&apos;s draft scores</h3>
-          <CheckList exerciseId={attempt.exercise_id} checks={checks} />
+          <CheckList exerciseId={attempt.exercise_id} checks={checks} staff />
           <details data-testid="override-panel">
             <summary style={{ cursor: "pointer", fontWeight: 700 }}>Change a score</summary>
             <div className="stack" style={{ marginTop: "0.6rem" }}>
