@@ -268,6 +268,7 @@ async function main() {
 
   // ---------------- program rollups scaled to 1,700 students
   const rollups: object[] = [];
+  const lastRate: Record<string, number> = {};
   for (let week = 1; week <= 4; week++) {
     for (const skill of SKILLS) {
       const rows = (results as { attempt_id: string; skill: string; pass: boolean }[]).filter((r) => r.skill === skill);
@@ -276,7 +277,9 @@ async function main() {
         const t = new Date(byAttempt.get(r.attempt_id)!).getTime();
         return Math.min(4, Math.max(1, 4 - Math.floor((NOW - t) / (7 * DAY)))) === week;
       });
-      const rate = wk.length ? wk.filter((r) => r.pass).length / wk.length : 0;
+      // Weeks with no exercise testing this skill carry the last measured rate forward.
+      const rate = wk.length ? wk.filter((r) => r.pass).length / wk.length : (lastRate[skill] ?? 0);
+      lastRate[skill] = rate;
       rollups.push({ cycle: CYCLE, week, skill, pass_rate: rate.toFixed(4), students: 1700 });
     }
   }
