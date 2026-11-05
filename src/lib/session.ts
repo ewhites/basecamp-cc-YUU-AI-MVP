@@ -2,7 +2,8 @@ import "server-only";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import type { Role } from "./personas";
-import { userClient } from "./supabase/server";
+import { sessionPersona, userClient } from "./db";
+import { PERSONA_IDS } from "./demo/sample";
 
 export interface Viewer {
   userId: string;
@@ -13,21 +14,20 @@ export interface Viewer {
   student: { id: string; display_name: string; track: string; section_id: string } | null;
 }
 
-/** The signed-in user and their role, read through RLS (a user can only read their own profile). */
+/** The signed-in user and their role (a user can only read their own profile). */
 export const getViewer = cache(async (): Promise<Viewer | null> => {
+  const key = await sessionPersona();
+  if (!key) return null;
   const db = await userClient();
-  const {
-    data: { user },
-  } = await db.auth.getUser();
-  if (!user) return null;
-  const { data: profile } = await db.from("profiles").select("role, display_name, persona").eq("id", user.id).single();
+  const userId = PERSONA_IDS[key]!;
+  const { data: profile } = await db.from("profiles").select("role, display_name, persona").eq("id", userId).single();
   if (!profile) return null;
   let student: Viewer["student"] = null;
   if (profile.role === "student") {
-    const { data } = await db.from("students").select("id, display_name, track, section_id").eq("user_id", user.id).single();
+    const { data } = await db.from("students").select("id, display_name, track, section_id").eq("user_id", userId).single();
     student = data ?? null;
   }
-  return { userId: user.id, role: profile.role, name: profile.display_name, persona: profile.persona, student };
+  return { userId, role: profile.role, name: profile.display_name, persona: profile.persona, student };
 });
 
 /** Page guard: sends signed-out users to the simulated Brightspace course page, wrong roles to their home. */

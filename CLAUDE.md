@@ -21,25 +21,23 @@ The one thing this prototype must prove: **a Claude coach can grade students' AI
 - Student names are replaced with pseudonymous IDs, and PII is stripped, before any Claude call (`src/lib/coach/privacy.ts`).
 - Distress messages skip the coach, show the pre-written staff-contact message, and raise a safety flag (`src/lib/coach/distress.ts`).
 - The coach only drafts scores. Instructors can see and override every one; grades "sync" only after instructor release.
-- Row-level security enforces the four roles in Postgres. App code never relies on itself to filter by role.
+- Access rules enforce the four roles in the data layer (`src/lib/demo/client.ts`, ported from the Postgres RLS policies in `supabase/migrations/`). Pages never filter by role themselves.
 - Daily token budget per student and a monthly spend cap (`src/lib/coach/budget.ts`). If Claude is down, the attempt is saved as `pending_score` and scored later.
 - Never commit `.env*` files or API keys (git pre-commit hook in `.githooks/` and a Claude Code hook in `.claude/`).
 
 ## Stack
 
 - Next.js 16 (App Router, TypeScript) in `src/app`. Plain CSS with Brightspace-style tokens in `src/app/globals.css`.
-- Supabase **local** (Docker): Postgres, auth, RLS. Migrations in `supabase/migrations/`, seed via `scripts/seed.ts`.
+- No backend for the demo: an in-memory store (`src/lib/demo/`) seeded with deterministic sample data on start, behind the same access rules as the RLS policies. `supabase/migrations/` is the pilot's Postgres design (not used by the demo).
 - Claude API via `@anthropic-ai/sdk`. Models are set in `src/lib/models.ts` (grading default `claude-haiku-5-5`; Arena compares `claude-haiku-5-5`, `claude-sonnet-5-5`, `claude-opus-5-5`). Structured outputs via `client.messages.parse` + `zodOutputFormat`. Lesson, rubric and rules are cached with `cache_control`.
 - No sampling params (`temperature` etc.): they 400 on current models.
 - Evals: `npm run eval` (TypeScript, imports `src/lib/coach`); legacy lesson-Q&A eval in `eval/run_eval.py`.
-- MCP: `mcp/server.ts` (stdio, read-only, signs in as a persona so RLS applies).
+- MCP: `mcp/server.ts` (stdio, read-only, acts as a persona so the access rules apply).
 
 ## Commands
 
 ```bash
 npm install
-npx supabase start          # local Postgres/auth (Docker must be running)
-npm run db:reset            # migrations + sample data (deterministic)
 npm run dev                 # http://localhost:3000
 npm run lint && npm run typecheck && npm test && npm run build
 npm run test:e2e            # Playwright demo script

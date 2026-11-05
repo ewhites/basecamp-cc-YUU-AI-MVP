@@ -1,6 +1,6 @@
 import { SampleTag } from "@/components/Tags";
 import { getViewer } from "@/lib/session";
-import { userClient } from "@/lib/supabase/server";
+import { userClient } from "@/lib/db";
 import { redirect } from "next/navigation";
 
 /**

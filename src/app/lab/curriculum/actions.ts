@@ -4,8 +4,8 @@ import { revalidatePath } from "next/cache";
 import { runGradingEval } from "@/lib/evals/run";
 import { getExercise } from "@/lib/curriculum/exercises";
 import { requireRole } from "@/lib/session";
-import { adminClient } from "@/lib/supabase/admin";
-import { userClient } from "@/lib/supabase/server";
+import { adminClient } from "@/lib/db";
+import { userClient } from "@/lib/db";
 
 const PATH = "/lab/curriculum";
 

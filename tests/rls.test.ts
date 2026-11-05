@@ -1,31 +1,15 @@
 /**
- * Row-level security integration tests against the local Supabase stack (seeded).
- * Each test signs in as a seeded persona with a one-time token and queries with the anon key,
- * exactly as the app does. Skips if local Supabase isn't running.
+ * Access-rule tests for the demo data layer. The rules are ported from the Postgres row-level
+ * security policies in supabase/migrations; these are the same assertions the RLS tests made.
  */
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { beforeAll, describe, expect, it } from "vitest";
-import { PERSONAS, SECTION_A_INSTRUCTOR } from "../src/lib/personas";
-import { personaSession } from "../src/lib/supabase/admin";
-import { supabaseConfig } from "../src/lib/supabase/config";
+import { DemoClient } from "../src/lib/demo/client";
+import { PERSONA_IDS } from "../src/lib/demo/sample";
+import { resetStore } from "../src/lib/demo/instance";
 
-let available = true;
-try {
-  supabaseConfig();
-} catch {
-  available = false;
-}
-
-async function as(key: string): Promise<SupabaseClient> {
-  const c = supabaseConfig();
-  const email = key === "haddad" ? SECTION_A_INSTRUCTOR.email : PERSONAS.find((p) => p.key === key)!.email;
-  const anon = createClient(c.url, c.anonKey, { auth: { persistSession: false, autoRefreshToken: false } });
-  const session = await personaSession(email, anon);
-  return createClient(c.url, c.anonKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-    global: { headers: { Authorization: `Bearer ${session.access_token}` } },
-  });
-}
+type SupabaseClient = DemoClient;
+const as = async (key: string): Promise<DemoClient> => new DemoClient({ kind: "user", uid: PERSONA_IDS[key]! });
+const available = true;
 
 const count = async (q: PromiseLike<{ count: number | null; error: unknown }>) => {
   const { count: n, error } = await q;
@@ -37,9 +21,9 @@ describe.skipIf(!available)("row-level security", () => {
   let jasmine: SupabaseClient, rivera: SupabaseClient, okafor: SupabaseClient, lee: SupabaseClient, anon: SupabaseClient;
 
   beforeAll(async () => {
+    resetStore();
     [jasmine, rivera, okafor, lee] = (await Promise.all(["jasmine", "rivera", "okafor", "lee"].map(as))) as [SupabaseClient, SupabaseClient, SupabaseClient, SupabaseClient];
-    const c = supabaseConfig();
-    anon = createClient(c.url, c.anonKey, { auth: { persistSession: false } });
+    anon = new DemoClient({ kind: "anon" });
   });
 
   it("a student sees only their own student row and attempts", async () => {

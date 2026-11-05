@@ -1,6 +1,6 @@
 # Demo script (about 7 minutes)
 
-Before you start: `npx supabase start`, `npm run db:reset`, `npm run dev`, and an API key in `.env.local`. Open http://localhost:3000.
+Before you start: `npm run dev` (or open the deployed link) with an API key in `.env.local`. Open http://localhost:3000.
 
 **0. Say what's simulated first (10 seconds).** "Everything you'll see is sample data. Brightspace, Year Up sign-in and the gradebook are simulated, and every screen is labeled."
 

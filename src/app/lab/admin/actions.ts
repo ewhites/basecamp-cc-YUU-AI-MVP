@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireRole } from "@/lib/session";
-import { userClient } from "@/lib/supabase/server";
+import { userClient } from "@/lib/db";
 
 export interface BreakGlassRow {
   attempt_id: string;

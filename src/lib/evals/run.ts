@@ -9,7 +9,10 @@ import { askCoach } from "../coach/qa";
 import { getExercise } from "../curriculum/exercises";
 import type { AttemptInput, Exercise, Studio } from "../curriculum/types";
 import { GRADER_EFFORT, GRADER_MODEL } from "../models";
-import { adminClient } from "../supabase/admin";
+import { DemoClient } from "../demo/client";
+
+/** Eval runs are saved into the demo store (shown in the admin center while the server runs) and eval/reports. */
+const adminClient = () => new DemoClient({ kind: "service" });
 import { coachCheckKeys, coachParts, loadGradingCases, loadSafetyCases, studentText, type GradingCase, type SafetyCase } from "./datasets";
 import { judge, JUDGE_MODEL } from "./judge";
 

@@ -3,7 +3,7 @@ import type { AttemptView } from "./attempts";
 import { toAttemptView } from "./attempts";
 import { SKILLS, type Skill } from "./curriculum/types";
 import { skillLevels, type CheckRow } from "./insights";
-import { userClient } from "./supabase/server";
+import { userClient } from "./db";
 
 /** Reads for the signed-in student. All through RLS: a student can only ever get their own rows. */
 

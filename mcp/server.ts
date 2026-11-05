@@ -5,50 +5,38 @@
  *   npx tsx mcp/server.ts            (registered as "ai-lab" in .mcp.json)
  *   LAB_MCP_PERSONA=jasmine|rivera|okafor|lee|haddad   (default rivera)
  *
- * It signs in as the persona and queries with the anon key plus that user's access token, so
- * Postgres row-level security decides what it can see. It never queries with the service role
- * (the service role is used once, inside personaSession, to mint the one-time sign-in token).
+ * It queries the demo data AS the persona, so the same access rules as the app (ported from the
+ * Postgres row-level security policies) decide what it can see. It never uses the service client.
  * Output uses pseudonymous student IDs only, never names: whatever this returns goes to an AI.
  * There are no write tools.
  */
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { createClient, type Session, type SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { AGENT_CHECKS, ARENA_CHECKS, PROMPT_CHECKS } from "../src/lib/curriculum/checks";
 import { EXERCISES } from "../src/lib/curriculum/exercises";
 import { SKILL_LABELS, SKILLS, type Skill } from "../src/lib/curriculum/types";
 import { MIN_CHECKS, skillLevels, STUCK_THRESHOLD, stuckStudents, type CheckRow } from "../src/lib/insights";
-import { persona, SECTION_A_INSTRUCTOR } from "../src/lib/personas";
-import { personaSession } from "../src/lib/supabase/admin";
-import { supabaseConfig } from "../src/lib/supabase/config";
+import { DemoClient } from "../src/lib/demo/client";
+import { PERSONA_IDS } from "../src/lib/demo/sample";
 
 const PERSONA_KEY = (process.env.LAB_MCP_PERSONA ?? "rivera").trim().toLowerCase();
 const ALL_CHECKS = [...PROMPT_CHECKS, ...ARENA_CHECKS, ...AGENT_CHECKS];
 
 // ---------------------------------------------------------------- session (RLS as the persona)
 
-function personaEmail(key: string): string {
-  if (key === SECTION_A_INSTRUCTOR.key) return SECTION_A_INSTRUCTOR.email;
-  const p = persona(key);
-  if (!p) throw new Error(`Unknown LAB_MCP_PERSONA "${key}". Use jasmine, rivera, okafor, lee or haddad.`);
-  return p.email;
-}
+type SupabaseClient = DemoClient;
+let current: { db: DemoClient; role: string } | null = null;
 
-let current: { session: Session; db: SupabaseClient; role: string } | null = null;
-
-/** A Supabase client acting as the persona. Re-signs in shortly before the access token expires. */
+/** A client acting as the persona: every read goes through the demo's access rules. */
 async function asPersona() {
-  const now = Math.floor(Date.now() / 1000);
-  if (current && (current.session.expires_at ?? 0) > now + 60) return current;
-  const c = supabaseConfig();
-  const opts = { auth: { persistSession: false, autoRefreshToken: false } };
-  const anon = createClient(c.url, c.anonKey, opts);
-  const session = await personaSession(personaEmail(PERSONA_KEY), anon);
-  const db = createClient(c.url, c.anonKey, { ...opts, global: { headers: { Authorization: `Bearer ${session.access_token}` } } });
-  const { data: prof, error } = await db.from("profiles").select("role").eq("id", session.user.id).maybeSingle();
+  if (current) return current;
+  const uid = PERSONA_IDS[PERSONA_KEY];
+  if (!uid) throw new Error(`Unknown LAB_MCP_PERSONA "${PERSONA_KEY}". Use jasmine, rivera, okafor, lee or haddad.`);
+  const db = new DemoClient({ kind: "user", uid });
+  const { data: prof, error } = await db.from("profiles").select("role").eq("id", uid).maybeSingle();
   if (error) throw new Error(`Could not read the persona's profile: ${error.message}`);
-  current = { session, db, role: (prof?.role as string | undefined) ?? "unknown" };
+  current = { db, role: (prof?.role as string | undefined) ?? "unknown" };
   return current;
 }
 
@@ -93,7 +81,7 @@ async function checkRows(db: SupabaseClient, filter: { studentIds?: string[]; ex
         created_at: r.attempts.created_at,
         exercise_id: r.attempts.exercise_id,
       });
-    if (data.length < 1000) break;
+    if ((data ?? []).length < 1000) break;
   }
   return rows;
 }

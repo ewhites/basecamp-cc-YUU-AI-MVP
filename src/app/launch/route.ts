@@ -1,14 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { SESSION_COOKIE } from "@/lib/db";
+import { sign } from "@/lib/demo/secret";
 import { persona } from "@/lib/personas";
-import { adminClient } from "@/lib/supabase/admin";
-import { userClient } from "@/lib/supabase/server";
 
 /**
  * SIMULATED Brightspace launch + Year Up sign-in. In the pilot this becomes an LTI 1.3 launch
- * from the course link with Year Up (Azure) single sign-on. Here it mints a one-time token for a
- * seeded sample persona and exchanges it for a session cookie. No passwords exist anywhere.
+ * from the course link with Year Up (Azure) single sign-on that verifies Brightspace's signed
+ * id_token. Here it sets a signed session cookie for a seeded sample persona.
  */
-/** The demo sign-in exists only for local demos. A real deployment must replace it with a verified LTI 1.3 launch + SSO. */
 function demoLoginEnabled() {
   return process.env.NODE_ENV !== "production" || process.env.LAB_DEMO_LOGIN === "1";
 }
@@ -18,15 +17,14 @@ export async function GET(req: NextRequest) {
   const p = persona(req.nextUrl.searchParams.get("as") ?? "");
   if (!p) return NextResponse.redirect(new URL("/", req.url));
 
-  const { data, error } = await adminClient().auth.admin.generateLink({ type: "magiclink", email: p.email });
-  if (error || !data.properties?.hashed_token) {
-    return NextResponse.redirect(new URL(`/?error=${encodeURIComponent("Run `npm run db:reset` to create the sample accounts.")}`, req.url));
-  }
-  const db = await userClient();
-  await db.auth.signOut();
-  const { error: e2 } = await db.auth.verifyOtp({ type: "magiclink", token_hash: data.properties.hashed_token });
-  if (e2) return NextResponse.redirect(new URL(`/?error=${encodeURIComponent(e2.message)}`, req.url));
-
   const next = req.nextUrl.searchParams.get("next");
-  return NextResponse.redirect(new URL(next && next.startsWith("/lab") ? next : p.landing, req.url));
+  const res = NextResponse.redirect(new URL(next && next.startsWith("/lab") ? next : p.landing, req.url));
+  res.cookies.set(SESSION_COOKIE, `${p.key}.${sign(p.key)}`, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: req.nextUrl.protocol === "https:",
+    path: "/",
+    maxAge: 60 * 60 * 8,
+  });
+  return res;
 }

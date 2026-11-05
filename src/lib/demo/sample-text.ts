@@ -2,7 +2,7 @@
  * Builds believable sample attempt text for the seeder, assembled from fragments so that every
  * passing check has an evidence quote that really appears in the text (same rule as the live coach).
  */
-import type { Exercise, RubricCheck } from "../src/lib/curriculum/types";
+import type { Exercise, RubricCheck } from "../curriculum/types";
 
 type Rand = () => number;
 const pick = <T>(xs: readonly T[], r: Rand): T => xs[Math.floor(r() * xs.length)]!;

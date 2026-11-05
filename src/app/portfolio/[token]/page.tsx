@@ -10,7 +10,7 @@ import {
   type Skill,
 } from "@/lib/curriculum/types";
 import { pct, skillLevels, type CheckRow } from "@/lib/insights";
-import { adminClient } from "@/lib/supabase/admin";
+import { adminClient } from "@/lib/db";
 import { looksLikeToken, tokenMatches } from "../token";
 
 export const dynamic = "force-dynamic";

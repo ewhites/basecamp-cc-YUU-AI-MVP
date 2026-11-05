@@ -2,7 +2,7 @@ import "server-only";
 import { EXERCISES, getExercise } from "./curriculum/exercises";
 import { SKILLS, type RubricCheck, type Skill } from "./curriculum/types";
 import { hardestChecks, skillLevels, stuckStudents, type CheckRow, type Flag, type SkillLevel } from "./insights";
-import { userClient } from "./supabase/server";
+import { userClient } from "./db";
 
 /**
  * Reads for the instructor console. Every query goes through userClient(), so RLS decides which

@@ -1,6 +1,6 @@
 import "server-only";
 import { createHmac, timingSafeEqual } from "node:crypto";
-import { supabaseConfig } from "@/lib/supabase/config";
+import { signingSecret } from "@/lib/demo/secret";
 
 /**
  * Share links for the skills portfolio. The token is an HMAC of the student's pseudonymous ID,
@@ -8,7 +8,7 @@ import { supabaseConfig } from "@/lib/supabase/config";
  * Server only: the secret is LAB_PORTFOLIO_SECRET, or the local Supabase service key as a fallback.
  */
 function secret(): string {
-  return process.env.LAB_PORTFOLIO_SECRET ?? supabaseConfig().serviceKey;
+  return process.env.LAB_PORTFOLIO_SECRET ?? signingSecret();
 }
 
 export function portfolioToken(studentId: string): string {

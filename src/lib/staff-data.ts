@@ -3,7 +3,7 @@ import { AGENT_CHECKS, ARENA_CHECKS, PROMPT_CHECKS } from "./curriculum/checks";
 import { EXERCISES } from "./curriculum/exercises";
 import { SKILLS, type RubricCheck, type Skill } from "./curriculum/types";
 import { budgetConfig } from "./coach/budget";
-import { userClient } from "./supabase/server";
+import { userClient } from "./db";
 
 /**
  * Reads for the two staff screens (admin and security center, curriculum insights).

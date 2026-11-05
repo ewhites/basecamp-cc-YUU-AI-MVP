@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { budgetFor, recordUsage, runArenaFor, scorePending, submitAttempt, verifyArenaToken, type AttemptView, type StoredOutput, type StudentViewer } from "@/lib/attempts";
 import { budgetConfig, checkBudget } from "@/lib/coach/budget";
-import { adminClient } from "@/lib/supabase/admin";
+import { adminClient } from "@/lib/db";
 import { askCoach } from "@/lib/coach/qa";
 import { getExercise } from "@/lib/curriculum/exercises";
 import { getViewer } from "@/lib/session";
