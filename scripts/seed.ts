@@ -103,8 +103,22 @@ function passProb(opts: { skill: Skill; attemptNo: number; week: number; section
   return Math.max(0.05, Math.min(0.96, p));
 }
 
+/** Right after `supabase db reset` the auth and REST services restart; wait until both answer. */
+async function waitForStack() {
+  for (let i = 0; i < 30; i++) {
+    const [{ error: a }, { error: r }] = await Promise.all([
+      adminClient().auth.admin.listUsers({ perPage: 1 }),
+      adminClient().from("sections").select("id").limit(1),
+    ]);
+    if (!a && !r) return;
+    await new Promise((res) => setTimeout(res, 1000));
+  }
+  throw new Error("Local Supabase did not come up. Is Docker running? Try `npx supabase start`.");
+}
+
 async function main() {
   const db = adminClient();
+  await waitForStack();
   console.log("Wiping sample data...");
   await wipe();
 
