@@ -131,7 +131,14 @@ Example output:
 ${JSON.stringify(example.response)}`;
 }
 
+const OUR_TAGS = /<\s*\/?\s*(student_prompt|student_reasoning|bot_instructions|ai_output|model_outputs|bot_transcript|lesson)\b[^>]*>/gi;
+
+/** Neutralizes our own delimiter tags inside untrusted text so it can't close a section early. */
+export function neutralizeTags(text: string): string {
+  return text.replace(OUR_TAGS, (m) => m.replace(/</g, "‹").replace(/>/g, "›"));
+}
+
 export function coachUserMessage(ex: Exercise, parts: { attempt: string; output: string }): string {
   const src = SOURCE_NAMES[ex.studio];
-  return `<${src.attempt}>\n${parts.attempt}\n</${src.attempt}>\n\n<${src.output}>\n${parts.output}\n</${src.output}>`;
+  return `<${src.attempt}>\n${neutralizeTags(parts.attempt)}\n</${src.attempt}>\n\n<${src.output}>\n${neutralizeTags(parts.output)}\n</${src.output}>`;
 }

@@ -11,7 +11,7 @@
  */
 import { randomBytes } from "node:crypto";
 import { EXERCISES } from "../src/lib/curriculum/exercises";
-import type { Exercise, Skill } from "../src/lib/curriculum/types";
+import type { Skill } from "../src/lib/curriculum/types";
 import { SKILLS } from "../src/lib/curriculum/types";
 import { costUsd, MODELS } from "../src/lib/models";
 import { JASMINE_STUDENT_ID, PERSONAS, SECTION_A_INSTRUCTOR } from "../src/lib/personas";

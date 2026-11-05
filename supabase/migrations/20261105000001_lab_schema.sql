@@ -256,7 +256,7 @@ begin
   if v_student is null or not can_see_student(v_student) then
     raise exception 'not allowed' using errcode = '42501';
   end if;
-  if auth_role() <> 'student' then
+  if auth_role() is distinct from 'student' then
     insert into audit_log (actor, actor_role, action, target) values (auth.uid(), auth_role(), 'view_attempt', p_attempt::text);
   end if;
 end $$;
@@ -265,7 +265,7 @@ create function public.override_check(p_attempt uuid, p_key text, p_pass boolean
 language plpgsql security definer set search_path = public as $$
 declare v_student text;
 begin
-  if auth_role() <> 'instructor' then raise exception 'only instructors can override' using errcode = '42501'; end if;
+  if auth_role() is distinct from 'instructor' then raise exception 'only instructors can override' using errcode = '42501'; end if;
   if coalesce(trim(p_note), '') = '' then raise exception 'a note is required'; end if;
   select student_id into v_student from attempts where id = p_attempt;
   if v_student is null or not can_see_student(v_student) then raise exception 'not allowed' using errcode = '42501'; end if;
@@ -291,7 +291,7 @@ create function public.release_scores(p_section text) returns int
 language plpgsql security definer set search_path = public as $$
 declare n int;
 begin
-  if auth_role() <> 'instructor' or p_section not in (select my_sections()) then
+  if auth_role() is distinct from 'instructor' or p_section not in (select my_sections()) then
     raise exception 'not allowed' using errcode = '42501';
   end if;
   update attempts a set released_at = now()
@@ -308,7 +308,7 @@ create function public.admin_view_student_work(p_student text, p_reason text)
 returns table (attempt_id uuid, exercise_id text, attempt_no int, status text, passed int, total int, input jsonb, created_at timestamptz)
 language plpgsql security definer set search_path = public as $$
 begin
-  if auth_role() <> 'admin' then raise exception 'admins only' using errcode = '42501'; end if;
+  if auth_role() is distinct from 'admin' then raise exception 'admins only' using errcode = '42501'; end if;
   if coalesce(length(trim(p_reason)), 0) < 10 then raise exception 'a reason of at least 10 characters is required'; end if;
   insert into audit_log (actor, actor_role, action, target, reason)
   values (auth.uid(), 'admin', 'admin_view_student_work', p_student, p_reason);
@@ -322,7 +322,7 @@ create function public.curriculum_check_stats()
 returns table (exercise_id text, check_key text, skill text, section_id text, attempts bigint, pass_rate numeric)
 language plpgsql stable security definer set search_path = public as $$
 begin
-  if auth_role() not in ('curriculum', 'admin') then raise exception 'not allowed' using errcode = '42501'; end if;
+  if auth_role() is null or auth_role() not in ('curriculum', 'admin') then raise exception 'not allowed' using errcode = '42501'; end if;
   return query
     select a.exercise_id, c.check_key, c.skill, s.section_id, count(*), round(avg(case when c.pass then 1 else 0 end), 4)
       from check_results c
@@ -336,7 +336,7 @@ create function public.usage_by_cohort(p_since timestamptz)
 returns table (section_id text, purpose text, calls bigint, tokens bigint, cost_usd numeric)
 language plpgsql stable security definer set search_path = public as $$
 begin
-  if auth_role() <> 'admin' then raise exception 'admins only' using errcode = '42501'; end if;
+  if auth_role() is distinct from 'admin' then raise exception 'admins only' using errcode = '42501'; end if;
   return query
     select coalesce(s.section_id, 'staff/eval'), u.purpose, count(*),
            sum(u.input_tokens + u.output_tokens + u.cache_read_tokens + u.cache_write_tokens)::bigint,
@@ -351,7 +351,7 @@ create function public.publish_rubric_draft(p_draft bigint) returns void
 language plpgsql security definer set search_path = public as $$
 declare d rubric_checks%rowtype; ok boolean;
 begin
-  if auth_role() not in ('curriculum', 'admin') then raise exception 'not allowed' using errcode = '42501'; end if;
+  if auth_role() is null or auth_role() not in ('curriculum', 'admin') then raise exception 'not allowed' using errcode = '42501'; end if;
   select * into d from rubric_checks where id = p_draft and status = 'draft';
   if not found then raise exception 'no such draft'; end if;
   select exists (select 1 from eval_runs where rubric_draft_id = p_draft and passed_gate) into ok;
