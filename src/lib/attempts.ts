@@ -1,4 +1,5 @@
 import "server-only";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { checkBudget, budgetConfig } from "./coach/budget";
 import { CoachUnavailableError, toCoachError } from "./coach/client";
 import { detectDistress, DISTRESS_RESPONSE } from "./coach/distress";
@@ -10,6 +11,7 @@ import type { AttemptInput, Exercise } from "./curriculum/types";
 import type { UsageLike } from "./models";
 import type { Viewer } from "./session";
 import { adminClient } from "./supabase/admin";
+import { supabaseConfig } from "./supabase/config";
 
 /**
  * The one write path for student attempts (all three studios).
@@ -43,7 +45,7 @@ function db() {
   return adminClient();
 }
 
-async function recordUsage(studentId: string | null, purpose: string, run: { model: string; usage: UsageLike; costUsd: number }) {
+export async function recordUsage(studentId: string | null, purpose: string, run: { model: string; usage: UsageLike; costUsd: number }) {
   await db().from("usage_ledger").insert({
     student_id: studentId,
     purpose,
@@ -254,6 +256,20 @@ export async function scorePending(v: StudentViewer): Promise<{ scored: number; 
   return { scored, stillPending: (data?.length ?? 0) - scored };
 }
 
+type ArenaOutputs = Extract<StoredOutput, { outputs: unknown }>["outputs"];
+
+/** Arena outputs travel through the browser between step 1 and step 2, so the server signs them. */
+function arenaSignature(studentId: string, exerciseId: string, prompt: string, outputs: ArenaOutputs): string {
+  const secret = process.env.LAB_SIGNING_SECRET ?? supabaseConfig().serviceKey;
+  return createHmac("sha256", secret).update(JSON.stringify([studentId, exerciseId, prompt, outputs])).digest("hex");
+}
+
+export function verifyArenaToken(studentId: string, exerciseId: string, prompt: string, outputs: ArenaOutputs, token: string): boolean {
+  const expected = Buffer.from(arenaSignature(studentId, exerciseId, prompt, outputs), "hex");
+  const given = Buffer.from(/^[0-9a-f]{64}$/.test(token) ? token : "", "hex");
+  return given.length === expected.length && timingSafeEqual(given, expected);
+}
+
 /** Arena step 1: run the byte-identical prompt on three models and return outputs for the student to judge. */
 export async function runArenaFor(v: StudentViewer, exerciseId: string, rawPrompt: string) {
   const ex = getExercise(exerciseId);
@@ -269,11 +285,8 @@ export async function runArenaFor(v: StudentViewer, exerciseId: string, rawPromp
   try {
     const runs = await runArena(prompt, ex);
     for (const r of runs) await recordUsage(v.student.id, "arena", r);
-    return {
-      prompt,
-      piiRemoved: removedSummary(removed) || undefined,
-      outputs: runs.map((r) => ({ model: r.model, text: r.text, latencyMs: r.latencyMs, costUsd: r.costUsd, usage: r.usage })),
-    };
+    const outputs: ArenaOutputs = runs.map((r) => ({ model: r.model, text: r.text, latencyMs: r.latencyMs, costUsd: r.costUsd, usage: r.usage }));
+    return { prompt, piiRemoved: removedSummary(removed) || undefined, outputs, token: arenaSignature(v.student.id, ex.id, prompt, outputs) };
   } catch (err) {
     return { error: `The models are unavailable right now (${toCoachError(err).message}). Try again in a minute.` };
   }

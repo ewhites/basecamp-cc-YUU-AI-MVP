@@ -1,0 +1,105 @@
+/**
+ * Row-level security integration tests against the local Supabase stack (seeded).
+ * Each test signs in as a seeded persona with a one-time token and queries with the anon key,
+ * exactly as the app does. Skips if local Supabase isn't running.
+ */
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { beforeAll, describe, expect, it } from "vitest";
+import { PERSONAS, SECTION_A_INSTRUCTOR } from "../src/lib/personas";
+import { personaSession } from "../src/lib/supabase/admin";
+import { supabaseConfig } from "../src/lib/supabase/config";
+
+let available = true;
+try {
+  supabaseConfig();
+} catch {
+  available = false;
+}
+
+async function as(key: string): Promise<SupabaseClient> {
+  const c = supabaseConfig();
+  const email = key === "haddad" ? SECTION_A_INSTRUCTOR.email : PERSONAS.find((p) => p.key === key)!.email;
+  const anon = createClient(c.url, c.anonKey, { auth: { persistSession: false, autoRefreshToken: false } });
+  const session = await personaSession(email, anon);
+  return createClient(c.url, c.anonKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: { headers: { Authorization: `Bearer ${session.access_token}` } },
+  });
+}
+
+const count = async (q: PromiseLike<{ count: number | null; error: unknown }>) => {
+  const { count: n, error } = await q;
+  if (error) throw error;
+  return n ?? 0;
+};
+
+describe.skipIf(!available)("row-level security", () => {
+  let jasmine: SupabaseClient, rivera: SupabaseClient, okafor: SupabaseClient, lee: SupabaseClient, anon: SupabaseClient;
+
+  beforeAll(async () => {
+    [jasmine, rivera, okafor, lee] = (await Promise.all(["jasmine", "rivera", "okafor", "lee"].map(as))) as [SupabaseClient, SupabaseClient, SupabaseClient, SupabaseClient];
+    const c = supabaseConfig();
+    anon = createClient(c.url, c.anonKey, { auth: { persistSession: false } });
+  });
+
+  it("a student sees only their own student row and attempts", async () => {
+    expect(await count(jasmine.from("students").select("id", { count: "exact", head: true }))).toBe(1);
+    expect(await count(jasmine.from("attempts").select("id", { count: "exact", head: true }).neq("student_id", "S-B-012"))).toBe(0);
+    expect(await count(jasmine.from("attempts").select("id", { count: "exact", head: true }))).toBeGreaterThan(0);
+    const { data: other } = await jasmine.from("check_results").select("attempt_id, attempts!inner(student_id)").neq("attempts.student_id", "S-B-012").limit(5);
+    expect(other ?? []).toHaveLength(0);
+  });
+
+  it("a student cannot write or override their own score", async () => {
+    const { error: ins } = await jasmine.from("check_results").insert({ attempt_id: "00000000-0000-4000-8000-000000000001", check_key: "x", skill: "description", pass: true });
+    expect(ins).not.toBeNull();
+    const { data: mine } = await jasmine.from("attempts").select("id").limit(1).single();
+    const { error } = await jasmine.rpc("override_check", { p_attempt: mine!.id, p_key: "role", p_pass: true, p_note: "self" });
+    expect(error).not.toBeNull();
+  });
+
+  it("an instructor sees only their own sections", async () => {
+    expect(await count(rivera.from("students").select("id", { count: "exact", head: true }).eq("section_id", "A"))).toBe(0);
+    expect(await count(rivera.from("students").select("id", { count: "exact", head: true }))).toBe(80);
+    expect(await count(rivera.from("attempts").select("id", { count: "exact", head: true }).like("student_id", "S-A-%"))).toBe(0);
+    const { error } = await rivera.rpc("release_scores", { p_section: "A" });
+    expect(error).not.toBeNull();
+  });
+
+  it("instructor overrides are audited and require a note", async () => {
+    const { data: a } = await rivera.from("attempts").select("id").eq("student_id", "S-B-001").limit(1).single();
+    const { error: noNote } = await rivera.rpc("override_check", { p_attempt: a!.id, p_key: "role", p_pass: true, p_note: " " });
+    expect(noNote).not.toBeNull();
+    const haddad = await as("haddad");
+    const { error: wrongSection } = await haddad.rpc("override_check", { p_attempt: a!.id, p_key: "role", p_pass: true, p_note: "not my student" });
+    expect(wrongSection).not.toBeNull();
+  });
+
+  it("the curriculum designer never sees student names, only aggregates", async () => {
+    expect(await count(okafor.from("students").select("id", { count: "exact", head: true }))).toBe(0);
+    expect(await count(okafor.from("attempts").select("id", { count: "exact", head: true }))).toBe(0);
+    const { data, error } = await okafor.rpc("curriculum_check_stats");
+    expect(error).toBeNull();
+    expect(data!.length).toBeGreaterThan(0);
+    expect(Object.keys(data![0]!)).not.toContain("student_id");
+  });
+
+  it("an admin reads student work only through the logged break-glass function", async () => {
+    expect(await count(lee.from("attempts").select("id", { count: "exact", head: true }))).toBe(0);
+    const { error: noReason } = await lee.rpc("admin_view_student_work", { p_student: "S-B-001", p_reason: "x" });
+    expect(noReason).not.toBeNull();
+    const before = await count(lee.from("audit_log").select("id", { count: "exact", head: true }));
+    const { data, error } = await lee.rpc("admin_view_student_work", { p_student: "S-B-001", p_reason: "RLS test: audited read" });
+    expect(error).toBeNull();
+    expect(data!.length).toBeGreaterThan(0);
+    expect(await count(lee.from("audit_log").select("id", { count: "exact", head: true }))).toBe(before + 1);
+  });
+
+  it("signed-out requests see nothing and cannot call functions", async () => {
+    // Signed out: either an error (no execute grant on the RLS helper) or zero rows. Never data.
+    const { data: rows, error: e1 } = await anon.from("attempts").select("id").limit(5);
+    expect(e1 !== null || (rows ?? []).length === 0).toBe(true);
+    const { error } = await anon.rpc("curriculum_check_stats");
+    expect(error).not.toBeNull();
+  });
+});

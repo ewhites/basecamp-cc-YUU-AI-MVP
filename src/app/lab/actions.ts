@@ -1,7 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { runArenaFor, scorePending, submitAttempt, type AttemptView, type StoredOutput, type StudentViewer } from "@/lib/attempts";
+import { budgetFor, recordUsage, runArenaFor, scorePending, submitAttempt, verifyArenaToken, type AttemptView, type StoredOutput, type StudentViewer } from "@/lib/attempts";
+import { budgetConfig, checkBudget } from "@/lib/coach/budget";
+import { adminClient } from "@/lib/supabase/admin";
 import { askCoach } from "@/lib/coach/qa";
 import { getExercise } from "@/lib/curriculum/exercises";
 import { getViewer } from "@/lib/session";
@@ -44,11 +46,17 @@ export async function runArenaAction(exerciseId: string, prompt: string) {
 
 export async function submitArenaAction(
   exerciseId: string,
-  payload: { prompt: string; pickedModel: string; reasoning: string; outputs: Extract<StoredOutput, { outputs: unknown }>["outputs"] },
+  payload: { prompt: string; pickedModel: string; reasoning: string; outputs: Extract<StoredOutput, { outputs: unknown }>["outputs"]; token: string },
 ): Promise<Result> {
   if (!payload.reasoning.trim()) return { ok: false, error: "Explain your pick first." };
+  if (payload.reasoning.length > 4000) return { ok: false, error: "Keep your reasoning under 4,000 characters." };
   if (!payload.outputs?.length) return { ok: false, error: "Run the prompt on the three models first." };
   const v = await student();
+  // The outputs came back through the browser: only accept exactly what the server produced and signed.
+  if (!verifyArenaToken(v.student.id, exerciseId, payload.prompt, payload.outputs, payload.token ?? "")) {
+    return { ok: false, error: "These results couldn't be verified. Run the prompt on the three models again." };
+  }
+  if (!payload.outputs.some((o) => o.model === payload.pickedModel)) return { ok: false, error: "Pick one of the three models that ran." };
   return guard(
     () => submitAttempt(v, exerciseId, { studio: "arena", prompt: payload.prompt, pickedModel: payload.pickedModel, reasoning: payload.reasoning }, { outputs: payload.outputs }),
     STUDIO_PATHS.arena,
@@ -75,25 +83,25 @@ export async function askLessonCoachAction(exerciseId: string, question: string)
   if (!question.trim()) return { error: "Ask a question about this lesson." };
   if (question.length > 1500) return { error: "Keep questions under 1,500 characters." };
   const ex = getExercise(exerciseId);
+  // Same spend guards as attempts: a student's daily budget, and the Lab-wide monthly cap for everyone.
+  if (v.student) {
+    const b = await budgetFor(v.student.id);
+    if (!b.ok) return { error: b.message };
+  } else {
+    const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+    const { data } = await adminClient().from("usage_ledger").select("cost_usd").gte("created_at", monthStart);
+    const spend = (data ?? []).reduce((n, r) => n + Number(r.cost_usd), 0);
+    const b = checkBudget({ studentTokensToday: 0, monthSpendUsd: spend, ...budgetConfig() });
+    if (!b.ok) return { error: b.message };
+  }
   try {
     const { scrubPii } = await import("@/lib/coach/privacy");
     const names = v.student ? [{ name: v.student.display_name, replacement: v.student.id }] : [];
     const answer = await askCoach(scrubPii(question, names).text, ex?.module);
     if (answer.distress && v.student) {
-      const { adminClient } = await import("@/lib/supabase/admin");
       await adminClient().from("safety_flags").insert({ student_id: v.student.id, kind: "distress", detail: "Distress phrase detected in Ask the coach. Coach skipped; staff contact message shown. Message text not stored." });
-    } else if (answer.usage && v.student) {
-      const { adminClient } = await import("@/lib/supabase/admin");
-      await adminClient().from("usage_ledger").insert({
-        student_id: v.student.id,
-        purpose: "qa",
-        model: answer.model,
-        input_tokens: answer.usage.input_tokens,
-        output_tokens: answer.usage.output_tokens,
-        cache_read_tokens: answer.usage.cache_read_input_tokens ?? 0,
-        cache_write_tokens: answer.usage.cache_creation_input_tokens ?? 0,
-        cost_usd: answer.costUsd.toFixed(6),
-      });
+    } else if (answer.usage) {
+      await recordUsage(v.student?.id ?? null, "qa", { model: answer.model, usage: answer.usage, costUsd: answer.costUsd });
     }
     return { text: answer.text, distress: answer.distress };
   } catch (e) {
