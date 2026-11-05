@@ -8,7 +8,13 @@ import { userClient } from "@/lib/supabase/server";
  * from the course link with Year Up (Azure) single sign-on. Here it mints a one-time token for a
  * seeded sample persona and exchanges it for a session cookie. No passwords exist anywhere.
  */
+/** The demo sign-in exists only for local demos. A real deployment must replace it with a verified LTI 1.3 launch + SSO. */
+function demoLoginEnabled() {
+  return process.env.NODE_ENV !== "production" || process.env.LAB_DEMO_LOGIN === "1";
+}
+
 export async function GET(req: NextRequest) {
+  if (!demoLoginEnabled()) return NextResponse.json({ error: "Not found" }, { status: 404 });
   const p = persona(req.nextUrl.searchParams.get("as") ?? "");
   if (!p) return NextResponse.redirect(new URL("/", req.url));
 

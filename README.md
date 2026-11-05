@@ -37,6 +37,7 @@ All optional except the API key. The Supabase values are read from `npx supabase
 | `ANTHROPIC_API_KEY` | Claude API key (required for coaching and evals) |
 | `LAB_DAILY_TOKEN_BUDGET_PER_STUDENT` | Daily token budget per student (default 60,000) |
 | `LAB_MONTHLY_SPEND_CAP_USD` | Lab-wide monthly spend cap (default $50) |
+| `LAB_DEMO_LOGIN` | Set to `1` to allow the simulated persona sign-in in a production build (off by default; local dev always allows it) |
 | `LAB_MCP_PERSONA` | Who the MCP server signs in as: `rivera`, `jasmine`, `okafor`, `lee` |
 | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` | Override the local Supabase connection |
 
