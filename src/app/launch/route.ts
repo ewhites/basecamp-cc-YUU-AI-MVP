@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { SESSION_COOKIE } from "@/lib/db";
-import { sign } from "@/lib/demo/secret";
+import { demoLoginEnabled, sign } from "@/lib/demo/secret";
 import { persona } from "@/lib/personas";
 
 /**
@@ -8,10 +8,6 @@ import { persona } from "@/lib/personas";
  * from the course link with Year Up (Azure) single sign-on that verifies Brightspace's signed
  * id_token. Here it sets a signed session cookie for a seeded sample persona.
  */
-function demoLoginEnabled() {
-  return process.env.NODE_ENV !== "production" || process.env.LAB_DEMO_LOGIN === "1";
-}
-
 export async function GET(req: NextRequest) {
   if (!demoLoginEnabled()) return NextResponse.json({ error: "Not found" }, { status: 404 });
   const p = persona(req.nextUrl.searchParams.get("as") ?? "");

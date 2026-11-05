@@ -11,7 +11,7 @@ import type { AttemptInput, Exercise } from "./curriculum/types";
 import type { UsageLike } from "./models";
 import type { Viewer } from "./session";
 import { adminClient } from "./db";
-import { signingSecret } from "./demo/secret";
+import { signingKey } from "./demo/secret";
 
 /**
  * The one write path for student attempts (all three studios).
@@ -260,8 +260,7 @@ type ArenaOutputs = Extract<StoredOutput, { outputs: unknown }>["outputs"];
 
 /** Arena outputs travel through the browser between step 1 and step 2, so the server signs them. */
 function arenaSignature(studentId: string, exerciseId: string, prompt: string, outputs: ArenaOutputs): string {
-  const secret = signingSecret();
-  return createHmac("sha256", secret).update(JSON.stringify([studentId, exerciseId, prompt, outputs])).digest("hex");
+  return createHmac("sha256", signingKey("arena")).update(JSON.stringify([studentId, exerciseId, prompt, outputs])).digest("hex");
 }
 
 export function verifyArenaToken(studentId: string, exerciseId: string, prompt: string, outputs: ArenaOutputs, token: string): boolean {

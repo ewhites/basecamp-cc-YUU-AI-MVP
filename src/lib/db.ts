@@ -2,7 +2,7 @@ import "server-only";
 import { cookies } from "next/headers";
 import { DemoClient } from "./demo/client";
 import { PERSONA_IDS } from "./demo/sample";
-import { verify } from "./demo/secret";
+import { demoLoginEnabled, verify } from "./demo/secret";
 
 /**
  * Data access for the demo. There is no backend: data lives in an in-memory store
@@ -18,6 +18,7 @@ export function adminClient(): DemoClient {
 
 /** The signed-in persona from the signed demo session cookie, or null. */
 export async function sessionPersona(): Promise<string | null> {
+  if (!demoLoginEnabled()) return null;
   const raw = (await cookies()).get(SESSION_COOKIE)?.value;
   if (!raw) return null;
   const [key, sig] = raw.split(".");

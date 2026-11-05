@@ -1,14 +1,14 @@
 import "server-only";
 import { createHmac, timingSafeEqual } from "node:crypto";
-import { signingSecret } from "@/lib/demo/secret";
+import { signingKey } from "@/lib/demo/secret";
 
 /**
  * Share links for the skills portfolio. The token is an HMAC of the student's pseudonymous ID,
  * so the link reveals nothing about the student and cannot be guessed or forged without the secret.
- * Server only: the secret is LAB_PORTFOLIO_SECRET, or the local Supabase service key as a fallback.
+ * Server only: keyed by the portfolio key derived from LAB_SIGNING_SECRET (required in production).
  */
-function secret(): string {
-  return process.env.LAB_PORTFOLIO_SECRET ?? signingSecret();
+function secret(): Buffer {
+  return signingKey("portfolio");
 }
 
 export function portfolioToken(studentId: string): string {
