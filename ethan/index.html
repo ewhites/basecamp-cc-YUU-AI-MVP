@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in · YUU AI Lab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="login-page">
+  <div class="login-card">
+    <span class="wordmark"><span class="c1">Y</span><span class="c2">U</span><span class="c3">U</span> <span class="rest">AI Lab</span></span>
+    <div class="color-bar"><span></span><span></span><span></span><span></span></div>
+    <h1>Welcome back</h1>
+    <p class="sub">Sign in to continue your AI learning journey</p>
+
+    <form id="login-form" novalidate>
+      <div id="error" class="error" role="alert">Those details don't match our records. Please try again.</div>
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" type="email" autocomplete="email" required>
+      </div>
+      <div class="field">
+        <label for="username">Username</label>
+        <input id="username" type="text" autocomplete="username" required>
+      </div>
+      <button class="btn btn-primary" type="submit">Sign in</button>
+    </form>
+    <p class="hint">Year Up United · AI Curriculum Simulator (MVP)</p>
+  </div>
+
+  <script src="js/users.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    if (currentUser()) window.location.replace("dashboard.html");
+    document.getElementById("login-form").addEventListener("submit", (ev) => {
+      ev.preventDefault();
+      const ok = login(document.getElementById("email").value, document.getElementById("username").value);
+      if (ok) window.location.href = "dashboard.html";
+      else document.getElementById("error").classList.add("show");
+    });
+  </script>
+</body>
+</html>
