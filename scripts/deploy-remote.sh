@@ -36,7 +36,9 @@ setenv SUPABASE_SERVICE_ROLE_KEY "$SERVICE"
 setenv LAB_DEMO_LOGIN "1"
 setenv LAB_MONTHLY_SPEND_CAP_USD "5"
 setenv LAB_DAILY_TOKEN_BUDGET_PER_STUDENT "60000"
-vercel env ls production 2>/dev/null | grep -q ANTHROPIC_API_KEY && echo "  ANTHROPIC_API_KEY present" || echo "  ANTHROPIC_API_KEY MISSING: Logan runs the one-line command to add it"
+AKEY=$(sed -n 's/^ANTHROPIC_API_KEY=//p' .env.local 2>/dev/null | tr -d '"' | head -1)
+[ -n "$AKEY" ] && setenv ANTHROPIC_API_KEY "$AKEY" || echo "  ANTHROPIC_API_KEY not found in .env.local: add it in Vercel before using the coach"
+unset AKEY
 
 echo "5/5 Deploying..."
 vercel deploy --prod --yes
