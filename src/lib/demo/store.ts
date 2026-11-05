@@ -38,7 +38,7 @@ export function ridOf(r: Row): string {
 }
 
 function setRid(s: Store, r: Row, rid: string) {
-  Object.defineProperty(r, RID, { value: rid, enumerable: false, writable: true, configurable: true });
+  Object.defineProperty(r, RID, { value: rid, enumerable: false, writable: false, configurable: true });
   s.byRid.set(rid, r);
 }
 
@@ -80,7 +80,7 @@ export function emptyStore(): Store {
 export function insertRows(s: Store, table: TableName, rows: Row[]): Row[] {
   const out: Row[] = [];
   for (const r of rows) {
-    const full = { ...(DEFAULTS[table]?.(s) ?? {}), ...stripUndefined(r) };
+    const full = { ...(DEFAULTS[table]?.(s) ?? {}), ...stripUndefined(withoutRid(r)) };
     // Seed rows get deterministic ids (every server seeds identically); new rows get random ones.
     setRid(s, full, s.seeding ? `${table}:${s.tables[table].length}` : randomUUID());
     s.tables[table].push(full);
@@ -92,8 +92,17 @@ export function insertRows(s: Store, table: TableName, rows: Row[]): Row[] {
 
 /** Update one row in place and journal the change. Use this for every write to an existing row. */
 export function patchRow(s: Store, table: TableName, row: Row, patch: Row) {
-  Object.assign(row, patch);
-  if (!s.seeding) s.journal.push({ op: "u", t: table, rid: ridOf(row), patch });
+  const rid = ridOf(row);
+  const clean = withoutRid(patch);
+  Object.assign(row, clean);
+  if (!s.seeding) s.journal.push({ op: "u", t: table, rid, patch: clean });
+}
+
+/** The row id is reserved: no write payload may set or change it. */
+function withoutRid(r: Row): Row {
+  const out = { ...r };
+  delete out[RID];
+  return out;
 }
 
 /** Delete rows and journal the change. */
@@ -122,10 +131,10 @@ export function applyChanges(s: Store, changes: Change[]) {
       }
     } else if (c.op === "u") {
       const row = s.byRid.get(c.rid);
-      if (row) Object.assign(row, c.patch);
+      if (row && s.tables[c.t].includes(row)) Object.assign(row, withoutRid(c.patch));
     } else {
       const row = s.byRid.get(c.rid);
-      if (row) {
+      if (row && s.tables[c.t].includes(row)) {
         s.tables[c.t] = s.tables[c.t].filter((r) => r !== row);
         s.byRid.delete(c.rid);
       }
