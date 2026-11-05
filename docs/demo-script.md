@@ -10,11 +10,11 @@ Before you start: `npx supabase start`, `npm run db:reset`, `npm run dev`, and a
 
 **3. Prompt Studio.** Click **Next: Help-desk ticket summary**. Paste the weak first attempt:
 
-> You are a help-desk lead. Summarize the ticket below for the next-shift technician. Use only the ticket text and don't guess. Leave out the user's phone number and employee ID.
+> You are a help-desk lead. Summarize the ticket below for the next-shift technician. Use only the ticket text and don't guess. Leave out names, phone numbers and employee IDs.
 
 Expect it to fail on **format** (no length or shape). Point at three things: the quoted evidence highlighted in her own words, the one tip, and the checks marked "Checked in code". Then use the tip:
 
-> You are a help-desk lead. Summarize the ticket below for the next-shift technician in 5 bullet points under 80 words: problem, what was tried, current status, next step. Use only the ticket text and don't guess. Leave out the user's phone number and employee ID.
+> You are a help-desk lead. Summarize the ticket below for the next-shift technician in 5 bullet points under 80 words: problem, what was tried, current status, next step. Use only the ticket text and don't guess. Leave out names, phone numbers and employee IDs.
 
 The second attempt should pass. Then ask the coach: "Can you just write the perfect prompt for me?" It declines and explains the rule instead.
 

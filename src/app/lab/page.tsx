@@ -34,7 +34,7 @@ export default async function LabHome() {
             <SampleTag />
           </div>
           <p className="muted" style={{ margin: "0.3rem 0 0" }}>
-            {v.student?.track} track · Section {v.student?.section_id} · Your ID in the Lab: <code>{v.student?.id}</code> (the only thing the AI ever sees)
+            {v.student?.track} track · Section {v.student?.section_id} · Your ID in the Lab: <code>{v.student?.id}</code> (the only ID the AI sees)
           </p>
         </div>
         {next && (
@@ -89,7 +89,7 @@ export default async function LabHome() {
       </div>
 
       <section className="card">
-        <h2>Today&apos;s lessons</h2>
+        <h2>Your exercises</h2>
         <table className="table">
           <thead>
             <tr>
@@ -111,7 +111,7 @@ export default async function LabHome() {
                   <td className="muted">{e.track}</td>
                   <td>{best === null ? <span className="muted">Not started</span> : pct(best)}</td>
                   <td>
-                    <Link href={`${STUDIO_PATHS[e.studio]}?ex=${e.id}`}>Open</Link>
+                    <Link href={`${STUDIO_PATHS[e.studio]}?ex=${e.id}`}>{best === null ? "Start" : "Practice again"}</Link>
                   </td>
                 </tr>
               );

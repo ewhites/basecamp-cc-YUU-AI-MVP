@@ -23,7 +23,7 @@ export default async function PromptStudio({ searchParams }: { searchParams: Pro
             <SampleTag />
           </div>
           <p className="muted" style={{ margin: "0.3rem 0 0" }}>
-            Write a prompt for a real workplace task, see the output, get scored and coached, try again.
+            Write a prompt for a real task. See what the AI does with it, get scored, and improve it.
           </p>
         </div>
       </div>

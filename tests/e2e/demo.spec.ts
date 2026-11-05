@@ -22,7 +22,7 @@ test("Prompt Studio: weak attempt is coached, tip applied, second attempt improv
   test.skip(!hasKey, "needs ANTHROPIC_API_KEY");
   await page.goto("/launch?as=jasmine&next=/lab/prompt-studio?ex=ps-ticket-summary");
   await page.getByTestId("prompt-input").fill(
-    "You are a help-desk lead. Summarize the ticket below for the next-shift technician. Use only the ticket text and don't guess. Leave out the user's phone number and employee ID.",
+    "You are a help-desk lead. Summarize the ticket below for the next-shift technician. Use only the ticket text and don't guess. Leave out names, phone numbers and employee IDs.",
   );
   await page.getByTestId("submit-prompt").click();
   await expect(page.getByTestId("attempt-score")).toBeVisible();
@@ -31,7 +31,7 @@ test("Prompt Studio: weak attempt is coached, tip applied, second attempt improv
   const first = Number((await page.getByTestId("attempt-score").innerText()).split("/")[0]);
 
   await page.getByTestId("prompt-input").fill(
-    "You are a help-desk lead. Summarize the ticket below for the next-shift technician in 5 bullet points under 80 words: problem, what was tried, current status, next step. Use only the ticket text and don't guess. Leave out the user's phone number and employee ID.",
+    "You are a help-desk lead. Summarize the ticket below for the next-shift technician in 5 bullet points under 80 words: problem, what was tried, current status, next step. Use only the ticket text and don't guess. Leave out names, phone numbers and employee IDs.",
   );
   await page.getByTestId("submit-prompt").click();
   await expect(page.getByTestId("check-format")).toHaveAttribute("data-state", "pass");

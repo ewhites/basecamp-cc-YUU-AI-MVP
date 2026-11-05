@@ -98,5 +98,5 @@ export function hardestChecks(rows: { check_key: string; skill: string; pass: bo
 }
 
 export function pct(x: number | null | undefined): string {
-  return x === null || x === undefined ? "–" : `${Math.round(x * 100)}%`;
+  return x === null || x === undefined ? "Not yet" : `${Math.round(x * 100)}%`;
 }

@@ -36,10 +36,10 @@ export function PromptStudioForm({ exerciseId, latest }: { exerciseId: string; l
           <div className="row between">
             <span className={`small ${words >= 200 ? "" : "muted"}`}>{words} words{words >= 200 ? " (the limit is 200)" : ""}</span>
             <button className="btn btn-primary" disabled={pending || !prompt.trim()} data-testid="submit-prompt">
-              {pending ? "Running and scoring…" : attempt ? "Try again" : "Run and get coached"}
+              {pending ? "Running and scoring…" : attempt ? "Run my new version" : "Run and score my prompt"}
             </button>
           </div>
-          {pending && <div className="notice notice-info small">Running your prompt on Claude Haiku, then the coach checks it against the rubric. About 10 seconds.</div>}
+          {pending && <div className="notice notice-info small">Running your prompt, then checking it against the rubric. About 10 seconds.</div>}
           {error && <div className="notice notice-fail">{error}</div>}
         </form>
       </section>

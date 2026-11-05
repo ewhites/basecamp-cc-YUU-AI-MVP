@@ -29,7 +29,7 @@ export function AttemptResult({ exerciseId, attempt, compact = false }: { exerci
       )}
       {attempt.checks.length > 0 && <CheckList exerciseId={exerciseId} checks={attempt.checks} />}
       {!compact && attempt.status !== "distress" && (
-        <p className="small muted">Scores are drafts from an AI coach. Your instructor reviews them and can change any of them.</p>
+        <p className="small muted">These scores are drafts from an AI coach. Your instructor reviews them and can change any score.</p>
       )}
     </div>
   );

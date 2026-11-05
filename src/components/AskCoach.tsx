@@ -11,7 +11,7 @@ export function AskCoach({ exerciseId, module }: { exerciseId: string; module: s
   return (
     <div className="card card-muted">
       <h3>Ask the coach about {module}</h3>
-      <p className="small muted">The coach only answers questions about this lesson. It won&apos;t write your answer for you. This is an AI.</p>
+      <p className="small muted">An AI coach. It answers questions about this lesson and won&apos;t write your answer for you.</p>
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -21,7 +21,7 @@ export function AskCoach({ exerciseId, module }: { exerciseId: string; module: s
       >
         <input type="text" value={q} onChange={(e) => setQ(e.target.value)} placeholder="e.g. What does the G in R-T-G mean?" style={{ flex: 1 }} aria-label="Question for the coach" />
         <button className="btn" disabled={pending || !q.trim()}>
-          {pending ? "Thinking…" : "Ask"}
+          {pending ? "Thinking…" : "Ask the coach"}
         </button>
       </form>
       {answer?.error && <div className="notice notice-fail" style={{ marginTop: "0.6rem" }}>{answer.error}</div>}
