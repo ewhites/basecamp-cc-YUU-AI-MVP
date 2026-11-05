@@ -11,7 +11,7 @@ export type Row = Record<string, unknown>;
 export type TableName =
   | "profiles" | "sections" | "section_instructors" | "students" | "exercises" | "rubric_checks"
   | "attempts" | "check_results" | "audit_log" | "safety_flags" | "usage_ledger"
-  | "eval_runs" | "eval_results" | "program_rollups";
+  | "eval_runs" | "eval_results" | "program_rollups" | "lesson_progress";
 
 export interface Store {
   tables: Record<TableName, Row[]>;
@@ -31,6 +31,7 @@ const DEFAULTS: Partial<Record<TableName, (s: Store) => Row>> = {
   eval_runs: () => ({ id: randomUUID(), rubric_draft_id: null, created_at: now() }),
   eval_results: () => ({ rep: 1 }),
   profiles: () => ({ created_at: now() }),
+  lesson_progress: () => ({ created_at: now() }),
 };
 
 function next(s: Store, t: string): number {
@@ -43,7 +44,7 @@ export function emptyStore(): Store {
     tables: {
       profiles: [], sections: [], section_instructors: [], students: [], exercises: [], rubric_checks: [],
       attempts: [], check_results: [], audit_log: [], safety_flags: [], usage_ledger: [],
-      eval_runs: [], eval_results: [], program_rollups: [],
+      eval_runs: [], eval_results: [], program_rollups: [], lesson_progress: [],
     },
     seq: {},
   };

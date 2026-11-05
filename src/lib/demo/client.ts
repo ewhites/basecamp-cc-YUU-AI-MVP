@@ -71,6 +71,7 @@ function visible(s: Store, actor: Actor, table: TableName, row: Row): boolean {
     case "students":
       return canSeeStudent(s, c, row.id);
     case "attempts":
+    case "lesson_progress":
       return canSeeStudent(s, c, row.student_id);
     case "check_results": {
       const a = idx(s).attempt.get(row.attempt_id);
@@ -85,7 +86,8 @@ function visible(s: Store, actor: Actor, table: TableName, row: Row): boolean {
       return c.role === "admin" || (c.role === "instructor" && canSeeStudent(s, c, row.student_id));
     case "eval_runs":
     case "eval_results":
-      return c.role === "admin" || c.role === "curriculum";
+      // Instructors see the coach's measured accuracy (aggregate numbers, no student data).
+      return c.role === "admin" || c.role === "curriculum" || c.role === "instructor";
     case "program_rollups":
       return c.role === "admin" || c.role === "curriculum" || c.role === "instructor";
   }
@@ -326,7 +328,8 @@ const RPCS: Record<string, (s: Store, c: Ctx, a: Record<string, any>) => unknown
     const ids = new Set(s.tables.students.filter((st) => st.section_id === a.p_section).map((st) => st.id));
     let n = 0;
     for (const at of s.tables.attempts) {
-      if (ids.has(at.student_id) && at.released_at === null && at.status === "scored") { at.released_at = new Date().toISOString(); n++; }
+      // Skills checks are never graded for credit, so they never go to the gradebook.
+      if (ids.has(at.student_id) && at.released_at === null && at.status === "scored" && at.studio !== "check") { at.released_at = new Date().toISOString(); n++; }
     }
     audit(s, c, "release_scores", `section ${a.p_section}`, `${n} attempts sent to gradebook (simulated)`);
     return n;

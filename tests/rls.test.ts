@@ -24,6 +24,15 @@ describe.skipIf(!available)("row-level security", () => {
     resetStore();
     [jasmine, rivera, okafor, lee] = (await Promise.all(["jasmine", "rivera", "okafor", "lee"].map(as))) as [SupabaseClient, SupabaseClient, SupabaseClient, SupabaseClient];
     anon = new DemoClient({ kind: "anon" });
+    // Jasmine starts the course fresh; give her one scored attempt (written by the server) to test against.
+    const service = new DemoClient({ kind: "service" });
+    const { data: a } = await service
+      .from("attempts")
+      .insert({ student_id: "S-B-012", exercise_id: "sp-describe", studio: "check", attempt_no: 1, input: { studio: "check", answer: "x" }, status: "scored", passed: 1, total: 3 })
+      .select("id")
+      .single();
+    await service.from("check_results").insert({ attempt_id: a!.id, check_key: "d_task_audience", skill: "description", pass: true });
+    await service.from("lesson_progress").insert({ student_id: "S-B-001", step_id: "lesson-M01" });
   });
 
   it("a student sees only their own student row and attempts", async () => {
@@ -34,11 +43,18 @@ describe.skipIf(!available)("row-level security", () => {
     expect(other ?? []).toHaveLength(0);
   });
 
+  it("a student sees only their own lesson progress", async () => {
+    expect(await count(jasmine.from("lesson_progress").select("step_id", { count: "exact", head: true }))).toBe(0);
+    expect(await count(rivera.from("lesson_progress").select("step_id", { count: "exact", head: true }))).toBe(1);
+    const { error } = await jasmine.from("lesson_progress").insert({ student_id: "S-B-012", step_id: "lesson-M01" });
+    expect(error).not.toBeNull();
+  });
+
   it("a student cannot write or override their own score", async () => {
     const { error: ins } = await jasmine.from("check_results").insert({ attempt_id: "00000000-0000-4000-8000-000000000001", check_key: "x", skill: "description", pass: true });
     expect(ins).not.toBeNull();
     const { data: mine } = await jasmine.from("attempts").select("id").limit(1).single();
-    const { error } = await jasmine.rpc("override_check", { p_attempt: mine!.id, p_key: "role", p_pass: true, p_note: "self" });
+    const { error } = await jasmine.rpc("override_check", { p_attempt: mine!.id, p_key: "d_task_audience", p_pass: false, p_note: "self" });
     expect(error).not.toBeNull();
   });
 

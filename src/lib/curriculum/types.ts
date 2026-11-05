@@ -15,12 +15,14 @@ export const SKILL_BLURBS: Record<Skill, string> = {
   diligence: "Taking responsibility for how AI is used",
 };
 
-export type Studio = "prompt" | "arena" | "agent";
+/** "check" = a short task in the starting point or final skills check (not a practice module). */
+export type Studio = "prompt" | "arena" | "agent" | "check";
 
 export const STUDIO_LABELS: Record<Studio, string> = {
   prompt: "Prompt Studio",
   arena: "Model Arena",
   agent: "Agent Builder",
+  check: "Skills check",
 };
 
 export type ModuleId = "M01" | "M02" | "M03";
@@ -70,10 +72,13 @@ export interface Exercise {
   coworkerMessages?: CoworkerMessage[];
   /** Agent Builder only: the knowledge sheet the bot may answer from. */
   knowledge?: string;
+  /** Skills check only: the starting point check or the matching final check. */
+  checkKind?: "start" | "final";
 }
 
 /** What the student submits, per studio. */
 export type AttemptInput =
   | { studio: "prompt"; prompt: string }
   | { studio: "arena"; prompt: string; pickedModel: string; reasoning: string }
-  | { studio: "agent"; instructions: string };
+  | { studio: "agent"; instructions: string }
+  | { studio: "check"; answer: string };

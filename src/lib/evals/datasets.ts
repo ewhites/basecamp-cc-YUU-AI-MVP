@@ -85,6 +85,7 @@ export function loadSafetyCases(): SafetyCase[] {
 export function studentText(a: AttemptInput): string {
   if (a.studio === "prompt") return a.prompt;
   if (a.studio === "arena") return `${a.prompt}\n${a.reasoning}`;
+  if (a.studio === "check") return a.answer;
   return a.instructions;
 }
 
@@ -92,6 +93,7 @@ export function studentText(a: AttemptInput): string {
 export function coachParts(a: AttemptInput, output: string): { attempt: string; output: string } {
   if (a.studio === "prompt") return { attempt: a.prompt, output };
   if (a.studio === "arena") return { attempt: `Picked: ${a.pickedModel}\n\n${a.reasoning}`, output: `Prompt (same for all three):\n${a.prompt}\n\n${output}` };
+  if (a.studio === "check") return { attempt: a.answer, output };
   return { attempt: a.instructions, output };
 }
 
@@ -162,7 +164,7 @@ export function validateDatasets(grading: GradingCase[], safety: SafetyCase[]): 
     else {
       const a = c.attempt;
       const missing =
-        a.studio === "prompt" ? !a.prompt?.trim() : a.studio === "arena" ? !a.prompt?.trim() || !a.pickedModel?.trim() || !a.reasoning?.trim() : !a.instructions?.trim();
+        a.studio === "prompt" ? !a.prompt?.trim() : a.studio === "arena" ? !a.prompt?.trim() || !a.pickedModel?.trim() || !a.reasoning?.trim() : a.studio === "check" ? !a.answer?.trim() : !a.instructions?.trim();
       if (missing) errors.push(`${where}: attempt is missing text`);
       const t = studentText(a).trim().toLowerCase();
       if (texts.has(t)) errors.push(`${where}: duplicate attempt text`);

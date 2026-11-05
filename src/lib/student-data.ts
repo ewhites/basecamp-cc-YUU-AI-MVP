@@ -1,9 +1,11 @@
 import "server-only";
 import type { AttemptView } from "./attempts";
 import { toAttemptView } from "./attempts";
+import { SKILL_CHECKS, skillCheck } from "./curriculum/skill-checks";
 import { SKILLS, type Skill } from "./curriculum/types";
 import { skillLevels, type CheckRow } from "./insights";
 import { userClient } from "./db";
+import { scoreChecks, type SkillScores } from "./progress";
 
 /** Reads for the signed-in student. All through RLS: a student can only ever get their own rows. */
 
@@ -41,4 +43,40 @@ export async function mySkillProfile(): Promise<{ levels: Record<Skill, { curren
     else if (i > 0) break;
   }
   return { levels, attempts: new Set(rows.map((r) => r.attempt_id)).size, streakDays: streak };
+}
+
+/** The latest answer to one task in the starting point or final check. */
+export type CheckAnswer = AttemptView & { exerciseId: string; answer: string | null };
+
+type ScoredLike = { exerciseId: string; attemptNo: number; checks: { skill: string; pass: boolean }[] };
+
+/**
+ * Per-skill share of checks met on one skills check, from the latest SCORED answer to each task.
+ * Answering a task again replaces its earlier score instead of averaging with it.
+ * Pending and distress answers have no checks, so they leave the skill "not taken".
+ */
+export function checkScoresFrom(attempts: ScoredLike[], kind: "start" | "final"): SkillScores {
+  const rows: { exercise_id: string; skill: string; pass: boolean }[] = [];
+  for (const t of skillCheck(kind)) {
+    const latest = attempts
+      .filter((a) => a.exerciseId === t.id && a.checks.length > 0)
+      .sort((a, b) => b.attemptNo - a.attemptNo)[0];
+    for (const c of latest?.checks ?? []) rows.push({ exercise_id: t.id, skill: c.skill, pass: c.pass });
+  }
+  return scoreChecks(rows, kind);
+}
+
+/** The signed-in student's skills checks: the latest answer per task, and per-skill scores for both checks. */
+export async function myCheckAnswers(): Promise<{ latest: Record<string, CheckAnswer>; start: SkillScores; final: SkillScores }> {
+  const ids = new Set(SKILL_CHECKS.map((e) => e.id));
+  const all = (await myAttempts()).filter((a) => ids.has(a.exerciseId));
+  const latest: Record<string, CheckAnswer> = {};
+  for (const a of all) {
+    const cur = latest[a.exerciseId];
+    if (cur && cur.attemptNo >= a.attemptNo) continue;
+    const input = (a as { input?: unknown }).input;
+    const answer = typeof input === "object" && input && "answer" in input ? String((input as { answer: unknown }).answer ?? "") : null;
+    latest[a.exerciseId] = { ...a, answer };
+  }
+  return { latest, start: checkScoresFrom(all, "start"), final: checkScoresFrom(all, "final") };
 }

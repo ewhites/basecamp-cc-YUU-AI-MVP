@@ -79,6 +79,7 @@ export async function budgetFor(studentId: string) {
 function studentText(input: AttemptInput): string {
   if (input.studio === "prompt") return input.prompt;
   if (input.studio === "arena") return `${input.prompt}\n${input.reasoning}`;
+  if (input.studio === "check") return input.answer;
   return input.instructions;
 }
 
@@ -93,6 +94,7 @@ function scrubInput(input: AttemptInput, v: StudentViewer): { input: AttemptInpu
   let out: AttemptInput;
   if (input.studio === "prompt") out = { studio: "prompt", prompt: s(input.prompt) };
   else if (input.studio === "arena") out = { ...input, prompt: s(input.prompt), reasoning: s(input.reasoning) };
+  else if (input.studio === "check") out = { studio: "check", answer: s(input.answer) };
   else out = { studio: "agent", instructions: s(input.instructions) };
   return { input: out, removed: removedSummary(all) };
 }
@@ -106,6 +108,12 @@ interface Scored {
 
 /** Runs the student's work (if needed) and grades it. Throws CoachUnavailableError on API trouble. */
 async function runAndGrade(ex: Exercise, input: AttemptInput, studentId: string, existingOutput?: StoredOutput): Promise<Scored> {
+  if (input.studio === "check") {
+    // Skills check: nothing runs on a model; only the student's answer is graded.
+    const grade = await gradeAttempt({ exercise: ex, attempt: input.answer, output: ex.material?.text ?? "(no material for this task)" });
+    await recordUsage(studentId, "grade", grade);
+    return { output: {}, grade };
+  }
   if (input.studio === "prompt") {
     let run: RunOutput | null = null;
     let text = existingOutput && "text" in existingOutput ? existingOutput.text : undefined;

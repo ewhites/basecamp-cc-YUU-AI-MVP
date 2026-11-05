@@ -13,7 +13,8 @@ import { EXERCISES } from "../curriculum/exercises";
 import type { Skill } from "../curriculum/types";
 import { SKILLS } from "../curriculum/types";
 import { costUsd, MODELS } from "../models";
-import { JASMINE_STUDENT_ID, PERSONAS, SECTION_A_INSTRUCTOR } from "../personas";
+import { BACKOFFICE_ACCOUNTS, JASMINE_STUDENT_ID, PERSONAS, SECTION_A_INSTRUCTOR } from "../personas";
+import { SKILL_CHECKS } from "../curriculum/skill-checks";
 import { insertRows, type Row, type Store } from "./store";
 import evalSnapshot from "./eval-snapshot.json";
 import { fragmentsFor } from "./sample-text";
@@ -75,6 +76,7 @@ export function seedStore(s: Store) {
   const ids = PERSONA_IDS;
   insertRows(s, "profiles", [
     ...PERSONAS.map((p) => ({ id: ids[p.key], role: p.role, display_name: p.name, persona: p.key })),
+    ...BACKOFFICE_ACCOUNTS.map((p) => ({ id: ids[p.key], role: p.role, display_name: p.name, persona: p.key })),
     { id: ids.haddad, role: "instructor", display_name: SECTION_A_INSTRUCTOR.name, persona: "haddad" },
   ]);
 
@@ -88,10 +90,10 @@ export function seedStore(s: Store) {
   ]);
 
   insertRows(s, "exercises",
-    EXERCISES.map((e, i) => ({ id: e.id, studio: e.studio, module: e.module, title: e.title, track: e.track, position: i })),
+    [...EXERCISES, ...SKILL_CHECKS].map((e, i) => ({ id: e.id, studio: e.studio, module: e.module, title: e.title, track: e.track, position: i })),
   );
   insertRows(s, "rubric_checks",
-    EXERCISES.flatMap((e) => e.checks.map((c) => ({ exercise_id: e.id, key: c.key, version: 1, text: c.text, skill: c.skill, method: c.method, status: "published" }))),
+    [...EXERCISES, ...SKILL_CHECKS].flatMap((e) => e.checks.map((c) => ({ exercise_id: e.id, key: c.key, version: 1, text: c.text, skill: c.skill, method: c.method, status: "published" }))),
   );
 
   // ---------------- students
@@ -133,8 +135,8 @@ export function seedStore(s: Store) {
     const ability = (rand() - 0.5) * 0.3;
     const isJasmine = st.id === JASMINE_STUDENT_ID;
     for (const [ei, ex] of EXERCISES.entries()) {
-      // Jasmine starts the demo fresh on the first Prompt Studio exercise and the first Arena / Agent ones.
-      if (isJasmine && ["ps-ticket-summary", "ma-policy-summary", "ab-newhire-it"].includes(ex.id)) continue;
+      // Jasmine starts the course fresh: her first screen is the starting point check.
+      if (isJasmine) continue;
       const tries = ex.studio === "prompt" ? between(2, 3) : between(1, 2);
       // Exercises unlock over the 4-week unit, in order.
       const week = Math.min(4, 1 + Math.floor(ei / 2.4));
@@ -196,6 +198,43 @@ export function seedStore(s: Store) {
       }
     }
   }
+  // ---------------- starting point and final checks
+  // Nearly everyone took the starting point in week 1. Students further along took the final check.
+  for (const st of students) {
+    if (st.id === JASMINE_STUDENT_ID) continue;
+    const ability = (rand() - 0.5) * 0.3;
+    for (const kind of ["start", "final"] as const) {
+      if (kind === "start" && rand() < 0.06) continue;
+      if (kind === "final" && rand() > 0.35) continue;
+      const daysAgo = kind === "start" ? between(26, 29) : between(0, 3);
+      for (const ex of SKILL_CHECKS.filter((e) => e.checkKind === kind)) {
+        const id = uuid();
+        const created = new Date(NOW - daysAgo * DAY - between(0, 50) * 60_000);
+        const outcomes = ex.checks.map((c) => {
+          let p = (kind === "start" ? 0.34 : 0.68) + ability;
+          if (c.skill === "description" && STUCK_ON_DESCRIPTION.has(st.id)) p = kind === "start" ? 0.1 : 0.2;
+          if (c.skill === "discernment" && st.section_id === "C") p -= 0.15;
+          return { check: c, pass: rand() < Math.max(0.05, Math.min(0.95, p)) };
+        });
+        const answer = checkAnswer(ex.id, outcomes);
+        const passed = outcomes.filter((o) => o.pass).length;
+        attempts.push({
+          id, student_id: st.id, exercise_id: ex.id, studio: "check", attempt_no: 1,
+          input: { studio: "check", answer: answer.text }, output: {}, status: "scored",
+          passed, total: outcomes.length, tip: answer.tip, model: MODELS.haiku, prompt_version: "seed",
+          released_at: null, created_at: created.toISOString(),
+        });
+        for (const o of outcomes) {
+          results.push({
+            attempt_id: id, check_key: o.check.key, skill: o.check.skill, pass: o.pass, coach_pass: o.pass,
+            evidence: o.pass ? (answer.evidence[o.check.key] ?? "") : "", evidence_verified: o.pass,
+            reason: o.pass ? "Meets the check." : "Not found in the answer.",
+          });
+        }
+      }
+    }
+  }
+
   // A few attempts that still need an instructor (the coach's quote didn't verify).
   for (const a of attempts.slice(40, 43) as { id: string; status: string }[]) a.status = "needs_review";
   for (const r of results as { attempt_id: string; check_key: string; needs_review?: boolean; pass: boolean }[]) {
@@ -243,4 +282,39 @@ export function seedStore(s: Store) {
 
   // Latest measured eval results (eval/coach, 2026-11-05) so the admin center shows real numbers.
   insertRows(s, "eval_runs", evalSnapshot as Record<string, unknown>[]);
+}
+
+// ---------------------------------------------------------------- skills-check sample answers
+const CHECK_FRAGS: Record<string, Record<string, string[]>> = {
+  d_task_audience: { "sp-describe": ["Write a reminder email to my team", "Draft a short message for the whole team"], "fc-describe": ["Write a welcome message to this month's new hires", "Draft an email for the new hires"] },
+  d_format: { _: ["Keep it under 80 words with 3 bullets.", "Use 2 short paragraphs and a friendly tone.", "Make it 4 sentences max."] },
+  d_key_facts: { "sp-describe": ["The drive moves Friday at 6pm and files saved after 5pm may be lost."], "fc-describe": ["Photos are Tuesday 9 to 11am in Room 204 and they need a photo ID."] },
+  j_spots_error: { "sp-judge": ["It says 3 years but the policy says 4 years.", "The policy says to use the service portal, not email your manager."], "fc-judge": ["The policy says badges at all times, not optional.", "The server room needs an IT escort, not just the log."] },
+  j_decision: { _: ["I would not send it yet.", "Fix it first before it goes out."] },
+  j_source: { _: ["I would check every line against the policy.", "Compare it to the original policy text."] },
+  g_hands_off: { "sp-delegate": ["I'd give the AI task A, the subject lines."], "fc-delegate": ["I'd give the AI task A, the to-do list."] },
+  g_keeps: { "sp-delegate": ["I'd keep B because approving a timesheet is a decision.", "Task C stays with me."], "fc-delegate": ["I'd keep B, picking who gets interviewed.", "Task C stays with me."] },
+  g_reason: { _: ["It has someone's personal data in it.", "A wrong call can't be undone.", "I can't check if the AI's answer is right."] },
+  p_removes: { _: ["First I'd remove the personal details.", "I'd replace the private info with placeholders."] },
+  p_names_detail: { "sp-protect": ["Take out the account number and phone number.", "Remove her name and phone number."], "fc-protect": ["Take out the bank account and routing number.", "Remove the cell number."] },
+  p_reviews: { _: ["Then I'd read the AI's draft before it goes out.", "I'd check and edit the reply before sending."] },
+};
+const WEAK_CHECK = ["I'd just ask the AI to do it.", "Looks fine to me.", "I would use AI for all of them because it's faster.", "Paste it in and send what it writes."];
+
+function checkAnswer(exId: string, outcomes: { check: { key: string }; pass: boolean }[]) {
+  const evidence: Record<string, string> = {};
+  const parts: string[] = [];
+  for (const o of outcomes) {
+    if (!o.pass) continue;
+    const frags = CHECK_FRAGS[o.check.key];
+    const list = frags?.[exId] ?? frags?._;
+    if (!list) continue;
+    const f = pick(list);
+    parts.push(f);
+    evidence[o.check.key] = f;
+  }
+  if (parts.length < 2) parts.push(pick(WEAK_CHECK));
+  const miss = outcomes.find((o) => !o.pass);
+  const tip = miss ? "Look again at the part of the task your answer skipped, and add one specific line for it." : "Strong answer. Next time, say which lesson rule you're applying.";
+  return { text: parts.join(" "), evidence, tip };
 }

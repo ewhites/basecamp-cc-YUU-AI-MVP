@@ -1,4 +1,5 @@
 import { AGENT_CHECKS, ARENA_CHECKS, PROMPT_CHECKS } from "./checks";
+import { SKILL_CHECKS } from "./skill-checks";
 import type { Exercise, Studio } from "./types";
 
 /**
@@ -96,7 +97,7 @@ Policy excerpt: If an expedited order arrives late, refund the expedited shippin
     scenario:
       "HR at Brightline Logistics wants every new hire to get a short summary of the remote-work policy. It will run for about 400 new hires a year. Your job: pick the model.",
     brief:
-      "Write one prompt. It runs on three Claude models, byte-identical (M02-S3). Read the three outputs, pick the best one and explain why using Fit, Trust and Cost.",
+      "Write one prompt. It runs on three Claude models, with the exact same wording. Read the three outputs, pick the best one and explain why using Fit, Trust and Cost.",
     material: {
       label: "Remote-work policy (sample)",
       text: `Brightline Logistics Remote Work Policy (v3, effective Jan 1)
@@ -172,7 +173,7 @@ Returns policy: Returns accepted within 30 days, unworn, with tags. Defective it
     scenario:
       "Brightline Logistics hires 30 people a month. They all ask the same IT questions in week one. Build a bot that answers them from the IT guide.",
     brief:
-      "Write the bot's instructions (its system prompt). We will test it on three messages from coworkers. Use the four-part spec: Job, Tools/limits, Stop rule, Handoff (M03-S2).",
+      "Write the bot's instructions (its system prompt). We will test it on three messages from coworkers. Use the four-part spec: Job, Tools/limits, Stop rule, Handoff.",
     knowledge: `Brightline New-Hire IT Guide (sample)
 - Wi-Fi: join "BL-Staff" and sign in with your Brightline email and password. Guests use "BL-Guest" (password at reception).
 - First login: your temporary password is in your welcome email; you must change it at first sign-in. Set up MFA in the Microsoft Authenticator app.
@@ -264,10 +265,13 @@ Returns policy: Returns accepted within 30 days, unworn, with tags. Defective it
   },
 ];
 
+/** Practice exercises plus the skills-check tasks. */
+export const ALL_EXERCISES: Exercise[] = [...EXERCISES, ...SKILL_CHECKS];
+
 export function getExercise(id: string): Exercise | undefined {
-  return EXERCISES.find((e) => e.id === id);
+  return ALL_EXERCISES.find((e) => e.id === id);
 }
 
 export function exercisesFor(studio: Studio): Exercise[] {
-  return EXERCISES.filter((e) => e.studio === studio);
+  return ALL_EXERCISES.filter((e) => e.studio === studio);
 }

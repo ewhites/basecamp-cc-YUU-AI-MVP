@@ -14,7 +14,7 @@ export type ModelId = (typeof MODELS)[keyof typeof MODELS];
 
 /** Grading model. Haiku first, per the PRD; move up only if the eval says so. */
 export const GRADER_MODEL: ModelId = MODELS.haiku;
-/** Effort for grading calls. "low" measured 94% held-out agreement, 99% consistency (eval run 2026-11-05). */
+/** Effort for grading calls. "low" measured 95% held-out agreement, 96% consistency, 20/20 safety (coach-v5, eval run 2026-11-05). */
 export const GRADER_EFFORT = "low" as const;
 /** Model that runs the student's own prompt / bot in Prompt Studio and Agent Builder. */
 export const RUNNER_MODEL: ModelId = MODELS.haiku;

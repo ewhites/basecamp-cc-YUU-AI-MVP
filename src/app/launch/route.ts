@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
   if (!p) return NextResponse.redirect(new URL("/", req.url));
 
   const next = req.nextUrl.searchParams.get("next");
-  const res = NextResponse.redirect(new URL(next && next.startsWith("/lab") ? next : p.landing, req.url));
+  const res = NextResponse.redirect(new URL(next && /^\/(lab|home)(\/|$)/.test(next) ? next : p.landing, req.url));
   res.cookies.set(SESSION_COOKIE, `${p.key}.${sign(p.key)}`, {
     httpOnly: true,
     sameSite: "lax",

@@ -99,7 +99,8 @@ async function main() {
   const jEx = await call(jasmine, "get_exercise_stats", { exercise: "ps-meeting-recap" });
   const jRows = ((jEx.json?.checks as { results: number }[] | undefined) ?? []).reduce((n, c) => n + c.results, 0);
   console.log(`  get_exercise_stats(ps-meeting-recap) -> ${jRows} check results visible`);
-  expectThat(jRows > 0 && jRows < 50, "exercise stats come only from her own attempts", `${jRows} results`);
+  // Jasmine starts the course fresh, so anything above 0 would be a classmate's results leaking.
+  expectThat(jRows === 0, "exercise stats include none of her classmates' attempts", `${jRows} results`);
   await jasmine.close();
 
   console.log(`\n${failures === 0 ? "ALL PASSED" : `${failures} FAILED`}`);

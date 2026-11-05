@@ -16,7 +16,7 @@ import { z } from "zod";
 import { AGENT_CHECKS, ARENA_CHECKS, PROMPT_CHECKS } from "../src/lib/curriculum/checks";
 import { EXERCISES } from "../src/lib/curriculum/exercises";
 import { SKILL_LABELS, SKILLS, type Skill } from "../src/lib/curriculum/types";
-import { MIN_CHECKS, skillLevels, STUCK_THRESHOLD, stuckStudents, type CheckRow } from "../src/lib/insights";
+import { MIN_CHECKS, practiceOnly, skillLevels, STUCK_THRESHOLD, stuckStudents, type CheckRow } from "../src/lib/insights";
 import { DemoClient } from "../src/lib/demo/client";
 import { PERSONA_IDS } from "../src/lib/demo/sample";
 
@@ -101,7 +101,7 @@ async function classOverview(sectionIn: string) {
   const students = await studentsIn(db, section);
   if (!students.length) return { section, persona: PERSONA_KEY, role, ...noAccess(`students in Section ${section}`, role) };
   const ids = students.map((s) => s.id);
-  const rows = await checkRows(db, { studentIds: ids });
+  const rows = practiceOnly(await checkRows(db, { studentIds: ids }));
   const levels = skillLevels(rows);
   const skills = Object.fromEntries(
     SKILLS.map((sk) => {
@@ -131,7 +131,7 @@ async function needingHelp(sectionIn: string, skill: Skill) {
   const section = normSection(sectionIn);
   const students = await studentsIn(db, section);
   if (!students.length) return { section, skill, persona: PERSONA_KEY, role, ...noAccess(`students in Section ${section}`, role) };
-  const rows = await checkRows(db, { studentIds: students.map((s) => s.id) });
+  const rows = practiceOnly(await checkRows(db, { studentIds: students.map((s) => s.id) }));
   const flags = stuckStudents(skillLevels(rows), skill);
   const out = flags.map((f) => {
     const mine = rows.filter((r) => r.student_id === f.student_id && r.skill === skill);
@@ -179,7 +179,7 @@ async function studentProgress(who: string) {
   if (!match.length) return { query: q, persona: PERSONA_KEY, role, ...noAccess(`student matching "${q}"`, role) };
   if (match.length > 1) return { query: q, visible: true, ambiguous: true, matches: match.map((m) => m.id), message: "More than one student matches; ask again with a student ID." };
   const st = match[0]!;
-  const rows = await checkRows(db, { studentIds: [st.id] });
+  const rows = practiceOnly(await checkRows(db, { studentIds: [st.id] }));
   const lv = skillLevels(rows).get(st.id);
   const { data: attempts, error } = await db
     .from("attempts")

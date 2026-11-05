@@ -110,6 +110,7 @@ function scrubAttempt(a: AttemptInput): AttemptInput {
   const s = (t: string) => scrubPii(t).text;
   if (a.studio === "prompt") return { studio: "prompt", prompt: s(a.prompt) };
   if (a.studio === "arena") return { ...a, prompt: s(a.prompt), reasoning: s(a.reasoning) };
+  if (a.studio === "check") return { studio: "check", answer: s(a.answer) };
   return { studio: "agent", instructions: s(a.instructions) };
 }
 
@@ -418,6 +419,7 @@ const TAGS: Record<Studio, [string, string]> = {
   prompt: ["student_prompt", "ai_output"],
   arena: ["student_reasoning", "model_outputs"],
   agent: ["bot_instructions", "bot_transcript"],
+  check: ["student_answer", "task_material"],
 };
 
 interface Assertion {
