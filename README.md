@@ -32,11 +32,12 @@ Set a monthly spend limit on the key in the Anthropic Console. The app also has 
 | `LAB_DEMO_LOGIN` | Set to `1` to allow the persona sign-in in a production build (local dev always allows it) |
 | `LAB_DAILY_TOKEN_BUDGET_PER_STUDENT` | Daily token budget per student (default 60,000) |
 | `LAB_MONTHLY_SPEND_CAP_USD` | Spend cap the app enforces (default $50) |
+| `KV_REST_API_URL`, `KV_REST_API_TOKEN` | Optional. Upstash Redis (free plan, added through the Vercel Marketplace) that keeps every server instance's demo data in step. Without them each instance keeps its own copy |
 | `LAB_MCP_PERSONA` | Who the MCP server acts as: `rivera` (default), `jasmine`, `haddad`, or the data-layer-only `okafor`, `lee` |
 
 ### Deploy (Vercel)
 
-No backend is needed. Set `ANTHROPIC_API_KEY`, `LAB_SIGNING_SECRET`, `LAB_DEMO_LOGIN=1` and a low `LAB_MONTHLY_SPEND_CAP_USD`, then `vercel deploy --prod`. Demo data resets whenever an instance restarts, and each server instance keeps its own copy.
+No backend is needed. Set `ANTHROPIC_API_KEY`, `LAB_SIGNING_SECRET`, `LAB_DEMO_LOGIN=1` and a low `LAB_MONTHLY_SPEND_CAP_USD`, then `vercel deploy --prod`. Every server instance starts from the same sample data. With Upstash connected (`KV_REST_API_URL`, `KV_REST_API_TOKEN`), every change after that goes into one shared, append-only log that each instance replays before it reads (`src/lib/demo/sync.ts`), so a student's progress survives when Vercel routes a click to another instance. To reset the live demo, bump `SEED_VERSION` in `sync.ts` and redeploy: a new seed version starts a fresh log.
 
 ## Accounts
 

@@ -1,5 +1,6 @@
 import { getStore } from "./instance";
-import { insertRows, type Row, type Store, type TableName } from "./store";
+import { deleteRows, insertRows, patchRow, type Row, type Store, type TableName } from "./store";
+import { pullChanges, pushChanges } from "./sync";
 
 /**
  * A small, Supabase-shaped query client over the in-memory demo store.
@@ -235,13 +236,20 @@ class Query<D = any[]> implements PromiseLike<Result<D>> {
   maybeSingle(): Query<any> { this.single_ = "maybe"; return this as unknown as Query<any>; }
 
   then<A = Result<D>, B = never>(ok?: ((v: Result<D>) => A | PromiseLike<A>) | null, fail?: ((e: unknown) => B | PromiseLike<B>) | null): PromiseLike<A | B> {
+    return this.exec().then(ok, fail);
+  }
+
+  /** Catch up on other servers' changes, run, then share our own writes before answering. */
+  private async exec(): Promise<Result<D>> {
+    await pullChanges(this.s);
     let r: Result<D>;
     try {
       r = this.run();
     } catch (e) {
       r = { data: null, error: { message: e instanceof Error ? e.message : String(e) }, count: null };
     }
-    return Promise.resolve(r).then(ok, fail);
+    await pushChanges(this.s);
+    return r;
   }
 
   private matches(row: Row) {
@@ -257,8 +265,8 @@ class Query<D = any[]> implements PromiseLike<Result<D>> {
         return this.finish(this.returning ? rows.map((r) => project(s, actor, table, r, parseSelect(this.cols))!) : null, rows.length);
       }
       const hit = s.tables[table].filter((r) => this.matches(r));
-      if (this.op === "update") for (const r of hit) Object.assign(r, this.payload);
-      else s.tables[table] = s.tables[table].filter((r) => !hit.includes(r));
+      if (this.op === "update") for (const r of hit) patchRow(s, table, r, { ...(this.payload as Row) });
+      else deleteRows(s, table, hit);
       return this.finish(this.returning ? hit.map((r) => project(s, actor, table, r, parseSelect(this.cols))!) : null, hit.length);
     }
 
@@ -316,10 +324,9 @@ const RPCS: Record<string, (s: Store, c: Ctx, a: Record<string, any>) => unknown
     if (!at || !canSeeStudent(s, c, at.student_id)) deny();
     const row = s.tables.check_results.find((r) => r.attempt_id === a.p_attempt && r.check_key === a.p_key);
     if (!row) deny("no such check");
-    Object.assign(row!, { pass: !!a.p_pass, overridden: true, override_note: a.p_note, overridden_by: c.uid, overridden_at: new Date().toISOString(), needs_review: false });
+    patchRow(s, "check_results", row!, { pass: !!a.p_pass, overridden: true, override_note: a.p_note, overridden_by: c.uid, overridden_at: new Date().toISOString(), needs_review: false });
     const rs = s.tables.check_results.filter((r) => r.attempt_id === a.p_attempt);
-    at!.passed = rs.filter((r) => r.pass).length;
-    at!.status = rs.some((r) => r.needs_review) ? "needs_review" : "scored";
+    patchRow(s, "attempts", at!, { passed: rs.filter((r) => r.pass).length, status: rs.some((r) => r.needs_review) ? "needs_review" : "scored" });
     audit(s, c, "override_check", `${a.p_attempt}:${a.p_key}`, a.p_note);
     return null;
   },
@@ -329,7 +336,7 @@ const RPCS: Record<string, (s: Store, c: Ctx, a: Record<string, any>) => unknown
     let n = 0;
     for (const at of s.tables.attempts) {
       // Skills checks are never graded for credit, so they never go to the gradebook.
-      if (ids.has(at.student_id) && at.released_at === null && at.status === "scored" && at.studio !== "check") { at.released_at = new Date().toISOString(); n++; }
+      if (ids.has(at.student_id) && at.released_at === null && at.status === "scored" && at.studio !== "check") { patchRow(s, "attempts", at, { released_at: new Date().toISOString() }); n++; }
     }
     audit(s, c, "release_scores", `section ${a.p_section}`, `${n} attempts sent to gradebook (simulated)`);
     return n;
@@ -381,8 +388,8 @@ const RPCS: Record<string, (s: Store, c: Ctx, a: Record<string, any>) => unknown
     const d = s.tables.rubric_checks.find((r) => r.id === a.p_draft && r.status === "draft");
     if (!d) deny("no such draft");
     if (!s.tables.eval_runs.some((r) => r.rubric_draft_id === a.p_draft && r.passed_gate)) deny("run the eval on this draft and pass the gate before publishing");
-    for (const r of s.tables.rubric_checks) if (r.exercise_id === d!.exercise_id && r.key === d!.key && r.status === "published") r.status = "retired";
-    d!.status = "published";
+    for (const r of s.tables.rubric_checks) if (r.exercise_id === d!.exercise_id && r.key === d!.key && r.status === "published") patchRow(s, "rubric_checks", r, { status: "retired" });
+    patchRow(s, "rubric_checks", d!, { status: "published" });
     audit(s, c, "publish_rubric", `${d!.exercise_id}:${d!.key} v${d!.version}`, "eval gate passed");
     return null;
   },
@@ -400,10 +407,13 @@ export class DemoClient {
     if (!fn) return { data: null, error: { message: `function ${name} does not exist` }, count: null };
     if (this.actor.kind === "anon") return { data: null, error: { message: `permission denied for function ${name}` }, count: null };
     const c: Ctx = this.actor.kind === "service" ? { uid: "service", role: "admin", studentId: null, sections: [] } : ctxFor(this.s, this.actor.uid);
+    await pullChanges(this.s);
     try {
       return { data: fn(this.s, c, args) ?? null, error: null, count: null };
     } catch (e) {
       return { data: null, error: { message: e instanceof Error ? e.message : String(e) }, count: null };
+    } finally {
+      await pushChanges(this.s);
     }
   }
 }

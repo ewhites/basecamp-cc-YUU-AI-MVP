@@ -31,7 +31,7 @@ The one thing this prototype must prove: **a Claude coach can grade students' AI
 ## Stack
 
 - Next.js 16 (App Router, TypeScript) in `src/app`. Plain CSS with Brightspace-style tokens in `src/app/globals.css`.
-- No backend for the demo: an in-memory store (`src/lib/demo/`) seeded with deterministic sample data on start, behind the same access rules as the RLS policies. `supabase/migrations/` is the pilot's Postgres design (not used by the demo).
+- No backend for the demo: an in-memory store (`src/lib/demo/`) seeded with deterministic sample data on start, behind the same access rules as the RLS policies. On Vercel, changes are shared between instances through an append-only log in Upstash Redis (`src/lib/demo/sync.ts`, free plan). Every write to an existing row must go through `patchRow`/`deleteRows` in `store.ts` so it is logged. `supabase/migrations/` is the pilot's Postgres design (not used by the demo).
 - Claude API via `@anthropic-ai/sdk`. Models are set in `src/lib/models.ts` (grading default `claude-haiku-5-5`; Arena compares `claude-haiku-5-5`, `claude-sonnet-5-5`, `claude-opus-5-5`). Structured outputs via `client.messages.parse` + `zodOutputFormat`. Lesson, rubric and rules are cached with `cache_control`.
 - No sampling params (`temperature` etc.): they 400 on current models.
 - Evals: `npm run eval` (TypeScript, imports `src/lib/coach`); legacy lesson-Q&A eval in `eval/run_eval.py`.

@@ -1,17 +1,22 @@
 import { seedStore } from "./sample";
 import { emptyStore, type Store } from "./store";
+import { SEED_VERSION } from "./sync";
 
 const KEY = "__yuuAiLabStore";
-/** Bump when the schema or seed changes, so a running dev server reseeds instead of keeping old data. */
-const VERSION = 3;
 
-/** The process-wide demo store, seeded with the deterministic sample data on first use. */
+/**
+ * The process-wide demo store, seeded with the deterministic sample data on first use.
+ * A running dev server reseeds when SEED_VERSION changes instead of keeping old data.
+ * Changes made after seeding are shared between servers by sync.ts.
+ */
 export function getStore(): Store {
   const g = globalThis as unknown as Record<string, (Store & { version?: number }) | undefined>;
-  if (!g[KEY] || g[KEY]!.version !== VERSION) {
+  if (!g[KEY] || g[KEY]!.version !== SEED_VERSION) {
     const s = emptyStore();
+    s.seeding = true;
     seedStore(s);
-    g[KEY] = Object.assign(s, { version: VERSION });
+    s.seeding = false;
+    g[KEY] = Object.assign(s, { version: SEED_VERSION });
   }
   return g[KEY]!;
 }
