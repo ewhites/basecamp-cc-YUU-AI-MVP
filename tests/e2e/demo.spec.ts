@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import fs from "node:fs";
 
 /**
@@ -6,6 +6,14 @@ import fs from "node:fs";
  * API key is available, so the rest of the journey is still checked without one.
  */
 const hasKey = !!process.env.ANTHROPIC_API_KEY || fs.existsSync(".env.local");
+
+/** Fill a box and wait until its submit button is enabled (text typed before hydration is lost). */
+async function fillReady(page: Page, input: string, button: string, text: string) {
+  await expect(async () => {
+    await page.getByTestId(input).fill(text);
+    await expect(page.getByTestId(button)).toBeEnabled({ timeout: 1000 });
+  }).toPass({ timeout: 30_000 });
+}
 
 test("sign-in offers only the student and the instructor, then opens Brightspace", async ({ page }) => {
   await page.goto("/signout");
@@ -26,7 +34,7 @@ test("starting point check: one task is coached and counts toward progress", asy
   test.skip(!hasKey, "needs ANTHROPIC_API_KEY");
   await page.goto("/launch?as=jasmine&next=/lab/check/start?task=1");
   await expect(page.getByTestId("check-task")).toBeVisible();
-  await page.getByTestId("check-answer").fill(
+  await fillReady(page, "check-answer", "check-submit",
     "Write a reminder email to my team about the shared drive moving to the new system this Friday at 6pm. Tell them to save their files before 5pm Friday. Keep it under 80 words with 3 bullets.",
   );
   await page.getByTestId("check-submit").click();
@@ -38,7 +46,7 @@ test("starting point check: one task is coached and counts toward progress", asy
 test("Prompt Studio: weak attempt is coached, tip applied, second attempt improves", async ({ page }) => {
   test.skip(!hasKey, "needs ANTHROPIC_API_KEY");
   await page.goto("/launch?as=jasmine&next=/lab/prompt-studio?ex=ps-ticket-summary");
-  await page.getByTestId("prompt-input").fill(
+  await fillReady(page, "prompt-input", "submit-prompt",
     "You are a help-desk lead. Summarize the ticket below for the next-shift technician. Use only the ticket text and don't guess. Leave out names, phone numbers and employee IDs.",
   );
   await page.getByTestId("submit-prompt").click();
@@ -48,7 +56,7 @@ test("Prompt Studio: weak attempt is coached, tip applied, second attempt improv
   await expect(latest.getByTestId("coach-tip")).toBeVisible();
   const first = Number((await latest.getByTestId("attempt-score").innerText()).split("/")[0]);
 
-  await page.getByTestId("prompt-input").fill(
+  await fillReady(page, "prompt-input", "submit-prompt",
     "You are a help-desk lead. Summarize the ticket below for the next-shift technician in 5 bullet points under 80 words: problem, what was tried, current status, next step. Use only the ticket text and don't guess. Leave out names, phone numbers and employee IDs.",
   );
   await page.getByTestId("submit-prompt").click();
