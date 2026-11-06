@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { SimulatedTag } from "@/components/Tags";
-import { overrideCheckAction, releaseScoresAction } from "./actions";
+import { overrideCheckAction, releaseScoresAction, resolveFlagAction } from "./actions";
 
 /** "Assign mini-lesson": simulated, no database write. */
 export function AssignMiniLesson({ title, primary = false }: { title: string; primary?: boolean }) {
@@ -105,6 +105,66 @@ export function OverrideForm({ attemptId, checkKey, label, pass }: { attemptId: 
         </button>
       </div>
       {msg && <div className={`notice small ${msg.ok ? "notice-pass" : "notice-fail"}`} role="status">{msg.text}</div>}
+    </form>
+  );
+}
+
+/** Close a flag after following up. The note is required and goes to the audit log. */
+export function ResolveFlagForm({ flagId, label, placeholder }: { flagId: number; label: string; placeholder: string }) {
+  const [open, setOpen] = useState(false);
+  const [note, setNote] = useState("");
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [pending, start] = useTransition();
+  if (msg?.ok) {
+    return (
+      <div className="notice notice-pass small" role="status" data-testid="flag-resolved">
+        {msg.text}
+      </div>
+    );
+  }
+  if (!open) {
+    return (
+      <button className="btn" onClick={() => setOpen(true)} data-testid={`resolve-flag-${flagId}`}>
+        {label}
+      </button>
+    );
+  }
+  return (
+    <form
+      className="stack-sm"
+      onSubmit={(e) => {
+        e.preventDefault();
+        setMsg(null);
+        if (!note.trim()) {
+          setMsg({ ok: false, text: "Add a short note first." });
+          return;
+        }
+        start(async () => {
+          const r = await resolveFlagAction(flagId, note);
+          setMsg(r.ok ? { ok: true, text: "Done. It's off your list, and your note is saved." } : { ok: false, text: r.error });
+        });
+      }}
+    >
+      <label htmlFor={`flag-note-${flagId}`}>Note (required, only staff see it)</label>
+      <div className="row" style={{ alignItems: "flex-end" }}>
+        <input
+          id={`flag-note-${flagId}`}
+          type="text"
+          value={note}
+          maxLength={500}
+          autoFocus
+          onChange={(e) => setNote(e.target.value)}
+          placeholder={placeholder}
+          style={{ flex: 1, minWidth: "12rem" }}
+        />
+        <button className="btn btn-primary" disabled={pending} data-testid="resolve-flag-save">
+          {pending ? "Saving\u2026" : "Save"}
+        </button>
+        <button type="button" className="btn btn-subtle" onClick={() => setOpen(false)}>
+          Cancel
+        </button>
+      </div>
+      {msg && <div className="notice small notice-fail" role="status">{msg.text}</div>}
     </form>
   );
 }

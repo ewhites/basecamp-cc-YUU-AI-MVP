@@ -3,7 +3,8 @@ import type { AttemptView } from "./attempts";
 import { toAttemptView } from "./attempts";
 import { SKILL_CHECKS, skillCheck } from "./curriculum/skill-checks";
 import { SKILLS, type Skill } from "./curriculum/types";
-import { skillLevels, type CheckRow } from "./insights";
+import { isSkillCheck, skillLevels, type CheckRow } from "./insights";
+import { findCheck, plainGuidance } from "./instructor-data";
 import { userClient } from "./db";
 import { scoreChecks, type SkillScores } from "./progress";
 
@@ -79,4 +80,29 @@ export async function myCheckAnswers(): Promise<{ latest: Record<string, CheckAn
     latest[a.exerciseId] = { ...a, answer };
   }
   return { latest, start: checkScoresFrom(all, "start"), final: checkScoresFrom(all, "final") };
+}
+
+/**
+ * The one thing to work on next: the practice check the student missed most across their last
+ * 5 practice tries, when they missed it at least twice. Null when nothing stands out.
+ */
+export async function myFocus(): Promise<{ check: string; looksLike: string; missed: number; tries: number; exerciseId: string } | null> {
+  const db = await userClient();
+  const { data } = await db.from("check_results").select("attempt_id, check_key, skill, pass, attempts!inner(exercise_id, created_at)");
+  const rows = ((data ?? []) as unknown as { attempt_id: string; check_key: string; skill: string; pass: boolean; attempts: { exercise_id: string; created_at: string } }[])
+    .filter((r) => !isSkillCheck(r.attempts.exercise_id));
+  const recent = [...new Map(rows.map((r) => [r.attempt_id, r.attempts.created_at])).entries()].sort((a, b) => b[1].localeCompare(a[1])).slice(0, 5).map(([id]) => id);
+  const agg = new Map<string, { missed: number; tries: number; skill: string; exerciseId: string; at: string }>();
+  for (const r of rows.filter((x) => recent.includes(x.attempt_id))) {
+    const a = agg.get(r.check_key) ?? { missed: 0, tries: 0, skill: r.skill, exerciseId: r.attempts.exercise_id, at: "" };
+    a.tries++;
+    if (!r.pass) a.missed++;
+    if (r.attempts.created_at > a.at) Object.assign(a, { at: r.attempts.created_at, exerciseId: r.attempts.exercise_id });
+    agg.set(r.check_key, a);
+  }
+  const [key, worst] = [...agg.entries()].filter(([, a]) => a.missed >= 2 && a.missed / a.tries >= 0.5).sort((x, y) => y[1].missed - x[1].missed)[0] ?? [];
+  if (!key || !worst) return null;
+  const check = findCheck(key, worst.skill);
+  if (!check) return null;
+  return { check: check.text.replace(/\?$/, ""), looksLike: plainGuidance(check.guidance), missed: worst.missed, tries: worst.tries, exerciseId: worst.exerciseId };
 }

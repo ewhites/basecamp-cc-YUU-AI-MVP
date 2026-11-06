@@ -330,6 +330,17 @@ const RPCS: Record<string, (s: Store, c: Ctx, a: Record<string, any>) => unknown
     audit(s, c, "override_check", `${a.p_attempt}:${a.p_key}`, a.p_note);
     return null;
   },
+  resolve_safety_flag(s, c, a) {
+    if (c.role !== "instructor") deny("only instructors can close a flag");
+    const note = String(a.p_note ?? "").trim();
+    if (!note) deny("a note is required");
+    const f = s.tables.safety_flags.find((x) => String(x.id) === String(a.p_flag));
+    if (!f || !canSeeStudent(s, c, f.student_id)) deny();
+    if (f!.status !== "open") return null;
+    patchRow(s, "safety_flags", f!, { status: "resolved", resolved_by: c.uid, resolved_at: new Date().toISOString(), resolution_note: note });
+    audit(s, c, "resolve_safety_flag", String(f!.id), note);
+    return null;
+  },
   release_scores(s, c, a) {
     if (c.role !== "instructor" || !c.sections.includes(a.p_section)) deny();
     const ids = new Set(s.tables.students.filter((st) => st.section_id === a.p_section).map((st) => st.id));

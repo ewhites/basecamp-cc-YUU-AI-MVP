@@ -4,7 +4,8 @@ import { SkillBars } from "@/components/SkillBars";
 import { COURSE } from "@/lib/curriculum/course";
 import { getViewer } from "@/lib/session";
 import { myProgress } from "@/lib/progress";
-import { myCheckAnswers } from "@/lib/student-data";
+import { myCheckAnswers, myFocus } from "@/lib/student-data";
+import { stepFor } from "@/lib/curriculum/course";
 
 const KIND_LABEL = { check: "Skills check", lesson: "Lesson", practice: "Practice", skills: "Summary" } as const;
 
@@ -14,7 +15,7 @@ export default async function CourseHome() {
   if (!v) redirect("/");
   if (v.role !== "student") redirect("/lab/instructor");
 
-  const [progress, checks] = await Promise.all([myProgress(), myCheckAnswers()]);
+  const [progress, checks, focus] = await Promise.all([myProgress(), myCheckAnswers(), myFocus()]);
   const first = v.student?.display_name.split(" ")[0];
   const fresh = progress.done === 0;
   const next = progress.next;
@@ -54,6 +55,22 @@ export default async function CourseHome() {
             <p className="small muted" style={{ margin: 0 }}>See how your skills grew from your starting point.</p>
           </div>
           <Link href="/lab/skills" className="btn btn-primary btn-lg">See your skills</Link>
+        </section>
+      )}
+
+      {focus && (
+        <section className="card focus-card" data-testid="focus">
+          <div className="eyebrow">Work on this</div>
+          <h2 style={{ margin: "0 0 6px" }}>{focus.check}</h2>
+          <p style={{ margin: "0 0 6px" }}>
+            Your coach marked this as missed on {focus.missed} of your last {focus.tries} tries.
+          </p>
+          <p className="small muted" style={{ margin: "0 0 14px" }}>
+            <b>What the coach looks for:</b> {focus.looksLike}
+          </p>
+          <Link href={stepFor(focus.exerciseId)?.href ?? `/lab/practice/${focus.exerciseId}`} className="btn">
+            Practice it again
+          </Link>
         </section>
       )}
 

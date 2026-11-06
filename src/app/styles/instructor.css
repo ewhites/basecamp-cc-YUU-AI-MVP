@@ -91,3 +91,22 @@
 .ic-override { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 12px; }
 .ic-override > summary { cursor: pointer; font-weight: 600; color: var(--accent); }
 .ic-override[open] > summary { margin-bottom: 4px; }
+
+/* Why this student is on your list */
+.ic-why { display: grid; gap: 16px; border-left: 4px solid var(--warn); }
+.ic-why.is-urgent { border-left-color: var(--bad); }
+.ic-why h2 { margin: 0; }
+.ic-reason { display: grid; gap: 8px; }
+.ic-reason + .ic-reason { border-top: 1px solid var(--line); padding-top: 16px; }
+.ic-reason-line { margin: 0; max-width: 70ch; }
+.ic-todo { background: var(--surface-2); border-radius: var(--radius); padding: 10px 12px; max-width: 70ch; }
+.ic-tries { display: grid; gap: 6px; }
+.ic-try-list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.ic-try { display: inline-flex; gap: 6px; align-items: center; font-size: 14px; padding: 4px 10px; border-radius: var(--radius); border: 1px solid var(--line); color: var(--ink); text-decoration: none; }
+.ic-try:hover { text-decoration: none; border-color: var(--line-strong); }
+.ic-try.is-pass > span:first-child { color: var(--ok); font-weight: 700; }
+.ic-try.is-fail { background: var(--bad-soft); border-color: #f3c7c3; }
+.ic-try.is-fail > span:first-child { color: var(--bad); font-weight: 700; }
+.ic-handled { display: grid; gap: 4px; border-top: 1px solid var(--line); padding-top: 12px; }
+.ic-skill.is-stuck .ic-skill-heat { outline: 2px solid var(--warn); outline-offset: 1px; }
+.ic-back::before { content: "\2039"; font-size: 20px; line-height: 1; margin-right: 2px; }

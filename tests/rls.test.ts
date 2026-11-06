@@ -75,6 +75,18 @@ describe.skipIf(!available)("row-level security", () => {
     expect(wrongSection).not.toBeNull();
   });
 
+  it("only the student's own instructor can close a safety flag, with a note", async () => {
+    const { data: f } = await rivera.from("safety_flags").select("id, status").eq("student_id", "S-C-021").single();
+    expect(f!.status).toBe("open");
+    expect((await jasmine.rpc("resolve_safety_flag", { p_flag: f!.id, p_note: "x" })).error).not.toBeNull();
+    expect((await (await as("haddad")).rpc("resolve_safety_flag", { p_flag: f!.id, p_note: "not mine" })).error).not.toBeNull();
+    expect((await rivera.rpc("resolve_safety_flag", { p_flag: f!.id, p_note: " " })).error).not.toBeNull();
+    expect((await rivera.rpc("resolve_safety_flag", { p_flag: f!.id, p_note: "Checked in after class" })).error).toBeNull();
+    const { data: after } = await rivera.from("safety_flags").select("status, resolution_note").eq("id", f!.id).single();
+    expect(after).toMatchObject({ status: "resolved", resolution_note: "Checked in after class" });
+    expect(await count(lee.from("audit_log").select("id", { count: "exact", head: true }).eq("action", "resolve_safety_flag"))).toBe(1);
+  });
+
   it("the curriculum designer never sees student names, only aggregates", async () => {
     expect(await count(okafor.from("students").select("id", { count: "exact", head: true }))).toBe(0);
     expect(await count(okafor.from("attempts").select("id", { count: "exact", head: true }))).toBe(0);

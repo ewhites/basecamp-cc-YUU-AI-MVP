@@ -1,3 +1,4 @@
+import Image from "next/image";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { SkillBars } from "@/components/SkillBars";
@@ -68,8 +69,9 @@ export default async function SharedSkills({ params }: { params: Promise<{ token
       <header className="topbar">
         <div className="topbar-inner">
           <span className="brand">
-            <span className="brand-mark" aria-hidden>AI</span>
-            <span>Year Up United AI Lab</span>
+            <Image src="/year-up-united.png" alt="Year Up United" className="brand-logo" width={85} height={28} priority />
+            <span className="bar-v" aria-hidden />
+            <span>AI Lab</span>
           </span>
           <span className="spacer" />
           <SampleTag />

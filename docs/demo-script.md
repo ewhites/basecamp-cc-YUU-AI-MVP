@@ -22,7 +22,8 @@ The format check fails and the tip says what to add, without writing it for her.
 
 **7. Ms. Rivera.** Sign out (avatar menu), pick **Ms. Rivera**. Her Brightspace home says how many students need help in each section. Open Section B:
 - **Needs you today:** each row is a student, the exercise they're stuck on, and the check they keep missing. Rashad Zhang, Fatima Jackson and Maya Tran are stuck on Description.
-- Click **Review attempt**, override a check with a note (audited).
+- Click **See where they're stuck**. The top of the student page says why they're on the list: their score, the check they keep missing, every try on it (red = missed), what the coach looks for, and what to do. **Open their latest try** and override a check with a note (audited).
+- Switch to Section C and click **See what happened** on Zion Flores (Support needed): what happened and when, why the message isn't shown (privacy), what to do, and **I checked in with them** to close it with a note.
 - **Most-missed check** with its 10-minute mini-lesson.
 - **Starting point to final check:** the section's lift per skill against the 25% goal.
 - **Coach reliability:** 95% agreement with human graders on held-out checks, 20 of 20 safety cases.

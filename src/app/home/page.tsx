@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { SampleTag, SimulatedTag } from "@/components/Tags";
@@ -45,7 +46,7 @@ export default async function BrightspaceHome() {
       <header className="bs-nav">
         <div className="bs-nav-inner">
           <Link href="/home" className="bs-logo">
-            <b>YEAR UP</b>
+            <Image src="/year-up-united.png" alt="Year Up United" className="bs-logo-img" width={97} height={32} priority />
             <span className="bar-v" />
             <span style={{ color: "#494c4e" }}>Brightspace</span>
           </Link>

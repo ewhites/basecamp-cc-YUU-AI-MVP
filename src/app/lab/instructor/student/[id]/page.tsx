@@ -7,15 +7,22 @@ import { practiceOnly, skillLevels } from "@/lib/insights";
 import {
   attemptReplay,
   checkRowsFor,
+  dayText,
   exerciseTitle,
   heatClass,
+  sectionOverview,
   studentAttempts,
   studentById,
+  studentFlags,
+  studentReasons,
+  whenText,
   type AttemptReplay,
+  type SafetyFlagRow,
+  type StudentReason,
 } from "@/lib/instructor-data";
 import { scoreChecks } from "@/lib/progress";
 import { requireRole } from "@/lib/session";
-import { OverrideForm } from "../../ConsoleButtons";
+import { OverrideForm, ResolveFlagForm } from "../../ConsoleButtons";
 import { percent, sectionHref, shortDate, studentHref } from "../../links";
 
 export default async function StudentPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ attempt?: string }> }) {
@@ -37,11 +44,18 @@ export default async function StudentPage({ params, searchParams }: { params: Pr
     );
   }
 
-  const [attempts, rows, replay] = await Promise.all([
+  const [attempts, rows, replay, flags, overview] = await Promise.all([
     studentAttempts(student.id),
     checkRowsFor([student.id]),
     attemptId ? attemptReplay(attemptId) : Promise.resolve(null),
+    studentFlags(student.id),
+    sectionOverview(student.section_id),
   ]);
+  const reasons = studentReasons(student, rows, attempts, flags, overview.stuck);
+  const handled = flags.filter((f) => f.status === "resolved");
+  const stuckSkills = new Set(reasons.flatMap((r) => (r.stuck ? [r.stuck.skill] : [])));
+  const flaggedAttempts = new Set(reasons.flatMap((r) => (r.attempt_id ? [r.attempt_id] : [])));
+  const first = student.display_name.split(" ")[0]!;
   const levels = skillLevels(practiceOnly(rows)).get(student.id);
   const checkRows = rows.map((r) => ({ exercise_id: r.exercise_id ?? "", skill: r.skill, pass: r.pass }));
   const start = scoreChecks(checkRows, "start");
@@ -63,30 +77,33 @@ export default async function StudentPage({ params, searchParams }: { params: Pr
         </div>
       </div>
 
+      <WhyCard first={first} reasons={reasons} handled={handled} studentId={student.id} />
+
       <section className="card card-tight" data-testid="student-skills">
+        <div className="row between ic-card-head">
+          <h3 style={{ margin: 0 }}>Skills</h3>
+          <span className="tiny muted">Share of checks passed on the last 3 practice tries</span>
+        </div>
         <div className="ic-skills">
           {SKILLS.map((s) => {
             const c = levels?.[s].current ?? null;
             const a = start[s];
             const b = final[s];
+            const stuck = stuckSkills.has(s);
             return (
-              <div key={s} className="ic-skill">
-                <div className="small">
+              <div key={s} className={`ic-skill${stuck ? " is-stuck" : ""}`} data-testid={stuck ? "stuck-skill" : undefined}>
+                <div className="row between small">
                   <b>{SKILL_LABELS[s]}</b>
+                  {stuck && <span className="tag tag-warn">Stuck</span>}
                 </div>
-                <div className={`heat ${heatClass(c)} ic-skill-heat`} title="Practice pass rate, last 3 attempts">
-                  {percent(c)}
-                </div>
+                <div className={`heat ${heatClass(c)} ic-skill-heat`}>{c === null ? "Not yet" : percent(c)}</div>
                 <div className="tiny muted ic-num">
-                  {a === null ? "No starting point yet" : b === null ? `Starting point ${percent(a)}` : `Checks: ${percent(a)} to ${percent(b)}`}
+                  {a === null ? "No starting point check yet" : b === null ? `Starting point check: ${percent(a)}` : `Checks: ${percent(a)} at start, ${percent(b)} at the end`}
                 </div>
               </div>
             );
           })}
         </div>
-        <p className="tiny muted" style={{ margin: "10px 0 0" }}>
-          Colored number: practice pass rate over the last 3 attempts on that skill. Checks: starting point score to final check score.
-        </p>
       </section>
 
       <div className="split ic-split">
@@ -110,6 +127,7 @@ export default async function StudentPage({ params, searchParams }: { params: Pr
                           Attempt {a.attempt_no} &middot; {shortDate(a.created_at)}
                           {a.released_at && " · Sent"}
                         </div>
+                        {flaggedAttempts.has(a.id) && <span className="tag tag-warn ic-gap">On your list</span>}
                       </td>
                       <td className="ic-right ic-nowrap">
                         <div className="ic-num">{a.passed !== null ? `${a.passed}/${a.total}` : "–"}</div>
@@ -137,6 +155,84 @@ export default async function StudentPage({ params, searchParams }: { params: Pr
         </section>
       </div>
     </div>
+  );
+}
+
+const REASON_TAG: Record<StudentReason["kind"], string> = { support: "tag-fail", stuck: "tag-warn", review: "tag-info", safety: "tag-quiet" };
+
+/** Why this student is on the instructor's list: what happened, when, and what to do. */
+function WhyCard({ first, reasons, handled, studentId }: { first: string; reasons: StudentReason[]; handled: SafetyFlagRow[]; studentId: string }) {
+  if (!reasons.length && !handled.length) return null;
+  return (
+    <section className={`card ic-why${reasons.some((r) => r.kind === "support") ? " is-urgent" : ""}`} id="why" data-testid="why-card">
+      <h2>{reasons.length ? `Why ${first} is on your list` : `${first} is not on your list right now`}</h2>
+      {reasons.map((r, i) => (
+        <div key={`${r.kind}-${i}`} className="ic-reason" data-testid="why-reason" data-kind={r.kind}>
+          <div className="row ic-need-head">
+            <span className={`tag ${REASON_TAG[r.kind]}`}>{r.headline}</span>
+            <span className="small muted">{r.kind === "stuck" ? `Latest try ${dayText(r.at)}` : whenText(r.at)}</span>
+          </div>
+          {r.what.map((w) => (
+            <p key={w} className="ic-reason-line">
+              {w}
+            </p>
+          ))}
+          {r.stuck && (
+            <div className="ic-tries" data-testid="check-history">
+              {r.stuck.looksLike && (
+                <p className="small ic-reason-line">
+                  <b>The coach looks for:</b> {r.stuck.looksLike}
+                </p>
+              )}
+              <div className="tiny muted">Their tries on this check, oldest first</div>
+              <ol className="ic-try-list">
+                {r.stuck.history.map((h) => (
+                  <li key={h.attempt_id}>
+                    <Link href={studentHref(studentId, h.attempt_id)} className={`ic-try ${h.pass ? "is-pass" : "is-fail"}`} title={`${exerciseTitle(h.exercise_id)}, ${shortDate(h.created_at)}`}>
+                      <span aria-hidden>{h.pass ? "\u2713" : "\u2717"}</span>
+                      <span className="sr-only">{h.pass ? "Passed" : "Missed"}</span>
+                      <span>{exerciseTitle(h.exercise_id)}</span>
+                      <span className="muted">{shortDate(h.created_at)}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
+          <div className="ic-todo">
+            <b>What to do:</b> {r.todo}
+          </div>
+          {(r.attempt_id || r.flag_id !== undefined) && (
+            <div className="row">
+              {r.attempt_id && (
+                <Link href={`${studentHref(studentId, r.attempt_id)}#replay`} className={`btn ${i === 0 ? "btn-primary" : ""}`}>
+                  {r.action}
+                </Link>
+              )}
+              {r.flag_id !== undefined && (
+                <ResolveFlagForm
+                  flagId={r.flag_id}
+                  label={r.kind === "support" ? "I checked in with them" : "Mark as handled"}
+                  placeholder={r.kind === "support" ? "For example: Talked after class, connected with Student Support" : "What you did"}
+                />
+              )}
+            </div>
+          )}
+        </div>
+      ))}
+      {handled.length > 0 && (
+        <div className="ic-handled">
+          <div className="tiny muted">Handled</div>
+          {handled.map((f) => (
+            <div key={f.id} className="small">
+              {f.kind === "distress" ? "Support check-in" : "Flag closed"}
+              {f.resolved_at && ` ${dayText(f.resolved_at)}`}
+              {f.resolution_note && <span className="muted">: {f.resolution_note}</span>}
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -168,7 +264,7 @@ function Replay({ attempt }: { attempt: AttemptReplay }) {
   const review = attempt.check_results.some((c) => c.needs_review);
 
   return (
-    <div className="stack" data-testid="attempt-replay">
+    <div className="stack" data-testid="attempt-replay" id="replay">
       <div className="row between">
         <div>
           <div className="eyebrow">

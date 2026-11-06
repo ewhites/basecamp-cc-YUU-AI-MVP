@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { redirect } from "next/navigation";
 import { SampleTag, SimulatedTag } from "@/components/Tags";
 import { PERSONAS } from "@/lib/personas";
@@ -12,7 +13,7 @@ export default async function SignIn() {
     <main className="signin">
       <div className="signin-card">
         <div className="bs-logo" style={{ marginBottom: 28 }}>
-          <b>YEAR UP</b>
+          <Image src="/year-up-united.png" alt="Year Up United" className="bs-logo-img" width={109} height={36} priority />
           <span className="bar-v" />
           <span style={{ color: "#494c4e" }}>Brightspace</span>
         </div>

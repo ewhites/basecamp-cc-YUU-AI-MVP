@@ -35,3 +35,16 @@ export async function releaseScoresAction(sectionId: string): Promise<ActionResu
   revalidatePath("/lab/instructor", "layout");
   return { ok: true, value: Number(data ?? 0) };
 }
+
+export async function resolveFlagAction(flagId: number, note: string): Promise<ActionResult> {
+  await requireRole("instructor");
+  if (!Number.isSafeInteger(flagId) || flagId < 0) return { ok: false, error: "That flag is not available." };
+  const trimmed = typeof note === "string" ? note.trim() : "";
+  if (!trimmed) return { ok: false, error: "Add a short note, for example when you checked in." };
+  if (trimmed.length > 500) return { ok: false, error: "Keep the note under 500 characters." };
+  const db = await userClient();
+  const { error } = await db.rpc("resolve_safety_flag", { p_flag: flagId, p_note: trimmed });
+  if (error) return { ok: false, error: error.code === "42501" ? "You can only close flags for students in your sections." : error.message };
+  revalidatePath("/lab/instructor", "layout");
+  return { ok: true, value: undefined };
+}

@@ -94,3 +94,4 @@
 .hints { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 2px; font-size: 14px; color: var(--muted); }
 .hints b { color: var(--ink-2); }
 .stack > .checks:not(:first-child) { margin-top: 16px; }
+.focus-card { border-left: 4px solid var(--warn); }

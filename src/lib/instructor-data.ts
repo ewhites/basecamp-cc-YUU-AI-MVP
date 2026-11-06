@@ -15,6 +15,7 @@ import {
   type StuckDetail,
 } from "./insights";
 import { scoreChecks, type SkillScores } from "./progress";
+import { STAFF_CONTACT } from "./coach/distress";
 import { userClient } from "./db";
 
 /**
@@ -253,6 +254,21 @@ export interface SafetyFlagRow {
   kind: string;
   detail: string;
   created_at: string;
+  status?: "open" | "resolved";
+  resolved_at?: string | null;
+  resolution_note?: string | null;
+}
+
+/** Every flag for one student, open and handled, newest first. */
+export async function studentFlags(studentId: string): Promise<SafetyFlagRow[]> {
+  const db = await userClient();
+  const { data, error } = await db
+    .from("safety_flags")
+    .select("id, student_id, kind, detail, status, created_at, resolved_at, resolution_note")
+    .eq("student_id", studentId)
+    .order("created_at", { ascending: false });
+  if (error) throw new Error(error.message);
+  return (data ?? []) as SafetyFlagRow[];
 }
 
 /** Open safety flags for these students. Only the `detail` summary is read, never raw student text. */
@@ -377,7 +393,10 @@ export async function needsYouToday(overview: SectionOverview): Promise<NeedsYou
       exercise_id: at?.exercise_id ?? null,
       attempt_id: at?.id ?? null,
       headline: FLAG_HEADLINES[f.kind] ?? f.kind,
-      detail: f.detail,
+      detail:
+        f.kind === "distress"
+          ? `Wrote something in ${flagPlace(f.detail, at?.exercise_id ?? null)} on ${dayText(f.created_at)} that sounded like personal distress. The coach paused and showed the Student Support contact. Check in with them today.`
+          : f.detail,
       also: [],
     });
   }
@@ -443,6 +462,159 @@ export async function needsYouToday(overview: SectionOverview): Promise<NeedsYou
     }
   }
   return rows;
+}
+
+// ---------------------------------------------------------------- why one student needs you
+
+/** Where a flag was raised: the linked exercise, else the place named in the flag's summary. */
+export function flagPlace(detail: string, exerciseId: string | null): string {
+  if (exerciseId) return exerciseTitle(exerciseId);
+  return detail.match(/detected in ([^.;]+)/)?.[1]?.trim() ?? "the AI Lab";
+}
+
+/** "Tue, Nov 3" in the program's time zone. */
+export function dayText(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "America/New_York" });
+}
+
+/** "Tue, Nov 3 at 2:14 PM" in the program's time zone. */
+export function whenText(iso: string): string {
+  const d = new Date(iso);
+  const time = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/New_York" });
+  return `${dayText(iso)} at ${time}`;
+}
+
+/** Grader guidance in plain words, without the curriculum section codes. */
+export function plainGuidance(guidance: string): string {
+  const cut = guidance.split(/\s*\bM\d{2}-S\d/)[0]!.replace(/[\s,(]+$/, "").replace(/^Yes if /, "");
+  const s = cut.charAt(0).toUpperCase() + cut.slice(1);
+  return s.endsWith(".") ? s : `${s}.`;
+}
+
+/** Mini-lesson text without "(M01-S1)"-style section codes. */
+export function plainCurriculum(text: string): string {
+  return text.replace(/\s*\((?:M\d{2}-S\d+(?:,\s*|\s+and\s+)?)+\)/g, "");
+}
+
+export interface CheckTry {
+  attempt_id: string;
+  exercise_id: string;
+  created_at: string;
+  pass: boolean;
+}
+
+export interface StudentReason {
+  kind: Exclude<NeedsYouKind, "class">;
+  headline: string;
+  /** When it happened (the flag, the attempt, or the latest try). */
+  at: string;
+  /** What happened, in plain sentences. */
+  what: string[];
+  /** What the instructor should do about it. */
+  todo: string;
+  attempt_id: string | null;
+  /** Label for the attempt button. */
+  action: string | null;
+  flag_id?: number;
+  stuck?: { skill: Skill; rate: number; check: string; looksLike: string | null; failed: number; tries: number; history: CheckTry[]; others: number };
+}
+
+const SAFETY_TODO: Record<string, string> = {
+  pii_removed: "Nothing urgent. Personal details were removed before the coach saw the work. Remind them to use made-up details in practice.",
+  prompt_injection: "The coach graded the work as written. Worth a quick word about doing the task as asked.",
+  refusal: "Open the try. If the AI keeps refusing, the task wording may need a fix.",
+};
+
+/**
+ * Every reason a student is on the instructor's list, worded for the student page: what happened,
+ * when, and what to do. Uses the same rules as "Needs you today", so the two never disagree.
+ */
+export function studentReasons(
+  student: { id: string; display_name: string },
+  rows: CheckRow[],
+  attempts: AttemptListRow[],
+  flags: SafetyFlagRow[],
+  sectionStuck: StuckDetail[] = [],
+): StudentReason[] {
+  const first = student.display_name.split(" ")[0]!;
+  const out: StudentReason[] = [];
+
+  for (const f of flags.filter((x) => (x.status ?? "open") === "open")) {
+    const t = Date.parse(f.created_at);
+    const at = attempts.find((a) => Math.abs(Date.parse(a.created_at) - t) <= FLAG_WINDOW_MS && (f.kind !== "distress" || a.status === "distress"));
+    if (f.kind === "distress") {
+      out.push({
+        kind: "support",
+        headline: "Support needed",
+        at: f.created_at,
+        what: [
+          `${first} wrote something in ${flagPlace(f.detail, at?.exercise_id ?? null)} that sounded like personal distress, not a question about the lesson.`,
+          `The coach did not answer it. ${first} saw a message pointing them to ${STAFF_CONTACT.name} in Student Support, and to 988 if they are in danger.`,
+          "What they wrote is not saved, to protect their privacy. That is why you can't see it here.",
+        ],
+        todo: `Check in with ${first} privately today. If you think they may be in danger, contact Student Support right away.`,
+        attempt_id: null,
+        action: null,
+        flag_id: f.id,
+      });
+    } else {
+      out.push({
+        kind: "safety",
+        headline: FLAG_HEADLINES[f.kind] ?? f.kind,
+        at: f.created_at,
+        what: [f.detail],
+        todo: SAFETY_TODO[f.kind] ?? "Open the try and decide if it needs a word with the student.",
+        attempt_id: at?.id ?? null,
+        action: at ? "Open the try" : null,
+        flag_id: f.id,
+      });
+    }
+  }
+
+  const practice = practiceOnly(rows.filter((r) => r.student_id === student.id));
+  const levels = skillLevels(practice);
+  for (const fl of stuckStudents(levels).filter((x) => x.student_id === student.id)) {
+    const d = stuckDetail(practice, fl);
+    if (!d) continue;
+    const check = findCheck(d.check_key, d.skill);
+    const name = (check?.text ?? d.check_key).replace(/\?$/, "");
+    const history = practice
+      .filter((r) => r.check_key === d.check_key)
+      .sort((a, b) => a.created_at.localeCompare(b.created_at))
+      .slice(-6)
+      .map((r) => ({ attempt_id: r.attempt_id, exercise_id: r.exercise_id ?? "", created_at: r.created_at, pass: r.pass }));
+    const others = sectionStuck.filter((s) => s.skill === d.skill && s.student_id !== student.id).length;
+    out.push({
+      kind: "stuck",
+      headline: `Stuck on ${SKILL_LABELS[d.skill]}`,
+      at: history.at(-1)?.created_at ?? new Date().toISOString(),
+      what: [
+        `${first} passed ${Math.round(d.current * 100)}% of ${SKILL_LABELS[d.skill]} checks on their last 3 practice tries. Under 40% puts a student on your list.`,
+        `The one they miss most: \u201c${name}\u201d, missed on ${d.failed} of ${d.tries} tries.`,
+      ],
+      todo:
+        others >= CLASS_WIDE_MIN - 1
+          ? `${others} others in the section are stuck on this too, so the mini-lesson on your console covers it. Then open ${first}'s latest try with them and have them try once more.`
+          : `Open ${first}'s latest try with them, point to where it falls short, and have them try once more.`,
+      attempt_id: d.attempt_id,
+      action: "Open their latest try",
+      stuck: { skill: d.skill, rate: d.current, check: name, looksLike: check ? plainGuidance(check.guidance) : null, failed: d.failed, tries: d.tries, history, others },
+    });
+  }
+
+  for (const a of attempts.filter((x) => x.status === "needs_review")) {
+    out.push({
+      kind: "review",
+      headline: "Score needs your review",
+      at: a.created_at,
+      what: [`The coach scored ${exerciseTitle(a.exercise_id)} but could not find its quote in ${first}'s words, so that score is on hold.`],
+      todo: "Read the try and save your call on the flagged check. Held scores never reach the gradebook.",
+      attempt_id: a.id,
+      action: "Review the score",
+    });
+  }
+
+  return out.sort((x, y) => KIND_ORDER[x.kind] - KIND_ORDER[y.kind]);
 }
 
 // ---------------------------------------------------------------- coach reliability

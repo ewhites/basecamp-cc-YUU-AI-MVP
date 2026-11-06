@@ -10,6 +10,7 @@ import {
   liftOf,
   mySections,
   needsYouToday,
+  plainCurriculum,
   sectionOverview,
   unreleasedCount,
   type CoachReliability,
@@ -119,6 +120,14 @@ const KIND_TAG: Record<NeedsYouRow["kind"], string> = {
   safety: "tag-quiet",
 };
 
+const ROW_ACTION: Record<NeedsYouRow["kind"], string> = {
+  support: "See what happened",
+  class: "See mini-lesson",
+  stuck: "See where they're stuck",
+  review: "Review the score",
+  safety: "See details",
+};
+
 function NeedsYou({ rows, names, lessonSkill }: { rows: NeedsYouRow[]; names: Map<string, string>; lessonSkill: Skill | null }) {
   const nameOf = (id: string) => names.get(id) ?? id;
   const row = (r: NeedsYouRow, i: number) => {
@@ -162,15 +171,9 @@ function NeedsYou({ rows, names, lessonSkill }: { rows: NeedsYouRow[]; names: Ma
           <div className="small">{r.detail}</div>
           {r.also.length > 0 && <div className="tiny muted">Also: {r.also.join(", ")}</div>}
         </div>
-        {r.attempt_id ? (
-          <Link href={studentHref(r.student_id, r.attempt_id)} className={btn}>
-            Review attempt
-          </Link>
-        ) : (
-          <Link href={studentHref(r.student_id)} className={btn}>
-            Open student
-          </Link>
-        )}
+        <Link href={`${studentHref(r.student_id, r.attempt_id)}#why`} className={btn}>
+          {ROW_ACTION[r.kind]}
+        </Link>
       </li>
     );
   };
@@ -224,7 +227,7 @@ function MostMissed({ lesson, primary }: { lesson: MiniLesson; primary: boolean 
       </p>
       <div className="tip">
         <div className="eyebrow ic-tip-label">10-minute mini-lesson</div>
-        <div className="small">{check.miniLesson}</div>
+        <div className="small">{plainCurriculum(check.miniLesson)}</div>
       </div>
       <div className="ic-actions">
         <AssignMiniLesson title={check.text.replace(/\?$/, "")} primary={primary} />

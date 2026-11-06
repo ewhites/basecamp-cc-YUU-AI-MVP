@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { SampleTag } from "./Tags";
 
@@ -7,7 +8,8 @@ export function Topbar({ user, crumb }: { user: { name: string; initials: string
     <header className="topbar">
       <div className="topbar-inner">
         <Link href="/lab" className="brand">
-          <span className="brand-mark" aria-hidden>AI</span>
+          <Image src="/year-up-united.png" alt="Year Up United" className="brand-logo" width={85} height={28} priority />
+          <span className="bar-v" aria-hidden />
           <span>AI Lab</span>
         </Link>
         <nav className="crumbs" aria-label="Breadcrumb">
