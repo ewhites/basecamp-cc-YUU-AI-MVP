@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "ai-lab": {
+      "command": "npx",
+      "args": ["tsx", "mcp/server.ts"],
+      "env": {
+        "LAB_MCP_PERSONA": "rivera"
+      }
+    }
+  }
+}

@@ -1,10 +1,42 @@
+# dependencies
 node_modules/
-.env
-.env.*
+
+# builds
+.next/
+out/
 dist/
 build/
-.DS_Store
-Thumbs.db
+*.tsbuildinfo
+next-env.d.ts
+
+# secrets: every env file except the example
+.env
+.env.*
+!.env.example
+
+# test output
+test-results/
+playwright-report/
+coverage/
+
+# supabase local state
+supabase/.temp/
+supabase/.branches/
+
+# python eval
+.venv/
 __pycache__/
 *.pyc
-.venv/
+
+# eval run artifacts
+.claude/hillclimb/**/traces/
+.claude/hillclimb/**/report.html
+.claude/hillclimb/**/trajectory/
+eval/reports/*.json
+!eval/reports/.gitkeep
+
+# os
+.DS_Store
+Thumbs.db
+.vercel
+.env*

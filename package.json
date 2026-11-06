@@ -1,0 +1,40 @@
+{
+  "name": "yuu-ai-lab",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "eval": "tsx eval/coach/run.ts",
+    "mcp": "tsx mcp/server.ts",
+    "prepare": "git config core.hooksPath .githooks || true",
+    "mcp:test": "tsx mcp/test-client.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "1.1.0",
+    "@brightspace-ui/core": "3.332.1",
+    "@modelcontextprotocol/sdk": "1.32.1",
+    "next": "16.4.2",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "server-only": "0.0.1",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.1",
+    "@types/node": "26.6.5",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "eslint": "10.13.0",
+    "eslint-config-next": "16.4.2",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3",
+    "vitest": "4.1.12"
+  }
+}

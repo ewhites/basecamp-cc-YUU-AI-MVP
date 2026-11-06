@@ -1,0 +1,40 @@
+/* Skills checks, the skills page and the shared portfolio. Uses the tokens in globals.css. */
+
+/* ---------- skill bars ---------- */
+.skillbars { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 32px; }
+@media (max-width: 720px) { .skillbars { grid-template-columns: 1fr; } }
+.skillbar-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.skillbar-value { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.skillbar-bars { display: grid; gap: 4px; margin-top: 8px; }
+.skillbar-start > span { background: var(--faint); }
+
+/* ---------- check player ---------- */
+.check-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 14px; color: var(--muted); margin-bottom: 8px; }
+.seg { display: grid; grid-template-columns: repeat(var(--n, 4), 1fr); gap: 6px; }
+.seg > span { height: 6px; border-radius: 999px; background: var(--line); }
+.seg > span.done { background: var(--ok); }
+.seg > span.on { background: var(--accent); }
+.task-list { list-style: none; margin: 0; padding: 0; }
+.task-list > li { display: grid; grid-template-columns: 28px 1fr; gap: 12px; align-items: center; padding: 12px 0; border-top: 1px solid var(--line); }
+.task-list > li:first-child { border-top: 0; padding-top: 0; }
+.task-list > li:last-child { padding-bottom: 0; }
+.task-num { width: 26px; height: 26px; border-radius: 50%; background: var(--surface-2); color: var(--muted); display: grid; place-items: center; font-size: 13px; font-weight: 700; }
+.task-num.done { background: var(--ok); color: #fff; }
+.answer-text { white-space: pre-wrap; word-break: break-word; background: var(--surface-2); border-radius: var(--radius); padding: 12px 14px; font-size: 15px; }
+.material-label { font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+.form-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 12px; }
+
+/* ---------- skills page ---------- */
+.badge-mark { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 18px; flex: none; background: var(--surface-2); color: var(--faint); border: 2px dashed var(--line-strong); }
+.badge-mark.earned { background: var(--ok); color: #fff; border: 0; }
+.todo { list-style: none; margin: 0; padding: 0; }
+.todo > li { padding: 8px 0; border-top: 1px solid var(--line); font-size: 15px; }
+.todo > li:first-child { border-top: 0; }
+.module-row { display: grid; grid-template-columns: 22px 1fr auto; gap: 10px; align-items: center; padding: 8px 0; font-size: 15px; }
+.module-row + .module-row { border-top: 1px solid var(--line); }
+.module-row .step-dot { margin-top: 0; }
+.score-quiet { font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* ---------- shared portfolio (public, outside the Lab shell) ---------- */
+.public-wrap { max-width: 860px; margin: 0 auto; padding: 32px 24px 64px; }
+@media (max-width: 640px) { .public-wrap { padding: 24px 16px 48px; } }

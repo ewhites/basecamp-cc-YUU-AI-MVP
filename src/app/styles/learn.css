@@ -1,0 +1,97 @@
+/* learn pages (lessons and practice). Uses the tokens in globals.css. */
+
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+.text-bad { color: var(--bad); }
+
+/* ---------- lesson ---------- */
+.lesson > header h1 { margin-bottom: 10px; }
+.lead { font-size: 18px; line-height: 1.6; color: var(--ink-2); margin: 0; max-width: 68ch; }
+.example-lines .example-line { display: block; }
+.example-lines .example-line + .example-line,
+.example-lines .example-slot { margin-top: 8px; }
+.example-lines .mark { display: inline; }
+.example-body .mark { box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+.example-slot { display: block; margin-top: 8px; }
+.faded-input { min-height: 72px; border-style: dashed; border-width: 2px; background: var(--surface); font-size: 15px; }
+.faded-input.mark-a-line { border-color: #9dbcf2; }
+.faded-input.mark-b-line { border-color: #8fd0b1; }
+.faded-input.mark-c-line { border-color: #f0b878; }
+.faded-input.mark-d-line { border-color: #d7a5dc; }
+.model-answer { border-left: 3px solid var(--ok); background: var(--ok-soft); padding: 12px 16px; border-radius: 0 var(--radius) var(--radius) 0; }
+
+/* Part notes: the colored chip doubles as the legend. */
+.annot { list-style: none; margin-bottom: 0; padding: 0; display: grid; gap: 8px; }
+.annot li { display: grid; grid-template-columns: 136px 1fr; gap: 12px; align-items: baseline; font-size: 15px; }
+.annot li .mark { font-weight: 600; font-size: 14px; justify-self: start; }
+@media (max-width: 640px) { .annot li { grid-template-columns: 1fr; gap: 2px; } }
+
+.compare { overflow-x: auto; }
+.compare table.table { font-size: 14px; }
+.compare table.table td:nth-child(3), .compare table.table td:nth-child(4) { white-space: nowrap; color: var(--muted); }
+
+.recap { list-style: none; margin-bottom: 0; padding: 0; display: grid; gap: 8px; }
+.recap li { position: relative; padding-left: 28px; }
+.recap li::before { content: "✓"; position: absolute; left: 0; top: 2px; width: 18px; height: 18px; border-radius: 50%; background: var(--ok); color: #fff; font-size: 11px; font-weight: 700; display: grid; place-items: center; }
+
+.lesson-foot { display: flex; align-items: center; justify-content: flex-end; gap: 16px; flex-wrap: wrap; padding-top: 4px; }
+
+/* Chat bubbles: lesson example and the bot test transcript. */
+.chat { display: grid; gap: 8px; }
+.chat + .chat { border-top: 1px solid var(--line); padding-top: 14px; }
+.bubble { max-width: 85%; padding: 10px 14px; font-size: 15px; line-height: 1.5; white-space: pre-wrap; }
+.bubble-in { background: var(--surface-2); border-radius: 12px 12px 12px 4px; justify-self: start; }
+.bubble-out { background: var(--accent-soft); border-radius: 12px 12px 4px 12px; justify-self: end; }
+.bubble-from { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 2px; white-space: normal; }
+
+/* ---------- practice ---------- */
+.practice > header h1 { font-size: 26px; }
+.form-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.task-links { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-top: 4px; }
+.task-links > .disclosure { flex: 1; min-width: 240px; }
+.task-links > a { margin-left: auto; padding-top: 1px; }
+.checklist { margin: 8px 0 0; padding-left: 20px; font-size: 15px; display: grid; gap: 4px; }
+.test-messages { list-style: none; margin-bottom: 0; padding: 0; display: grid; gap: 8px; }
+.test-messages li { background: var(--surface-2); border-radius: var(--radius); padding: 10px 12px; }
+
+/* Disclosures (material, checklist, history): a quiet text toggle with a chevron. */
+.disclosure > summary { cursor: pointer; list-style: none; display: inline-flex; align-items: center; gap: 6px; font-size: 15px; font-weight: 600; color: var(--ink-2); }
+.disclosure > summary::-webkit-details-marker { display: none; }
+.disclosure > summary::before { content: ""; width: 7px; height: 7px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(-45deg); transition: transform 120ms ease; margin-right: 2px; }
+.disclosure[open] > summary::before { transform: rotate(45deg); }
+.disclosure > summary:hover { color: var(--accent); }
+.disclosure > pre { margin-top: 8px; }
+.history { display: grid; gap: 12px; margin-top: 14px; }
+.history > .disclosure { border-top: 1px solid var(--line); padding-top: 12px; }
+.history > .disclosure > summary { font-weight: 400; font-size: 14px; }
+
+/* "Ask the coach": collapsed and quiet, never the main element. */
+.quiet-panel { border: 1px dashed var(--line-strong); border-radius: var(--radius-lg); padding: 12px 16px; background: transparent; }
+.quiet-panel > summary { cursor: pointer; list-style: none; font-size: 14px; color: var(--muted); font-weight: 600; }
+.quiet-panel > summary::-webkit-details-marker { display: none; }
+.quiet-panel > summary::after { content: " +"; }
+.quiet-panel[open] > summary::after { content: " –"; }
+.quiet-panel > summary:hover { color: var(--accent); }
+
+/* Result card */
+.result-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.result-score { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.result .tip { font-size: 15px; }
+.result .tip .eyebrow { margin-bottom: 2px; }
+
+/* ---------- Model Arena ---------- */
+.arena-steps { padding: 2px 0; }
+.model-card { display: flex; flex-direction: column; gap: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 14px; min-width: 0; }
+.model-card.picked { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.model-text { flex: 1; max-height: 320px; font-family: var(--font); font-size: 14px; line-height: 1.5; }
+.model-meta { display: flex; justify-content: space-between; color: var(--muted); font-variant-numeric: tabular-nums; }
+.choices { border: 0; margin: 0; padding: 0; min-width: 0; }
+.step-title, .choices > legend { display: block; font-size: 20px; font-weight: 600; line-height: 1.3; padding: 0; margin: 0 0 10px; color: var(--ink); }
+.choice-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.choice { display: inline-flex; align-items: center; gap: 8px; margin: 0; font-size: 15px; font-weight: 600; border: 1px solid var(--line-strong); border-radius: var(--radius); padding: 8px 14px; cursor: pointer; background: var(--surface); }
+.choice:hover { border-color: var(--accent); }
+.choice.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-ink); }
+.choice:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+.hints { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 2px; font-size: 14px; color: var(--muted); }
+.hints b { color: var(--ink-2); }
+.stack > .checks:not(:first-child) { margin-top: 16px; }
+.focus-card { border-left: 4px solid var(--warn); }

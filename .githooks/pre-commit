@@ -1,0 +1,22 @@
+#!/bin/sh
+# Blocks commits that would leak secrets. Enabled with: git config core.hooksPath .githooks
+# (npm install runs that automatically via the "prepare" script.)
+
+staged=$(git diff --cached --name-only --diff-filter=ACMR)
+
+for f in $staged; do
+  case "$(basename "$f")" in
+    .env.example) ;;
+    .env|.env.*)
+      echo "pre-commit: blocked. '$f' is an env file and must never be committed." >&2
+      exit 1 ;;
+  esac
+done
+
+# Any Anthropic key pattern in the staged diff (added lines only).
+if git diff --cached -U0 | grep -E '^\+' | grep -Eq 'sk-ant-[A-Za-z0-9_-]{8,}'; then
+  echo "pre-commit: blocked. The staged changes contain something that looks like an Anthropic API key (sk-ant-...)." >&2
+  exit 1
+fi
+
+exit 0
