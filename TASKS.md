@@ -8,8 +8,11 @@ Logan's picks, 2026-11-19: Kaleos HQ design in Year Up colours, light reading sh
 - [x] Vision board 1 and 2, with his picks
 - [x] Design rules (unslop audit, research, Kaleos type sizes, elastic marker)
 - [x] Build plan
+- [x] Materials: blue linen and orange marble (`public/materials/`)
+- [x] Handoff to the Year Up enterprise account (`docs/redesign/HANDOFF.md`)
 
 ## Phase 1: foundation
+Status 2026-11-19: partly built (commit e6cb13d). Type check, lint and unit tests pass. Build, screenshots, ground wiring, show and study grounds, dock dimming still open. See docs/redesign/HANDOFF.md.
 - [ ] `src/design/tokens.css`, `base.css`, `components.css`
 - [ ] Fonts with `next/font` (Fraunces, Hanken Grotesk)
 - [ ] `kmk.ts` and `Elastic.tsx` (the elastic marker)
