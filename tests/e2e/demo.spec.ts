@@ -131,6 +131,9 @@ test("removed screens and accounts are gone", async ({ page }) => {
   await expect(page).toHaveURL(/\/lab\/admin$/);
   for (const who of ["rivera", "jasmine"]) {
     await page.goto(`/launch?as=${who}`);
+    // Let the sign-in redirect land before leaving, or the next navigation aborts the one still in flight.
+    await page.waitForURL(/\/lab/);
+    await page.waitForLoadState("networkidle");
     for (const url of ["/lab/admin", "/lab/curriculum", "/lab/security-check"]) {
       const res = await page.goto(url);
       expect(res?.status(), `${who} ${url}`).toBe(404);
