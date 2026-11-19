@@ -9,6 +9,7 @@
  * Plus program rollups scaled to a 1,700-student cycle for the admin and curriculum views.
  * All names are invented. No real student data.
  */
+import { ALL_STEPS } from "../curriculum/course";
 import { EXERCISES } from "../curriculum/exercises";
 import type { Skill } from "../curriculum/types";
 import { SKILLS } from "../curriculum/types";
@@ -248,9 +249,14 @@ export function seedStore(s: Store) {
     }
   }
 
-  insertRows(s, "attempts", attempts);
-  insertRows(s, "check_results", results);
-  insertRows(s, "usage_ledger", usage);
+  // Tasks that left the course map (Module 3 now has two demos and one live build) keep no sample history.
+  // Filtered after generation, so the random draws, and the class story, stay exactly the same.
+  const inCourse = new Set(ALL_STEPS.map((st) => st.exerciseId).filter(Boolean));
+  const offMap = new Set(EXERCISES.filter((e) => !inCourse.has(e.id)).map((e) => e.id));
+  const dropped = new Set((attempts as { id: string; exercise_id: string }[]).filter((a) => offMap.has(a.exercise_id)).map((a) => a.id));
+  insertRows(s, "attempts", (attempts as { id: string }[]).filter((a) => !dropped.has(a.id)) as Row[]);
+  insertRows(s, "check_results", (results as { attempt_id: string }[]).filter((r) => !dropped.has(r.attempt_id)) as Row[]);
+  insertRows(s, "usage_ledger", (usage as { exercise_id?: string }[]).filter((u) => !u.exercise_id || !offMap.has(u.exercise_id)) as Row[]);
 
   // ---------------- safety flags and audit history
   insertRows(s, "safety_flags", [
