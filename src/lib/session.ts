@@ -30,10 +30,10 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
   return { userId, role: profile.role, name: profile.display_name, persona: profile.persona, student };
 });
 
-/** Page guard: sends signed-out users to the simulated Brightspace course page, wrong roles to their home. */
+/** Page guard: sends signed-out users to sign-in, wrong roles to their own start page (/home picks it by role). */
 export async function requireRole(...roles: Role[]): Promise<Viewer> {
   const v = await getViewer();
   if (!v) redirect("/");
-  if (!roles.includes(v.role)) redirect("/lab");
+  if (!roles.includes(v.role)) redirect("/home");
   return v;
 }

@@ -12,7 +12,7 @@ Flow: simulated Year Up sign-in (`/`, two accounts: Jasmine Carter, student; Ms.
 - **Module 1, Writing prompts (Prompt Studio):** lesson with an annotated worked example, then 3 practice tasks: write a prompt, see the output, get scored and coached, retry.
 - **Module 2, Comparing models (Model Arena):** lesson, then a guided 3-step flow: one prompt on Haiku, Sonnet and Opus, compare, pick and explain why.
 - **Module 3, Building a bot (Agent Builder):** lesson, then write a bot's instructions, test it on 3 scripted coworker messages, fix what breaks.
-- Around them: the skills page and badge (`/lab/skills`), the instructor console (`/lab/instructor`), a read-only MCP server. Curriculum and admin roles exist in the data layer and access tests only (no screens in this demo).
+- Around them: the skills page and badge (`/lab/skills`), the instructor console (`/lab/instructor`), a read-only MCP server, and the admin cost view (`/lab/admin`, sign in as Sam Lee: spend against the monthly budget with 50/80/100% alerts, totals only). Facilitators change one student's daily token limit with a reason on the student page (`cap_overrides`, logged). The curriculum role exists in the data layer and access tests only (no sign-in, no screens).
 
 The one thing this prototype must prove: **a Claude coach can grade students' AI work reliably.** Gate: at least 80% agreement with human labels on yes/no rubric checks (held-out set), and 20/20 on the safety set.
 

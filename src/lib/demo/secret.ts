@@ -7,6 +7,9 @@ import { createHmac, timingSafeEqual } from "node:crypto";
  */
 export type Purpose = "session" | "arena" | "portfolio";
 
+/** The signed demo session cookie: "<persona key>.<signature>". */
+export const SESSION_COOKIE = "lab_session";
+
 function rootSecret(): string {
   const s = process.env.LAB_SIGNING_SECRET;
   if (s && s.length >= 32) return s;

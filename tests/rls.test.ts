@@ -107,6 +107,60 @@ describe.skipIf(!available)("row-level security", () => {
     expect(await count(lee.from("audit_log").select("id", { count: "exact", head: true }))).toBe(before + 1);
   });
 
+  it("daily limit changes: a facilitator reads and sets them only for their own sections", async () => {
+    // Seeded: three changes in Section B, none elsewhere.
+    expect(await count(rivera.from("cap_overrides").select("id", { count: "exact", head: true }))).toBe(3);
+    const haddad = await as("haddad");
+    expect(await count(haddad.from("cap_overrides").select("id", { count: "exact", head: true }))).toBe(0);
+    // Wrong section, wrong role, no reason, out of range: all refused.
+    expect((await haddad.rpc("set_daily_cap", { p_student: "S-B-005", p_tokens: 90000, p_reason: "not my student" })).error).not.toBeNull();
+    expect((await rivera.rpc("set_daily_cap", { p_student: "S-A-005", p_tokens: 90000, p_reason: "not my section" })).error).not.toBeNull();
+    expect((await jasmine.rpc("set_daily_cap", { p_student: "S-B-012", p_tokens: 300000, p_reason: "more please" })).error).not.toBeNull();
+    expect((await lee.rpc("set_daily_cap", { p_student: "S-B-005", p_tokens: 90000, p_reason: "admin" })).error).not.toBeNull();
+    expect((await rivera.rpc("set_daily_cap", { p_student: "S-B-005", p_tokens: 90000, p_reason: "  " })).error).not.toBeNull();
+    expect((await rivera.rpc("set_daily_cap", { p_student: "S-B-005", p_tokens: 10, p_reason: "too low" })).error).not.toBeNull();
+    // Direct table writes are refused for everyone but the server.
+    expect((await rivera.from("cap_overrides").insert({ student_id: "S-B-005", daily_tokens: 90000, reason: "direct", actor: PERSONA_IDS.rivera })).error).not.toBeNull();
+
+    const auditBefore = await count(lee.from("audit_log").select("id", { count: "exact", head: true }).eq("action", "set_daily_cap"));
+    const { data, error } = await rivera.rpc("set_daily_cap", { p_student: "S-B-005", p_tokens: 90000, p_reason: "Extra practice before the final check" });
+    expect(error).toBeNull();
+    expect(data).toMatchObject({ student_id: "S-B-005", daily_tokens: 90000, previous_tokens: 60000, actor: PERSONA_IDS.rivera });
+    expect(await count(lee.from("audit_log").select("id", { count: "exact", head: true }).eq("action", "set_daily_cap"))).toBe(auditBefore + 1);
+    const { data: status } = await rivera.rpc("daily_cap_status", { p_student: "S-B-005", p_since: new Date(0).toISOString() });
+    expect(status).toMatchObject({ default_tokens: 60000, daily_tokens: 90000 });
+    expect((await haddad.rpc("daily_cap_status", { p_student: "S-B-005", p_since: new Date(0).toISOString() })).error).not.toBeNull();
+  });
+
+  it("daily limit changes: a student reads only their own, an admin reads all", async () => {
+    expect(await count(jasmine.from("cap_overrides").select("id", { count: "exact", head: true }))).toBe(0);
+    const service = new DemoClient({ kind: "service" });
+    await service.from("cap_overrides").insert({ student_id: "S-B-012", daily_tokens: 70000, previous_tokens: 60000, reason: "Test row", actor: PERSONA_IDS.rivera });
+    const { data: mine } = await jasmine.from("cap_overrides").select("student_id");
+    expect((mine ?? []).map((r) => r.student_id)).toEqual(["S-B-012"]);
+    expect(await count(okafor.from("cap_overrides").select("id", { count: "exact", head: true }))).toBe(0);
+    const all = await count(lee.from("cap_overrides").select("id", { count: "exact", head: true }));
+    expect(all).toBe(await count(service.from("cap_overrides").select("id", { count: "exact", head: true })));
+    expect(all).toBeGreaterThanOrEqual(5);
+  });
+
+  it("the admin cost summary is admin-only and holds totals, never content", async () => {
+    for (const who of [jasmine, rivera, okafor]) expect((await who.rpc("admin_cost_summary", { p_month_start: new Date(0).toISOString(), p_week_start: new Date(0).toISOString() })).error).not.toBeNull();
+    const { data, error } = await lee.rpc("admin_cost_summary", { p_month_start: new Date(0).toISOString(), p_week_start: new Date(0).toISOString() });
+    expect(error).toBeNull();
+    expect(data.spend_usd).toBeGreaterThan(0);
+    expect(data.top_spenders.length).toBeGreaterThan(0);
+    expect(data.by_model.map((m: { model: string }) => m.model)).toContain("claude-haiku-5-5");
+    expect(data.top_lessons.length).toBeGreaterThan(0);
+    // Only these totals come back: no names, no attempt text, no model output.
+    expect(Object.keys(data.top_spenders[0]).sort()).toEqual(["calls", "cost_usd", "section_id", "student_id", "tokens"]);
+    expect(Object.keys(data.top_lessons[0]).sort()).toEqual(["cost_usd", "exercise_id", "students", "tokens"]);
+    expect(Object.keys(data.by_model[0]).sort()).toEqual(["cache_read", "cache_write", "calls", "cost_usd", "input", "model", "output"]);
+    const text = JSON.stringify(data);
+    const { data: work } = await new DemoClient({ kind: "service" }).from("attempts").select("input").eq("student_id", "S-B-005").limit(3);
+    for (const w of work ?? []) for (const v of Object.values(w.input as Record<string, string>)) if (typeof v === "string" && v.length > 20) expect(text).not.toContain(v);
+  });
+
   it("signed-out requests see nothing and cannot call functions", async () => {
     // Signed out: either an error (no execute grant on the RLS helper) or zero rows. Never data.
     const { data: rows, error: e1 } = await anon.from("attempts").select("id").limit(5);

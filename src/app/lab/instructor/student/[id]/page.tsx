@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CheckList, type CheckLike } from "@/components/CheckList";
+import { LimitLog } from "@/components/LimitLog";
 import { SampleTag, StatusTag } from "@/components/Tags";
 import { Button } from "@/design/Button";
 import { CoachPanel } from "@/design/CoachPanel";
@@ -23,9 +24,11 @@ import {
   type SafetyFlagRow,
   type StudentReason,
 } from "@/lib/instructor-data";
+import { MAX_DAILY_TOKENS, MIN_DAILY_TOKENS } from "@/lib/coach/budget";
+import { capStatus, overridesFor, tokens, type CapOverride, type CapStatus } from "@/lib/cost-data";
 import { scoreChecks } from "@/lib/progress";
 import { requireRole } from "@/lib/session";
-import { OverrideForm, ResolveFlagForm } from "../../ConsoleButtons";
+import { DailyLimitForm, OverrideForm, ResolveFlagForm } from "../../ConsoleButtons";
 import { percent, sectionHref, shortDate, studentHref } from "../../links";
 
 const rise = (i: number) => ({ "--i": i }) as React.CSSProperties;
@@ -40,7 +43,7 @@ function Back({ href, children }: { href: string; children: React.ReactNode }) {
 }
 
 export default async function StudentPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ attempt?: string }> }) {
-  await requireRole("instructor");
+  const viewer = await requireRole("instructor");
   const { id } = await params;
   const { attempt: attemptId } = await searchParams;
   const student = await studentById(decodeURIComponent(id));
@@ -59,12 +62,14 @@ export default async function StudentPage({ params, searchParams }: { params: Pr
     );
   }
 
-  const [attempts, rows, replay, flags, overview] = await Promise.all([
+  const [attempts, rows, replay, flags, overview, cap, limitChanges] = await Promise.all([
     studentAttempts(student.id),
     checkRowsFor([student.id]),
     attemptId ? attemptReplay(attemptId) : Promise.resolve(null),
     studentFlags(student.id),
     sectionOverview(student.section_id),
+    capStatus(student.id),
+    overridesFor([student.id], 5),
   ]);
   const reasons = studentReasons(student, rows, attempts, flags, overview.stuck);
   const handled = flags.filter((f) => f.status === "resolved");
@@ -194,11 +199,54 @@ export default async function StudentPage({ params, searchParams }: { params: Pr
               </>
             )}
           </section>
+          {cap && <DailyLimit studentId={student.id} first={first} cap={cap} changes={limitChanges} viewerId={viewer.userId} />}
         </Sheet>
 
         <CoachDraft attempt={ok} first={first} />
       </div>
     </div>
+  );
+}
+
+/** The student's daily token limit, today's use, the form to change it, and the last few changes. Totals only. */
+function DailyLimit({ studentId, first, cap, changes, viewerId }: { studentId: string; first: string; cap: CapStatus; changes: CapOverride[]; viewerId: string }) {
+  const share = cap.daily_tokens > 0 ? Math.min(1, cap.used_today / cap.daily_tokens) : 0;
+  const changed = cap.override !== null && cap.daily_tokens !== cap.default_tokens;
+  return (
+    <section className="st-sec ds-rise" style={rise(4)} id="limit" data-testid="daily-limit" aria-labelledby="limit-h">
+      <h2 id="limit-h">Daily limit</h2>
+      <dl className="ds-rows st-kv">
+        <div className="ds-row">
+          <dt>Limit</dt>
+          <dd>
+            <b className="ds-num" data-testid="limit-current">
+              {tokens(cap.daily_tokens)} tokens
+            </b>
+            <span>{changed ? `Changed from the default of ${tokens(cap.default_tokens)}` : "Default for every student"}</span>
+          </dd>
+        </div>
+        <div className="ds-row">
+          <dt>Used today</dt>
+          <dd>
+            <b className="ds-num" data-testid="limit-used">
+              {tokens(cap.used_today)} tokens
+            </b>
+            <span>{Math.round(share * 100)}% of the limit</span>
+          </dd>
+        </div>
+      </dl>
+      <span className="ds-track st-limit-bar" role="img" aria-label={`${Math.round(share * 100)}% of today's limit used`}>
+        <i style={{ width: `${Math.round(share * 100)}%` }} />
+      </span>
+      <p className="st-fine">When {first} reaches the limit, new attempts are saved and scored the next day</p>
+      <DailyLimitForm studentId={studentId} current={cap.daily_tokens} min={MIN_DAILY_TOKENS} max={MAX_DAILY_TOKENS} />
+      {changes.length > 0 && (
+        <div className="st-sub">
+          <h3 className="st-h3">Changes</h3>
+          <LimitLog rows={changes} actor={(id) => (id === viewerId ? "You" : "Another facilitator")} />
+        </div>
+      )}
+    </section>
   );
 }
 

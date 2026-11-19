@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { SimulatedTag } from "@/components/Tags";
 import { Icon } from "@/design/icons";
-import { overrideCheckAction, releaseScoresAction, resolveFlagAction } from "./actions";
+import { overrideCheckAction, releaseScoresAction, resolveFlagAction, setDailyCapAction } from "./actions";
 
 /** The outlined second button on the cream sheet. The one orange button on a screen is the main step. */
 const LINE = "ds-btn ds-sq st-btn-line";
@@ -169,6 +169,80 @@ export function ResolveFlagForm({ flagId, label, placeholder, primary = false }:
         </button>
       </div>
       {msg && <Said ok={false}>{msg.text}</Said>}
+    </form>
+  );
+}
+
+/** Change one student's daily token limit. A reason is required; the change is logged with the old and new limit. */
+export function DailyLimitForm({ studentId, current, min, max }: { studentId: string; current: number; min: number; max: number }) {
+  const [value, setValue] = useState(String(current));
+  const [reason, setReason] = useState("");
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [pending, start] = useTransition();
+  const fmt = (n: number) => n.toLocaleString("en-US");
+  return (
+    <form
+      className="st-ov st-limit-form"
+      data-testid="daily-limit-form"
+      onSubmit={(e) => {
+        e.preventDefault();
+        setMsg(null);
+        const n = Number(value.replace(/[,\s]/g, ""));
+        if (!Number.isInteger(n) || n < min || n > max) {
+          setMsg({ ok: false, text: `Pick a whole number from ${fmt(min)} to ${fmt(max)}` });
+          return;
+        }
+        if (!reason.trim()) {
+          setMsg({ ok: false, text: "Add a short reason for the change" });
+          return;
+        }
+        start(async () => {
+          const r = await setDailyCapAction(studentId, n, reason);
+          if (r.ok) {
+            setReason("");
+            setMsg({ ok: true, text: `Limit set to ${fmt(r.value)} tokens a day. The change is logged with your reason` });
+          } else setMsg({ ok: false, text: r.error });
+        });
+      }}
+    >
+      <div className="st-ov-fields">
+        <div className="st-field st-field-tokens">
+          <label htmlFor="limit-tokens">New daily limit (tokens)</label>
+          <input
+            id="limit-tokens"
+            type="text"
+            inputMode="numeric"
+            autoComplete="off"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            aria-describedby="limit-range"
+            data-testid="limit-tokens"
+          />
+        </div>
+        <div className="st-field st-field-grow">
+          <label htmlFor="limit-reason">Reason (required)</label>
+          <input
+            id="limit-reason"
+            type="text"
+            value={reason}
+            maxLength={500}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="For example: Make-up session after missing class"
+            data-testid="limit-reason"
+          />
+        </div>
+        <button type="submit" className={LINE} disabled={pending} data-testid="set-limit">
+          {pending ? "Saving…" : "Set limit"}
+        </button>
+      </div>
+      <p className="st-fine" id="limit-range">
+        From {fmt(min)} to {fmt(max)} tokens. Admins see every change in the limit log
+      </p>
+      {msg && (
+        <Said ok={msg.ok} testid="limit-result">
+          {msg.text}
+        </Said>
+      )}
     </form>
   );
 }

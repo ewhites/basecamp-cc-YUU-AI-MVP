@@ -45,6 +45,7 @@ export default async function SignIn() {
                     {PERSONAS.map((p) => {
                       const student = p.role === "student";
                       const who = student ? p.name.split(" ")[0] : p.name;
+                      const role = student ? "student" : p.role === "admin" ? "admin" : "facilitator";
                       return (
                         <a
                           key={p.key}
@@ -53,7 +54,7 @@ export default async function SignIn() {
                           data-testid={`signin-${p.key}`}
                         >
                           Sign in as {who}
-                          <span className="ds-sr">, {student ? "student" : "facilitator"}</span>
+                          <span className="ds-sr">, {role}</span>
                           {!student && <Icon name="arrow" />}
                         </a>
                       );

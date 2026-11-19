@@ -25,9 +25,11 @@ const ROUTES = [
   ["home-instructor", "rivera", "/home"],
   ["instructor", "rivera", "/lab/instructor?section=B"],
   ["student", "rivera", "/lab/instructor/student/S-B-012"],
+  ["student-limit", "rivera", "/lab/instructor/student/S-B-017"],
+  ["admin", "lee", "/lab/admin"],
 ];
 
-const SIZES = [["d", 1440, 900], ["m", 390, 844]];
+const SIZES = (process.env.SIZES ?? "d,m").split(",").map((k) => ({ d: ["d", 1440, 900], t: ["t", 1024, 768], m: ["m", 390, 844], n: ["n", 320, 640] })[k]).filter(Boolean);
 const browser = await chromium.launch();
 for (const [w, width, height] of SIZES) {
   const ctx = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: 1 });

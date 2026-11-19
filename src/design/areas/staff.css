@@ -299,3 +299,24 @@
 .st-copy .ds-btn { flex: none; }
 .st-preview { justify-self: start; }
 .st-preview .ds-icon { width: 16px; height: 16px; }
+
+/* ------------------------------------------------------------------ daily limit and its log (console, student page, admin) */
+.st-limit-bar { display: block; height: 6px; max-width: 40em; }
+.st-field-tokens { width: 12rem; }
+.st-limit-form { padding-top: 8px; }
+.st-lims { display: grid; }
+.st-lim { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px 24px; padding: 14px 0; border-top: 1px solid var(--hair); }
+.st-lims > .st-lim:first-child { border-top: 0; padding-top: 4px; }
+.st-lim-who { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; }
+.st-lim-who a, .st-lim-who b { font-weight: 600; font-size: var(--fs-small); }
+.st-lim-who a:hover { text-decoration: underline; }
+.st-lim-who span { font-size: var(--fs-fine); color: var(--t2); }
+.st-lim-what { display: grid; gap: 2px; min-width: 0; font-size: var(--fs-small); }
+.st-lim-what b { font-weight: 600; }
+.st-lim-reason { color: var(--t2); line-height: 1.45; max-width: 40em; overflow-wrap: anywhere; }
+.st-lim-when { display: flex; gap: 10px; font-size: var(--fs-fine); color: var(--t2); white-space: nowrap; }
+@media (min-width: 1024px) {
+  .st-lim { grid-template-columns: 11em minmax(0, 1fr) auto; align-items: baseline; }
+  .st-lim:not(:has(.st-lim-who)) { grid-template-columns: minmax(0, 1fr) auto; }
+  .st-lim-who { flex-direction: column; gap: 2px; }
+}

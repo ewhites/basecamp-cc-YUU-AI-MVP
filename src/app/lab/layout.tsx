@@ -59,6 +59,17 @@ async function instructorDock(): Promise<{ places: DockPlace[]; next: { label: s
   }
 }
 
+/** Admin dock: the cost view and its limit log, as anchors on one page. No "Next" button. */
+function adminDock(): { places: DockPlace[]; next: null } {
+  return {
+    places: [
+      { label: "Cost", href: "/lab/admin", icon: "skills", match: ["/lab/admin", "/lab$"] },
+      { label: "Overrides", href: "/lab/admin#overrides", icon: "flag", match: [] },
+    ],
+    next: null,
+  };
+}
+
 /**
  * The lab shell: the ground, the top bar, the page, and the dock. The left syllabus rail is gone.
  * The ground is "study" (calm) on lessons, practice, checks and instructor pages, "show" on the course home and skills.
@@ -68,7 +79,7 @@ export default async function LabLayout({ children }: { children: React.ReactNod
   if (!v) redirect("/");
   const p = persona(v.persona);
   const user = { name: v.name, initials: p?.initials ?? v.name.slice(0, 2).toUpperCase(), detail: p?.description ?? "" };
-  const dock = v.role === "student" ? await studentDock() : await instructorDock();
+  const dock = v.role === "student" ? await studentDock() : v.role === "admin" ? adminDock() : await instructorDock();
 
   // The ground image is the first thing painted: fetch it early.
   preload("/materials/ground.webp", { as: "image", fetchPriority: "high" });

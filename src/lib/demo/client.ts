@@ -1,3 +1,4 @@
+import { budgetConfig, dailyLimit, MAX_DAILY_TOKENS, MIN_DAILY_TOKENS } from "../coach/budget";
 import { getStore } from "./instance";
 import { deleteRows, insertRows, patchRow, type Row, type Store, type TableName } from "./store";
 import { pullChanges, pushChanges } from "./sync";
@@ -91,6 +92,9 @@ function visible(s: Store, actor: Actor, table: TableName, row: Row): boolean {
       return c.role === "admin" || c.role === "curriculum" || c.role === "instructor";
     case "program_rollups":
       return c.role === "admin" || c.role === "curriculum" || c.role === "instructor";
+    case "cap_overrides":
+      // Students see their own limit changes, facilitators those for their sections, admins all.
+      return c.role === "admin" || canSeeStudent(s, c, row.student_id);
   }
 }
 
@@ -309,6 +313,20 @@ function audit(s: Store, c: Ctx, action: string, target: string | null, reason: 
   insertRows(s, "audit_log", [{ actor: c.uid, actor_role: c.role, action, target, reason }]);
 }
 
+/** The newest limit change for one student, or null. */
+function latestOverride(s: Store, studentId: unknown): Row | null {
+  let best: Row | null = null;
+  for (const r of s.tables.cap_overrides) {
+    if (r.student_id !== studentId) continue;
+    if (!best || cmp(r.created_at, best.created_at) > 0 || (r.created_at === best.created_at && cmp(r.id, best.id) > 0)) best = r;
+  }
+  return best;
+}
+
+const tokensOf = (u: Row) => Number(u.input_tokens) + Number(u.output_tokens);
+const allTokensOf = (u: Row) => tokensOf(u) + Number(u.cache_read_tokens) + Number(u.cache_write_tokens);
+const round4 = (x: number) => Math.round(x * 10000) / 10000;
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const RPCS: Record<string, (s: Store, c: Ctx, a: Record<string, any>) => unknown> = {
   log_attempt_view(s, c, a) {
@@ -393,6 +411,96 @@ const RPCS: Record<string, (s: Store, c: Ctx, a: Record<string, any>) => unknown
       agg.set(k, g);
     }
     return [...agg.values()].map((g) => ({ ...g, cost_usd: Math.round(g.cost_usd * 10000) / 10000 }));
+  },
+  /** A facilitator sets one student's daily token limit, with a reason. Logged in cap_overrides and the audit log. */
+  set_daily_cap(s, c, a) {
+    if (c.role !== "instructor") deny("only facilitators can change a daily limit");
+    if (!canSeeStudent(s, c, a.p_student)) deny();
+    const tokens = Number(a.p_tokens);
+    if (!Number.isInteger(tokens) || tokens < MIN_DAILY_TOKENS || tokens > MAX_DAILY_TOKENS) deny(`the limit must be a whole number from ${MIN_DAILY_TOKENS} to ${MAX_DAILY_TOKENS}`);
+    const reason = String(a.p_reason ?? "").trim();
+    if (!reason) deny("a reason is required");
+    if (reason.length > 500) deny("keep the reason under 500 characters");
+    const previous = dailyLimit(latestOverride(s, a.p_student) as { daily_tokens: number } | null, budgetConfig().dailyTokensPerStudent);
+    const [row] = insertRows(s, "cap_overrides", [{ student_id: a.p_student, daily_tokens: tokens, previous_tokens: previous, reason, actor: c.uid }]);
+    audit(s, c, "set_daily_cap", `${a.p_student}: ${previous} to ${tokens} tokens`, reason);
+    return { ...row };
+  },
+  /** One student's daily limit and today's use (token totals only). The caller passes the start of their day. */
+  daily_cap_status(s, c, a) {
+    if (c.role !== "admin" && !canSeeStudent(s, c, a.p_student)) deny();
+    const override = latestOverride(s, a.p_student);
+    const defaultTokens = budgetConfig().dailyTokensPerStudent;
+    let used = 0;
+    for (const u of s.tables.usage_ledger) if (u.student_id === a.p_student && (u.created_at as string) >= a.p_since) used += tokensOf(u);
+    return { default_tokens: defaultTokens, daily_tokens: dailyLimit(override as { daily_tokens: number } | null, defaultTokens), used_today: used, override: override ? { ...override } : null };
+  },
+  /**
+   * The admin cost view: totals only, never message content. Students appear by pseudonymous ID and section.
+   * p_month_start: start of the month; p_week_start: start of the 7-day window for active students.
+   */
+  admin_cost_summary(s, c, a) {
+    if (c.role !== "admin") deny("admins only");
+    const section = new Map(s.tables.students.map((x) => [x.id, x.section_id as string]));
+    const tokens = { input: 0, output: 0, cache_read: 0, cache_write: 0 };
+    let spend = 0, calls = 0;
+    const byStudent = new Map<string, { student_id: string; section_id: string; tokens: number; cost_usd: number; calls: number }>();
+    const byModel = new Map<string, { model: string; calls: number; input: number; output: number; cache_read: number; cache_write: number; cost_usd: number }>();
+    const byExercise = new Map<string, { exercise_id: string; tokens: number; cost_usd: number; students: Set<string> }>();
+    for (const u of s.tables.usage_ledger) {
+      if ((u.created_at as string) < a.p_month_start) continue;
+      const cost = Number(u.cost_usd);
+      calls++;
+      spend += cost;
+      tokens.input += Number(u.input_tokens);
+      tokens.output += Number(u.output_tokens);
+      tokens.cache_read += Number(u.cache_read_tokens);
+      tokens.cache_write += Number(u.cache_write_tokens);
+      const m = byModel.get(u.model as string) ?? { model: (u.model as string) ?? "unknown", calls: 0, input: 0, output: 0, cache_read: 0, cache_write: 0, cost_usd: 0 };
+      m.calls++;
+      m.input += Number(u.input_tokens);
+      m.output += Number(u.output_tokens);
+      m.cache_read += Number(u.cache_read_tokens);
+      m.cache_write += Number(u.cache_write_tokens);
+      m.cost_usd += cost;
+      byModel.set(m.model, m);
+      if (u.student_id) {
+        const sid = u.student_id as string;
+        const st = byStudent.get(sid) ?? { student_id: sid, section_id: section.get(sid) ?? "", tokens: 0, cost_usd: 0, calls: 0 };
+        st.tokens += allTokensOf(u);
+        st.cost_usd += cost;
+        st.calls++;
+        byStudent.set(sid, st);
+      }
+      if (u.exercise_id) {
+        const e = byExercise.get(u.exercise_id as string) ?? { exercise_id: u.exercise_id as string, tokens: 0, cost_usd: 0, students: new Set<string>() };
+        e.tokens += allTokensOf(u);
+        e.cost_usd += cost;
+        if (u.student_id) e.students.add(u.student_id as string);
+        byExercise.set(e.exercise_id, e);
+      }
+    }
+    // Active: used the Lab (a model call or a saved attempt) in the last 7 days.
+    const active = new Set<string>();
+    for (const u of s.tables.usage_ledger) if (u.student_id && (u.created_at as string) >= a.p_week_start) active.add(u.student_id as string);
+    for (const at of s.tables.attempts) if ((at.created_at as string) >= a.p_week_start) active.add(at.student_id as string);
+    const input = tokens.input + tokens.cache_read + tokens.cache_write;
+    return {
+      spend_usd: round4(spend),
+      cap_usd: budgetConfig().monthlyCapUsd,
+      calls,
+      tokens,
+      cache_hit_rate: input ? round4(tokens.cache_read / input) : null,
+      active_students: active.size,
+      students_total: s.tables.students.length,
+      students_with_spend: byStudent.size,
+      top_spenders: [...byStudent.values()].sort((x, y) => y.cost_usd - x.cost_usd || cmp(x.student_id, y.student_id)).slice(0, Number(a.p_limit ?? 8)).map((x) => ({ ...x, cost_usd: round4(x.cost_usd) })),
+      by_model: [...byModel.values()].sort((x, y) => y.cost_usd - x.cost_usd).map((x) => ({ ...x, cost_usd: round4(x.cost_usd) })),
+      top_lessons: [...byExercise.values()]
+        .sort((x, y) => y.tokens - x.tokens || cmp(x.exercise_id, y.exercise_id))
+        .slice(0, Number(a.p_limit ?? 8))
+        .map((x) => ({ exercise_id: x.exercise_id, tokens: x.tokens, cost_usd: round4(x.cost_usd), students: x.students.size })),
+    };
   },
   publish_rubric_draft(s, c, a) {
     if (c.role !== "curriculum" && c.role !== "admin") deny();

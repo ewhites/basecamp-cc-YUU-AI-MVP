@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireRole } from "@/lib/session";
+import { MAX_DAILY_TOKENS, MIN_DAILY_TOKENS } from "@/lib/coach/budget";
 import { userClient } from "@/lib/db";
 
 /**
@@ -47,4 +48,21 @@ export async function resolveFlagAction(flagId: number, note: string): Promise<A
   if (error) return { ok: false, error: error.code === "42501" ? "You can only close flags for students in your sections." : error.message };
   revalidatePath("/lab/instructor", "layout");
   return { ok: true, value: undefined };
+}
+
+/** Set one student's daily token limit. The reason is required and goes to the limit log and the audit log. */
+export async function setDailyCapAction(studentId: string, tokens: number, reason: string): Promise<ActionResult<number>> {
+  await requireRole("instructor");
+  if (typeof studentId !== "string" || !/^S-[A-Z]-\d{3}$/.test(studentId)) return { ok: false, error: "That student is not available." };
+  if (typeof tokens !== "number" || !Number.isInteger(tokens) || tokens < MIN_DAILY_TOKENS || tokens > MAX_DAILY_TOKENS)
+    return { ok: false, error: `Pick a whole number from ${MIN_DAILY_TOKENS.toLocaleString("en-US")} to ${MAX_DAILY_TOKENS.toLocaleString("en-US")} tokens.` };
+  const trimmed = typeof reason === "string" ? reason.trim() : "";
+  if (!trimmed) return { ok: false, error: "Add a short reason for the change." };
+  if (trimmed.length > 500) return { ok: false, error: "Keep the reason under 500 characters." };
+  const db = await userClient();
+  const { error } = await db.rpc("set_daily_cap", { p_student: studentId, p_tokens: tokens, p_reason: trimmed });
+  if (error) return { ok: false, error: error.message === "not allowed" ? "You can only change limits for students in your sections." : error.message };
+  revalidatePath("/lab/instructor", "layout");
+  revalidatePath("/lab/admin");
+  return { ok: true, value: tokens };
 }

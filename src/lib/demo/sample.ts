@@ -186,6 +186,7 @@ export function seedStore(s: Store) {
         const runUsage = { input_tokens: between(300, 900), output_tokens: between(150, 500) };
         const row = (purpose: string, model: string, u: { input_tokens: number; output_tokens: number; cache_read_input_tokens?: number }) => ({
           student_id: st.id,
+          exercise_id: ex.id,
           purpose,
           model,
           input_tokens: u.input_tokens,
@@ -262,6 +263,21 @@ export function seedStore(s: Store) {
     { actor: ids.rivera, actor_role: "instructor", action: "release_scores", target: "section B", reason: "212 scores released to students", created_at: new Date(NOW - 8 * DAY).toISOString() },
     { actor: ids.lee, actor_role: "admin", action: "admin_view_student_work", target: "S-C-021", reason: "Safety flag follow-up requested by Student Support", created_at: new Date(NOW - 3 * DAY + 3600_000).toISOString() },
   ]);
+
+  // ---------------- daily limit changes (Section B). Fixed values, no random draws, so the data above never shifts.
+  const overrides = [
+    { student_id: "S-B-033", daily_tokens: 75_000, reason: "Make-up session after missing Tuesday's class", days: 6 },
+    { student_id: "S-B-017", daily_tokens: 90_000, reason: "Extra Prompting practice before Friday's check-in", days: 4 },
+    { student_id: "S-B-024", daily_tokens: 80_000, reason: "Redoing the Model Arena task after a lost connection", days: 2 },
+  ];
+  insertRows(s, "cap_overrides", overrides.map((o) => ({
+    student_id: o.student_id, daily_tokens: o.daily_tokens, previous_tokens: 60_000, reason: o.reason, actor: ids.rivera,
+    created_at: new Date(NOW - o.days * DAY - 5 * 3600_000).toISOString(),
+  })));
+  insertRows(s, "audit_log", overrides.map((o) => ({
+    actor: ids.rivera, actor_role: "instructor", action: "set_daily_cap", target: `${o.student_id}: 60000 to ${o.daily_tokens} tokens`, reason: o.reason,
+    created_at: new Date(NOW - o.days * DAY - 5 * 3600_000).toISOString(),
+  })));
 
   // ---------------- program rollups scaled to 1,700 students
   const rollups: Row[] = [];
