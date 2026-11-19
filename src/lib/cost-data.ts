@@ -109,5 +109,6 @@ export function shortTokens(n: number): string {
 
 /** Dollars with cents; under a dollar keeps four places so small per-student costs still read. */
 export function usd(n: number): string {
-  return n >= 1 ? `$${n.toFixed(2)}` : `$${n.toFixed(n === 0 ? 2 : 4)}`;
+  // Always cents, so the amounts line up. A non-zero amount under half a cent reads "under $0.01".
+  return n > 0 && n < 0.005 ? "under $0.01" : `$${n.toFixed(2)}`;
 }

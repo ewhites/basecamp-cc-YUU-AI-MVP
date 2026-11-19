@@ -23,14 +23,16 @@ alter table public.cap_overrides enable row level security;
 create policy cap_overrides_read on public.cap_overrides for select using (
   public.auth_role() = 'admin' or public.can_see_student(student_id)
 );
--- Facilitators insert only for students in their own sections, as themselves. No update or delete policy:
--- the log is append-only. The app writes through set_daily_cap, which also writes the audit log.
-create policy cap_overrides_insert on public.cap_overrides for insert with check (
-  public.auth_role() = 'instructor' and public.can_see_student(student_id) and actor = auth.uid()
-);
+-- No insert, update or delete policy, and no table grants for those: the log is append-only, and the only way
+-- to write it is set_daily_cap (security definer), which also writes the audit log and computes the old limit
+-- and the time on the server. A direct insert could skip the audit log or record a false old limit.
+revoke insert, update, delete on public.cap_overrides from anon, authenticated;
 
--- The default daily limit (LAB_DAILY_TOKEN_BUDGET_PER_STUDENT in the app). Passed in by the caller.
-create or replace function public.set_daily_cap(p_student text, p_tokens integer, p_reason text, p_default integer default 60000)
+-- The default daily limit (DEFAULT_DAILY_TOKENS in src/lib/coach/budget.ts). Fixed here, never from the caller,
+-- so the "old limit" in the log cannot be set by whoever makes the change.
+create or replace function public.default_daily_tokens() returns integer language sql immutable as $$ select 60000 $$;
+
+create or replace function public.set_daily_cap(p_student text, p_tokens integer, p_reason text)
 returns public.cap_overrides
 language plpgsql security definer set search_path = public as $$
 declare
@@ -42,7 +44,7 @@ begin
   if p_tokens is null or p_tokens < 1000 or p_tokens > 300000 then raise exception 'the limit must be a whole number from 1000 to 300000'; end if;
   if coalesce(btrim(p_reason), '') = '' then raise exception 'a reason is required'; end if;
   select daily_tokens into v_prev from cap_overrides where student_id = p_student order by created_at desc, id desc limit 1;
-  v_prev := coalesce(v_prev, p_default);
+  v_prev := coalesce(v_prev, default_daily_tokens());
   insert into cap_overrides (student_id, daily_tokens, previous_tokens, reason, actor)
   values (p_student, p_tokens, v_prev, btrim(p_reason), auth.uid()) returning * into v_row;
   insert into audit_log (actor, actor_role, action, target, reason)
@@ -51,14 +53,14 @@ begin
 end $$;
 
 -- One student's limit and today's token use (totals only).
-create or replace function public.daily_cap_status(p_student text, p_since timestamptz, p_default integer default 60000)
+create or replace function public.daily_cap_status(p_student text, p_since timestamptz)
 returns table (default_tokens integer, daily_tokens integer, used_today bigint)
 language plpgsql stable security definer set search_path = public as $$
 begin
   if auth_role() is distinct from 'admin' and not can_see_student(p_student) then raise exception 'not allowed' using errcode = '42501'; end if;
   return query
-    select p_default,
-           coalesce((select o.daily_tokens from cap_overrides o where o.student_id = p_student order by o.created_at desc, o.id desc limit 1), p_default),
+    select default_daily_tokens(),
+           coalesce((select o.daily_tokens from cap_overrides o where o.student_id = p_student order by o.created_at desc, o.id desc limit 1), default_daily_tokens()),
            coalesce((select sum(u.input_tokens + u.output_tokens) from usage_ledger u where u.student_id = p_student and u.created_at >= p_since), 0)::bigint;
 end $$;
 
@@ -96,6 +98,6 @@ begin
   return v;
 end $$;
 
-grant execute on function public.set_daily_cap(text, integer, text, integer) to authenticated, service_role;
-grant execute on function public.daily_cap_status(text, timestamptz, integer) to authenticated, service_role;
+grant execute on function public.set_daily_cap(text, integer, text) to authenticated, service_role;
+grant execute on function public.daily_cap_status(text, timestamptz) to authenticated, service_role;
 grant execute on function public.admin_cost_summary(timestamptz, timestamptz) to authenticated, service_role;
