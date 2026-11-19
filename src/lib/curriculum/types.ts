@@ -1,19 +1,37 @@
-export const SKILLS = ["delegation", "description", "discernment", "diligence"] as const;
+/**
+ * The five model-facing skills the coach practices (WCR AI SIM design spec, Career Pathways AI Skills curriculum).
+ * Changed from the four AI Fluency skills on 2026-11-19 at Logan's request. Every rubric check kept its key,
+ * text and guidance, so the human eval labels (keyed by check) still apply.
+ */
+export const SKILLS = ["prompting", "validation", "context", "models", "responsible"] as const;
 export type Skill = (typeof SKILLS)[number];
 
 export const SKILL_LABELS: Record<Skill, string> = {
-  delegation: "Delegation",
-  description: "Description",
-  discernment: "Discernment",
-  diligence: "Diligence",
+  prompting: "Prompting",
+  validation: "Validation",
+  context: "Context engineering",
+  models: "Comparing models",
+  responsible: "Responsible use",
 };
 
 export const SKILL_BLURBS: Record<Skill, string> = {
-  delegation: "Deciding what to hand to AI",
-  description: "Saying clearly what you need",
-  discernment: "Judging whether the output is any good",
-  diligence: "Taking responsibility for how AI is used",
+  prompting: "Asking for one clear outcome in a clear shape",
+  validation: "Checking the output against the source",
+  context: "Giving the AI the role, reader and facts it needs",
+  models: "Picking the right model for the job and the cost",
+  responsible: "Protecting people and data, and owning the result",
 };
+
+/** The six competencies of the Career Pathways AI Skills curriculum. Each module maps to one (see MODULE_INFO). */
+export const COMPETENCIES = [
+  "AI Fundamentals",
+  "AI Best Practices",
+  "Generative AI",
+  "Generative AI Applications",
+  "Agentic AI",
+  "Context Engineering",
+] as const;
+export type Competency = (typeof COMPETENCIES)[number];
 
 /** "check" = a short task in the starting point or final skills check (not a practice module). */
 export type Studio = "prompt" | "arena" | "agent" | "check";

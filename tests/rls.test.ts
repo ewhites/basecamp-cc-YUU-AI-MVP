@@ -31,7 +31,7 @@ describe.skipIf(!available)("row-level security", () => {
       .insert({ student_id: "S-B-012", exercise_id: "sp-describe", studio: "check", attempt_no: 1, input: { studio: "check", answer: "x" }, status: "scored", passed: 1, total: 3 })
       .select("id")
       .single();
-    await service.from("check_results").insert({ attempt_id: a!.id, check_key: "d_task_audience", skill: "description", pass: true });
+    await service.from("check_results").insert({ attempt_id: a!.id, check_key: "d_task_audience", skill: "prompting", pass: true });
     await service.from("lesson_progress").insert({ student_id: "S-B-001", step_id: "lesson-M01" });
   });
 
@@ -51,7 +51,7 @@ describe.skipIf(!available)("row-level security", () => {
   });
 
   it("a student cannot write or override their own score", async () => {
-    const { error: ins } = await jasmine.from("check_results").insert({ attempt_id: "00000000-0000-4000-8000-000000000001", check_key: "x", skill: "description", pass: true });
+    const { error: ins } = await jasmine.from("check_results").insert({ attempt_id: "00000000-0000-4000-8000-000000000001", check_key: "x", skill: "prompting", pass: true });
     expect(ins).not.toBeNull();
     const { data: mine } = await jasmine.from("attempts").select("id").limit(1).single();
     const { error } = await jasmine.rpc("override_check", { p_attempt: mine!.id, p_key: "d_task_audience", p_pass: false, p_note: "self" });

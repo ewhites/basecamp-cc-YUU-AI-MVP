@@ -1,6 +1,6 @@
 /**
  * AI Lab MCP server (stdio, READ-ONLY). Lets an assistant ask class questions such as
- * "who in Section B is stuck on Description?" in plain words.
+ * "who in Section B is stuck on Prompting?" in plain words.
  *
  *   npx tsx mcp/server.ts            (registered as "ai-lab" in .mcp.json)
  *   LAB_MCP_PERSONA=jasmine|rivera|okafor|lee|haddad   (default rivera)
@@ -270,7 +270,7 @@ async function respond(fn: () => Promise<unknown>) {
 }
 
 const sectionArg = z.string().min(1).max(20).describe('Section letter, e.g. "B" (sample sections are A, B and C)');
-const skillArg = z.enum(SKILLS).describe("One of the four AI Fluency skills");
+const skillArg = z.enum(SKILLS).describe("One of the five coached AI skills");
 
 server.registerTool(
   "get_class_overview",

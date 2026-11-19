@@ -94,7 +94,7 @@ test("instructor console leads with who needs help, then the lift", async ({ pag
   await page.goto("/lab/instructor?section=B");
   await expect(page.getByTestId("needs-you")).toBeVisible();
   await expect(page.getByTestId("needs-you-row").first()).toBeVisible();
-  await expect(page.getByText(/3 students stuck on Description/i).first()).toBeVisible();
+  await expect(page.getByText(/3 students stuck on Prompting/i).first()).toBeVisible();
   await expect(page.getByTestId("lift-panel")).toBeVisible();
   await expect(page.getByTestId("coach-reliability")).toBeVisible();
   const res = await page.goto("/lab/instructor?section=A");

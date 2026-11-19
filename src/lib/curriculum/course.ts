@@ -1,5 +1,5 @@
 import { EXERCISES } from "./exercises";
-import type { ModuleId } from "./types";
+import type { Competency, ModuleId } from "./types";
 
 /**
  * The course map: the order a student moves through the Lab, shown as the syllabus.
@@ -30,10 +30,11 @@ export interface CourseGroup {
   steps: CourseStep[];
 }
 
-export const MODULE_INFO: Record<ModuleId, { slug: string; number: number; title: string; skill: string; lessonTitle: string; blurb: string }> = {
-  M01: { slug: "m1", number: 1, title: "Writing prompts", skill: "Description", lessonTitle: "The R-T-G pattern", blurb: "Tell the AI exactly what you need." },
-  M02: { slug: "m2", number: 2, title: "Comparing models", skill: "Discernment", lessonTitle: "Fit, Trust, Cost", blurb: "Run one prompt on three models and judge which did best." },
-  M03: { slug: "m3", number: 3, title: "Building a bot", skill: "Delegation", lessonTitle: "The four-part bot spec", blurb: "Write a bot's instructions and test it on real messages." },
+/** skill: the main coached skill. competency: the curriculum competency the module maps to (lesson-to-competency mapping). */
+export const MODULE_INFO: Record<ModuleId, { slug: string; number: number; title: string; skill: string; competency: Competency; lessonTitle: string; blurb: string }> = {
+  M01: { slug: "m1", number: 1, title: "Writing prompts", skill: "Prompting", competency: "Generative AI", lessonTitle: "The R-T-G pattern", blurb: "Tell the AI exactly what you need." },
+  M02: { slug: "m2", number: 2, title: "Comparing models", skill: "Comparing models", competency: "Generative AI Applications", lessonTitle: "Fit, Trust, Cost", blurb: "Run one prompt on three models and judge which did best." },
+  M03: { slug: "m3", number: 3, title: "Building an agent", skill: "Context engineering", competency: "Agentic AI", lessonTitle: "The four-part agent spec", blurb: "Give an agent a job, tools and limits, then test it." },
 };
 
 export function moduleBySlug(slug: string): ModuleId | undefined {

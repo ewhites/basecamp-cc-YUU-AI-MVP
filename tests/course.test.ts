@@ -26,8 +26,10 @@ describe("skills check tasks", () => {
   it("has a starting point and a parallel final check: one task per skill, same checks", () => {
     for (const kind of ["start", "final"] as const) {
       const tasks = skillCheck(kind);
-      expect(tasks).toHaveLength(4);
+      expect(tasks).toHaveLength(SKILLS.length);
       expect(new Set(tasks.flatMap((t) => t.checks.map((c) => c.skill)))).toEqual(new Set(SKILLS));
+      // one task per skill: each task tests exactly one skill
+      for (const t of tasks) expect(new Set(t.checks.map((c) => c.skill)).size).toBe(1);
     }
     const keys = (kind: "start" | "final") => skillCheck(kind).map((t) => t.checks.map((c) => c.key));
     expect(keys("final")).toEqual(keys("start"));
@@ -82,12 +84,12 @@ describe("progress", () => {
 
   it("scores the starting point and final check per skill", () => {
     const rows = [
-      { exercise_id: "sp-describe", skill: "description", pass: true },
-      { exercise_id: "sp-describe", skill: "description", pass: false },
-      { exercise_id: "fc-describe", skill: "description", pass: true },
+      { exercise_id: "sp-describe", skill: "prompting", pass: true },
+      { exercise_id: "sp-describe", skill: "prompting", pass: false },
+      { exercise_id: "fc-describe", skill: "prompting", pass: true },
     ];
-    expect(scoreChecks(rows, "start").description).toBe(0.5);
-    expect(scoreChecks(rows, "final").description).toBe(1);
-    expect(scoreChecks(rows, "start").discernment).toBeNull();
+    expect(scoreChecks(rows, "start").prompting).toBe(0.5);
+    expect(scoreChecks(rows, "final").prompting).toBe(1);
+    expect(scoreChecks(rows, "start").validation).toBeNull();
   });
 });
