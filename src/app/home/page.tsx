@@ -8,5 +8,5 @@ import { getViewer } from "@/lib/session";
 export default async function Home() {
   const v = await getViewer();
   if (!v) redirect("/");
-  redirect(v.role === "student" ? "/lab" : "/lab/instructor?section=B");
+  redirect(v.role === "student" ? "/lab" : v.role === "admin" ? "/lab/admin" : "/lab/instructor?section=B");
 }

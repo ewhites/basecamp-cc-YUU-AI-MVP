@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { LimitLog } from "@/components/LimitLog";
 import { SampleTag } from "@/components/Tags";
 import { Button } from "@/design/Button";
 import { Icon } from "@/design/icons";
@@ -24,6 +25,7 @@ import {
   type NeedsYouRow,
   type SectionOverview,
 } from "@/lib/instructor-data";
+import { overridesFor, type CapOverride } from "@/lib/cost-data";
 import { computeProgress, type Progress } from "@/lib/progress-core";
 import { requireRole } from "@/lib/session";
 import { AssignMiniLesson, ReleaseScores } from "./ConsoleButtons";
@@ -34,12 +36,14 @@ type Params = { section?: string; student?: string; attempt?: string };
 /** Needs you today shows every row up to MAX_ROWS, else the first SHOWN and a "Show more". */
 const SHOWN = 6;
 const MAX_ROWS = 8;
+/** Recent daily limit changes shown on the console. */
+const LIMITS_SHOWN = 5;
 
 /** The steps a facilitator can see finished: the two checks and the practice tasks (lesson reading is the student's own). */
 const TRACKED = ALL_STEPS.filter((s) => s.kind === "check" || s.kind === "practice");
 
 export default async function FacilitatorConsole({ searchParams }: { searchParams: Promise<Params> }) {
-  await requireRole("instructor");
+  const viewer = await requireRole("instructor");
   const params = await searchParams;
   // Old links put the student on this page. The student view now has its own address.
   if (params.student) redirect(`/lab/instructor/student/${encodeURIComponent(params.student)}${params.attempt ? `?attempt=${encodeURIComponent(params.attempt)}` : ""}`);
@@ -82,7 +86,13 @@ export default async function FacilitatorConsole({ searchParams }: { searchParam
 
   const overview = await sectionOverview(section.id);
   const ids = overview.students.map((s) => s.id);
-  const [needs, ready, reliability, attempts] = await Promise.all([needsYouToday(overview), unreleasedCount(ids), coachReliability(), attemptsFor(ids)]);
+  const [needs, ready, reliability, attempts, limitChanges] = await Promise.all([
+    needsYouToday(overview),
+    unreleasedCount(ids),
+    coachReliability(),
+    attemptsFor(ids),
+    overridesFor(ids, LIMITS_SHOWN),
+  ]);
   const names = new Map(overview.students.map((s) => [s.id, s.display_name]));
   const progress = cohortProgress(ids, attempts);
 
@@ -130,6 +140,8 @@ export default async function FacilitatorConsole({ searchParams }: { searchParam
           <ByLesson progress={progress} total={ids.length} />
           <Heatmap overview={overview} progress={progress} />
         </section>
+
+        <LimitChanges rows={limitChanges} names={names} viewerId={viewer.userId} />
 
         <Reliability data={reliability} />
       </Sheet>
@@ -471,6 +483,28 @@ function Heatmap({ overview, progress }: { overview: SectionOverview; progress: 
         </span>
       </p>
     </details>
+  );
+}
+
+// ---------------------------------------------------------------- daily limit changes
+
+function LimitChanges({ rows, names, viewerId }: { rows: CapOverride[]; names: Map<string, string>; viewerId: string }) {
+  return (
+    <section className="st-sec ds-rise" style={{ "--i": 5 } as React.CSSProperties} data-testid="limit-changes" id="limits" aria-labelledby="limits-h">
+      <h2 id="limits-h">Limit changes</h2>
+      {rows.length === 0 ? (
+        <p className="st-text">No daily limits changed in this section. Change one from a student&apos;s page.</p>
+      ) : (
+        <>
+          <LimitLog
+            rows={rows}
+            student={(id) => ({ label: names.get(id) ?? id, href: `${studentHref(id)}#limit`, sub: id })}
+            actor={(id) => (id === viewerId ? "You" : "Another facilitator")}
+          />
+          <p className="st-fine st-foot">Change a limit from the student&apos;s page. Every change is logged with its reason</p>
+        </>
+      )}
+    </section>
   );
 }
 

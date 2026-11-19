@@ -1,6 +1,6 @@
 import "server-only";
 import { createHmac, timingSafeEqual } from "node:crypto";
-import { checkBudget, budgetConfig } from "./coach/budget";
+import { checkBudget, budgetConfig, dailyLimit } from "./coach/budget";
 import { CoachUnavailableError, toCoachError } from "./coach/client";
 import { detectDistress, DISTRESS_RESPONSE } from "./coach/distress";
 import { gradeAttempt, type CheckOutcome, type GradeResult } from "./coach/grade";
@@ -45,9 +45,11 @@ function db() {
   return adminClient();
 }
 
-export async function recordUsage(studentId: string | null, purpose: string, run: { model: string; usage: UsageLike; costUsd: number }) {
+/** Logs one model call's token counts and cost (never its content). exerciseId lets the admin view rank lessons by usage. */
+export async function recordUsage(studentId: string | null, purpose: string, run: { model: string; usage: UsageLike; costUsd: number }, exerciseId: string | null = null) {
   await db().from("usage_ledger").insert({
     student_id: studentId,
+    exercise_id: exerciseId,
     purpose,
     model: run.model,
     input_tokens: run.usage.input_tokens,
@@ -66,13 +68,16 @@ export async function budgetFor(studentId: string) {
   const now = new Date();
   const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-  const [{ data: today }, { data: month }] = await Promise.all([
+  const [{ data: today }, { data: month }, { data: override }] = await Promise.all([
     db().from("usage_ledger").select("input_tokens, output_tokens").eq("student_id", studentId).gte("created_at", dayStart),
     db().from("usage_ledger").select("cost_usd").gte("created_at", monthStart),
+    // A facilitator's latest limit change for this student, if any, replaces the default daily limit.
+    db().from("cap_overrides").select("daily_tokens").eq("student_id", studentId).order("created_at", { ascending: false }).order("id", { ascending: false }).limit(1).maybeSingle(),
   ]);
   const studentTokensToday = (today ?? []).reduce((n, r) => n + r.input_tokens + r.output_tokens, 0);
   const monthSpendUsd = (month ?? []).reduce((n, r) => n + Number(r.cost_usd), 0);
-  return checkBudget({ studentTokensToday, monthSpendUsd, ...budgetConfig() });
+  const config = budgetConfig();
+  return checkBudget({ studentTokensToday, monthSpendUsd, ...config, dailyTokensPerStudent: dailyLimit(override, config.dailyTokensPerStudent) });
 }
 
 /** Text the student wrote, per studio (the part that is scrubbed and checked for distress). */
@@ -111,7 +116,7 @@ async function runAndGrade(ex: Exercise, input: AttemptInput, studentId: string,
   if (input.studio === "check") {
     // Skills check: nothing runs on a model; only the student's answer is graded.
     const grade = await gradeAttempt({ exercise: ex, attempt: input.answer, output: ex.material?.text ?? "(no material for this task)" });
-    await recordUsage(studentId, "grade", grade);
+    await recordUsage(studentId, "grade", grade, ex.id);
     return { output: {}, grade };
   }
   if (input.studio === "prompt") {
@@ -119,11 +124,11 @@ async function runAndGrade(ex: Exercise, input: AttemptInput, studentId: string,
     let text = existingOutput && "text" in existingOutput ? existingOutput.text : undefined;
     if (!text) {
       run = await runStudentPrompt(input.prompt, ex);
-      await recordUsage(studentId, "run_prompt", run);
+      await recordUsage(studentId, "run_prompt", run, ex.id);
       text = run.text;
     }
     const grade = await gradeAttempt({ exercise: ex, attempt: input.prompt, output: text });
-    await recordUsage(studentId, "grade", grade);
+    await recordUsage(studentId, "grade", grade, ex.id);
     return { output: run ? { text, model: run.model, latencyMs: run.latencyMs, costUsd: run.costUsd } : existingOutput!, grade };
   }
   if (input.studio === "arena") {
@@ -131,7 +136,7 @@ async function runAndGrade(ex: Exercise, input: AttemptInput, studentId: string,
     const runs: RunOutput[] = outputs.map((o) => ({ ...o, stopReason: null }));
     const verdict = `Picked: ${input.pickedModel}\n\n${input.reasoning}`;
     const grade = await gradeAttempt({ exercise: ex, attempt: verdict, output: `Prompt (same for all three):\n${input.prompt}\n\n${arenaOutputsText(runs)}` });
-    await recordUsage(studentId, "grade", grade);
+    await recordUsage(studentId, "grade", grade, ex.id);
     return { output: { outputs }, grade };
   }
   let turns: BotTurn[];
@@ -142,10 +147,10 @@ async function runAndGrade(ex: Exercise, input: AttemptInput, studentId: string,
     }));
   } else {
     turns = await runBot(input.instructions, ex);
-    for (const t of turns) await recordUsage(studentId, "bot", t.reply);
+    for (const t of turns) await recordUsage(studentId, "bot", t.reply, ex.id);
   }
   const grade = await gradeAttempt({ exercise: ex, attempt: input.instructions, output: transcriptText(turns) });
-  await recordUsage(studentId, "grade", grade);
+  await recordUsage(studentId, "grade", grade, ex.id);
   return {
     output: { transcript: turns.map((t) => ({ id: t.message.id, from: t.message.from, text: t.message.text, reply: t.reply.text })) },
     grade,
@@ -291,7 +296,7 @@ export async function runArenaFor(v: StudentViewer, exerciseId: string, rawPromp
   const { runArena } = await import("./coach/runner");
   try {
     const runs = await runArena(prompt, ex);
-    for (const r of runs) await recordUsage(v.student.id, "arena", r);
+    for (const r of runs) await recordUsage(v.student.id, "arena", r, ex.id);
     const outputs: ArenaOutputs = runs.map((r) => ({ model: r.model, text: r.text, latencyMs: r.latencyMs, costUsd: r.costUsd, usage: r.usage }));
     return { prompt, piiRemoved: removedSummary(removed) || undefined, outputs, token: arenaSignature(v.student.id, ex.id, prompt, outputs) };
   } catch (err) {

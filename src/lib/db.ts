@@ -3,14 +3,14 @@ import { cookies } from "next/headers";
 import { DemoClient } from "./demo/client";
 import { PERSONA_IDS } from "./demo/sample";
 import { persona } from "./personas";
-import { demoLoginEnabled, verify } from "./demo/secret";
+import { demoLoginEnabled, SESSION_COOKIE, verify } from "./demo/secret";
 
 /**
  * Data access for the demo. There is no backend: data lives in an in-memory store
  * (src/lib/demo) with the same access rules as the Postgres RLS policies.
  */
 
-export const SESSION_COOKIE = "lab_session";
+export { SESSION_COOKIE };
 
 /** Service client: trusted server writes only (saving attempts and scores). Never for display reads. */
 export function adminClient(): DemoClient {

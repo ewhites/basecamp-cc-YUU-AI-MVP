@@ -15,11 +15,12 @@ async function fillReady(page: Page, input: string, button: string, text: string
   }).toPass({ timeout: 30_000 });
 }
 
-test("sign-in offers only the student and the facilitator, then the first visit opens the course", async ({ page }) => {
+test("sign-in offers the student, the facilitator and the admin, then the first visit opens the course", async ({ page }) => {
   await page.goto("/signout");
   await expect(page.getByText(/Simulated/).first()).toBeVisible();
   await expect(page.getByText("Sample data").first()).toBeVisible();
-  await expect(page.locator(".account")).toHaveCount(2);
+  await expect(page.locator(".account")).toHaveCount(3);
+  await expect(page.getByTestId("signin-lee")).toBeVisible();
   await expect(page.getByText("Dev Okafor")).toHaveCount(0);
   await page.context().clearCookies({ name: "ailab_intro" });
   await page.getByTestId("signin-jasmine").click();
@@ -122,13 +123,60 @@ test("instructor console leads with who needs help, then the lift", async ({ pag
 });
 
 test("removed screens and accounts are gone", async ({ page }) => {
-  for (const who of ["okafor", "lee"]) {
+  await page.goto("/launch?as=okafor");
+  await expect(page).toHaveURL(/\/$/);
+  await page.goto("/launch?as=lee");
+  await expect(page).toHaveURL(/\/lab\/admin$/);
+  for (const who of ["rivera", "jasmine"]) {
     await page.goto(`/launch?as=${who}`);
-    await expect(page).toHaveURL(/\/$/);
+    for (const url of ["/lab/admin", "/lab/curriculum", "/lab/security-check"]) {
+      const res = await page.goto(url);
+      expect(res?.status(), `${who} ${url}`).toBe(404);
+    }
   }
-  await page.goto("/launch?as=rivera");
-  for (const url of ["/lab/admin", "/lab/curriculum", "/lab/security-check"]) {
-    const res = await page.goto(url);
-    expect(res?.status(), url).toBe(404);
-  }
+});
+
+test("admin sees the cost view: budget and alert, totals, top spenders by ID, tokens by model, the limit log", async ({ page }) => {
+  await page.goto("/signout");
+  await page.getByTestId("signin-lee").click();
+  await expect(page).toHaveURL(/\/lab\/admin$/);
+  await expect(page.getByTestId("admin-cost")).toBeVisible();
+  await expect(page.getByText("Sample data").first()).toBeVisible();
+  await expect(page.getByTestId("admin-spend")).toHaveText(/^\$\d/);
+  await expect(page.getByTestId("budget-alert")).toContainText(/alert|Budget reached/);
+  await expect(page.getByTestId("admin-active")).toContainText(/\d+ of 120/);
+  await expect(page.getByTestId("admin-cache")).toHaveText(/\d+%/);
+  await expect(page.getByTestId("spender-row").first()).toContainText(/S-[ABC]-\d{3}/);
+  // Admins see pseudonymous IDs only: no student names on this page.
+  await expect(page.getByText("Jasmine Carter")).toHaveCount(0);
+  await expect(page.getByTestId("tokens-by-model").getByRole("columnheader", { name: "Model" })).toBeAttached();
+  await expect(page.getByTestId("tokens-by-model")).toContainText("Claude Haiku 5.5");
+  await expect(page.getByTestId("lesson-row").first()).toBeVisible();
+  await expect(page.getByTestId("override-log").getByTestId("limit-row")).not.toHaveCount(0);
+  await expect(page.getByTestId("override-log")).toContainText("Ms. Rivera");
+  await expect(page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Overrides" })).toHaveAttribute("href", "/lab/admin#overrides");
+});
+
+test("facilitator sets a student's daily limit with a reason, and it is logged", async ({ page }) => {
+  await page.goto("/launch?as=rivera&next=/lab/instructor/student/S-B-040");
+  const box = page.getByTestId("daily-limit");
+  await expect(box).toBeVisible();
+  await expect(page.getByTestId("limit-current")).toContainText("tokens");
+  const tokens = String(70_000 + Math.floor(Math.random() * 9) * 1000);
+  // A reason is required: the form refuses without one.
+  await expect(async () => {
+    await page.getByTestId("limit-tokens").fill(tokens);
+    await page.getByTestId("set-limit").click();
+    await expect(page.getByTestId("limit-result")).toContainText(/reason/i, { timeout: 1500 });
+  }).toPass({ timeout: 30_000 });
+  await page.getByTestId("limit-reason").fill("Make-up session after missing class");
+  await page.getByTestId("set-limit").click();
+  const shown = Number(tokens).toLocaleString("en-US");
+  await expect(page.getByTestId("limit-result")).toContainText(`Limit set to ${shown}`);
+  await expect(page.getByTestId("limit-current")).toContainText(shown);
+  await expect(box.getByTestId("limit-row").first()).toContainText("Make-up session after missing class");
+  // The console lists the change in the section.
+  await page.goto("/lab/instructor?section=B");
+  await expect(page.getByTestId("limit-changes").getByTestId("limit-row").first()).toContainText(shown);
+  await expect(page.getByText(/3 students stuck on Prompting/i).first()).toBeVisible();
 });
