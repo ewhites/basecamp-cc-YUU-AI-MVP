@@ -15,7 +15,9 @@ type Latest = (AttemptView & { input?: unknown }) | null;
 
 function lastPrompt(latest: Latest): string {
   const input = latest?.input;
-  return typeof input === "object" && input && "prompt" in input ? String((input as { prompt: string }).prompt) : "";
+  return typeof input === "object" && input && "prompt" in input
+    ? String((input as { prompt: string }).prompt)
+    : "";
 }
 
 /** Module 1 practice: write a prompt, see what the AI does with it, get scored. */
@@ -37,19 +39,25 @@ export function PromptForm({
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
   const words = prompt.trim() ? prompt.trim().split(/\s+/).length : 0;
-  const output = attempt?.output && "text" in attempt.output ? attempt.output : null;
+  const output =
+    attempt?.output && "text" in attempt.output ? attempt.output : null;
   const passed = alreadyDone || attemptPassed(attempt);
   const quotes = attemptQuotes(attempt);
 
   return (
     <Frame
       head={head}
+      after={passed ? <NextStep next={next} /> : undefined}
       coach={
         <CoachSide
           className="ds-rise ln-i2"
           exerciseId={exerciseId}
           module={head.module}
-          result={attempt ? <AttemptResult exerciseId={exerciseId} attempt={attempt} /> : undefined}
+          result={
+            attempt ? (
+              <AttemptResult exerciseId={exerciseId} attempt={attempt} />
+            ) : undefined
+          }
           empty="Run your prompt to see what to fix"
           earlier={head.earlier}
           next={next}
@@ -58,48 +66,59 @@ export function PromptForm({
       }
     >
       <Section title="Your prompt" id="work">
-      <form
-        className="ln-work"
-        onSubmit={(e) => {
-          e.preventDefault();
-          setError(null);
-          start(async () => {
-            const r = await submitPromptAction(exerciseId, prompt);
-            if (r.ok) setAttempt(r.attempt);
-            else setError(r.error);
-          });
-        }}
-      >
-        <Slab
-          note={
-            pending ? (
-              "Running your prompt, then checking it. About 10 seconds"
-            ) : (
-              <>
-                {attempt && <span>Try {attempt.attemptNo + 1}</span>}
-                <span className={words > 200 ? "ln-over" : undefined}>{words} of 200 words</span>
-              </>
-            )
-          }
-          action={
-            <Button type="submit" variant={passed ? "secondary" : "primary"} disabled={pending || !prompt.trim()} data-testid="submit-prompt">
-              {pending ? "Running" : attempt ? "Run new version" : "Run prompt"}
-            </Button>
-          }
+        <form
+          className="ln-work"
+          onSubmit={(e) => {
+            e.preventDefault();
+            setError(null);
+            start(async () => {
+              const r = await submitPromptAction(exerciseId, prompt);
+              if (r.ok) setAttempt(r.attempt);
+              else setError(r.error);
+            });
+          }}
         >
-          <WriteField
-            id="prompt"
-            label="Your prompt"
-            value={prompt}
-            onChange={setPrompt}
-            quotes={quotes}
-            quoteKey={attempt?.id}
-            placeholder="Role, then Task, then Guardrails. The attached material is added for you."
-            testId="prompt-input"
-          />
-        </Slab>
-        {error && <ErrorLine>{error}</ErrorLine>}
-      </form>
+          <Slab
+            note={
+              pending ? (
+                "Running your prompt, then checking it. About 10 seconds"
+              ) : (
+                <>
+                  {attempt && <span>Try {attempt.attemptNo + 1}</span>}
+                  <span className={words > 200 ? "ln-over" : undefined}>
+                    {words} of 200 words
+                  </span>
+                </>
+              )
+            }
+            action={
+              <Button
+                type="submit"
+                variant={passed ? "secondary" : "primary"}
+                disabled={pending || !prompt.trim()}
+                data-testid="submit-prompt"
+              >
+                {pending
+                  ? "Running"
+                  : attempt
+                    ? "Run new version"
+                    : "Run prompt"}
+              </Button>
+            }
+          >
+            <WriteField
+              id="prompt"
+              label="Your prompt"
+              value={prompt}
+              onChange={setPrompt}
+              quotes={quotes}
+              quoteKey={attempt?.id}
+              placeholder="Role, then Task, then Guardrails. The attached material is added for you."
+              testId="prompt-input"
+            />
+          </Slab>
+          {error && <ErrorLine>{error}</ErrorLine>}
+        </form>
       </Section>
 
       {output?.text && (
@@ -109,8 +128,6 @@ export function PromptForm({
           </Panel>
         </Section>
       )}
-
-      {passed && <NextStep next={next} />}
     </Frame>
   );
 }

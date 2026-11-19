@@ -9,12 +9,17 @@ import { myProgress } from "@/lib/progress";
 import { requireRole } from "@/lib/session";
 import { exampleOpenByDefault, readIntro } from "../../intro";
 import { orderedPractice } from "../../practice/order";
+import { Split } from "../../practice/Frame";
 import { DemoProvider, LessonCoach, WorkedExample } from "../Demo";
 import { FadedExample } from "../FadedExample";
 import { StartPractice } from "../StartPractice";
 
 /** A module's 5-minute lesson: the worked example first (with an optional demo), your turn, the rule, then Start practice. */
-export default async function LessonPage({ params }: { params: Promise<{ module: string }> }) {
+export default async function LessonPage({
+  params,
+}: {
+  params: Promise<{ module: string }>;
+}) {
   await requireRole("student");
   const { module: slug } = await params;
   const m = moduleBySlug(slug);
@@ -28,13 +33,25 @@ export default async function LessonPage({ params }: { params: Promise<{ module:
   // Module 3 goes through its scripted demos before the live build.
   const up = group.steps.find((s) => s.kind === "demo") ?? firstPractice;
   const progress = await myProgress();
-  const doneInModule = group.steps.filter((s) => progress.states[s.id]?.done).length;
+  const doneInModule = group.steps.filter(
+    (s) => progress.states[s.id]?.done,
+  ).length;
   const { worked } = lesson;
 
   return (
     <div className="ds-page ln-page">
-      <Crumbs items={[{ label: "Home", href: "/lab" }, { label: `Module ${info.number}: ${info.title}` }]} />
-      <Progress className="ln-where ds-rise" label={info.title} value={doneInModule / group.steps.length} end={`Lesson, ${lessonStep.minutes} min`} />
+      <Crumbs
+        items={[
+          { label: "Home", href: "/lab" },
+          { label: `Module ${info.number}: ${info.title}` },
+        ]}
+      />
+      <Progress
+        className="ln-where ds-rise"
+        label={info.title}
+        value={doneInModule / group.steps.length}
+        end={`Lesson, ${lessonStep.minutes} min`}
+      />
       <DemoProvider
         data={{
           segments: worked.segments,
@@ -55,35 +72,53 @@ export default async function LessonPage({ params }: { params: Promise<{ module:
             actions={
               <>
                 <span className="ln-foot-line">Up next: {up.title}</span>
-                <StartPractice stepId={lessonStep.id} href={up.href} label={up.kind === "demo" ? "Watch first demo" : undefined} pendingLabel={up.kind === "demo" ? "Opening demo" : undefined} />
+                <StartPractice
+                  stepId={lessonStep.id}
+                  href={up.href}
+                  label={up.kind === "demo" ? "Watch first demo" : undefined}
+                  pendingLabel={up.kind === "demo" ? "Opening demo" : undefined}
+                />
               </>
             }
           >
-            <Section title="The idea" id="idea">
-              <Panel>
-                <p className="ln-read">{lesson.intro}</p>
-              </Panel>
-            </Section>
+            <Split
+              a={
+                <>
+                  <Section title="The idea" id="idea">
+                    <Panel>
+                      <p className="ln-read">{lesson.intro}</p>
+                    </Panel>
+                  </Section>
 
-            <WorkedExample openByDefault={exampleOpenByDefault(intro)} />
+                  <WorkedExample openByDefault={exampleOpenByDefault(intro)} />
+                </>
+              }
+              b={
+                <>
+                  <Section title="Your turn" id="your-turn">
+                    <FadedExample faded={lesson.faded} parts={lesson.parts} />
+                  </Section>
 
-            <Section title="Your turn" id="your-turn">
-              <FadedExample faded={lesson.faded} parts={lesson.parts} />
-            </Section>
-
-            <Section title="The rule" id="rule">
-              <Panel list>
-                <ol className="ds-rows ln-rule">
-                  {lesson.recap.map((line) => (
-                    <li key={line} className="ds-row">
-                      {line}
-                    </li>
-                  ))}
-                </ol>
-              </Panel>
-            </Section>
+                  <Section title="The rule" id="rule">
+                    <Panel list>
+                      <ol className="ds-rows ln-rule">
+                        {lesson.recap.map((line) => (
+                          <li key={line} className="ds-row">
+                            {line}
+                          </li>
+                        ))}
+                      </ol>
+                    </Panel>
+                  </Section>
+                </>
+              }
+            />
           </Sheet>
-          <LessonCoach exerciseId={firstPractice.exerciseId!} module={m} next={{ href: up.href, title: up.title }} />
+          <LessonCoach
+            exerciseId={firstPractice.exerciseId!}
+            module={m}
+            next={{ href: up.href, title: up.title }}
+          />
         </div>
       </DemoProvider>
     </div>

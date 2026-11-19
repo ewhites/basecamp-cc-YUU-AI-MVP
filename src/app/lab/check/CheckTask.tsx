@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { submitCheckAction } from "@/app/lab/actions";
-import { ErrorLine, Slab } from "@/app/lab/practice/Frame";
+import { ErrorLine, Slab, Split } from "@/app/lab/practice/Frame";
 import { Highlighted, WriteField } from "@/app/lab/practice/WriteField";
 import { CoachSide } from "@/components/AskCoach";
 import { attemptQuotes } from "@/components/AttemptResult";
@@ -71,7 +71,11 @@ export function CheckTask({
     work = (
       <form className="ln-work" onSubmit={submit}>
         <Slab
-          note={pending ? "The coach is reading your answer" : "The coach checks your answer and gives one tip"}
+          note={
+            pending
+              ? "The coach is reading your answer"
+              : "The coach checks your answer and gives one tip"
+          }
           action={
             <>
               {result && !pending && (
@@ -86,7 +90,11 @@ export function CheckTask({
                   Keep last answer
                 </Button>
               )}
-              <Button type="submit" data-testid="check-submit" disabled={pending || !answer.trim()}>
+              <Button
+                type="submit"
+                data-testid="check-submit"
+                disabled={pending || !answer.trim()}
+              >
                 {pending ? "Checking" : "Submit answer"}
               </Button>
             </>
@@ -120,7 +128,11 @@ export function CheckTask({
           </Slab>
         )}
         <div className="ln-actions">
-          <Button variant="secondary" onClick={() => setEditing(true)} data-testid="check-again">
+          <Button
+            variant="secondary"
+            onClick={() => setEditing(true)}
+            data-testid="check-again"
+          >
             Answer again
           </Button>
           <Button href={nextHref} arrow data-testid="check-next">
@@ -133,28 +145,52 @@ export function CheckTask({
 
   return (
     <div className="ds-work">
-      <Sheet className="ds-rise ln-i1" kicker={kicker} title={title} brief={brief}>
-        <Section title="Your task" id="task">
-          <Panel>
-            <p className="ln-read" id="check-question">
-              {question}
-            </p>
-          </Panel>
-          {material}
-        </Section>
-        {work && (
-          <Section title="Your answer" id="work">
-            {work}
-          </Section>
-        )}
+      <Sheet
+        className="ds-rise ln-i1"
+        kicker={kicker}
+        title={title}
+        brief={brief}
+      >
+        <Split
+          kind="check"
+          a={
+            <Section title="Your task" id="task">
+              <Panel>
+                <p className="ln-read" id="check-question">
+                  {question}
+                </p>
+              </Panel>
+              {material}
+            </Section>
+          }
+          b={
+            work ? (
+              <Section title="Your answer" id="work">
+                {work}
+              </Section>
+            ) : null
+          }
+        />
       </Sheet>
       <CoachSide
         className="ds-rise ln-i2"
         exerciseId={exerciseId}
         module={module}
-        result={showResult ? <CheckResult attempt={result!} checkTexts={checkTexts} exerciseId={exerciseId} /> : undefined}
+        result={
+          showResult ? (
+            <CheckResult
+              attempt={result!}
+              checkTexts={checkTexts}
+              exerciseId={exerciseId}
+            />
+          ) : undefined
+        }
         empty="Submit your answer to see what you did well"
-        next={showResult && result!.status !== "distress" ? { href: nextHref } : null}
+        next={
+          showResult && result!.status !== "distress"
+            ? { href: nextHref }
+            : null
+        }
         arriveKey={showResult ? result!.id : undefined}
       />
     </div>

@@ -81,30 +81,32 @@ export default async function PracticePage({ params }: { params: Promise<{ id: s
           </Button>
         </div>
       </Section>
-      {ex.coworkerMessages && (
-        <Section title="Test messages" id="tests" desc="Your bot will be tested on these three">
-          <Panel list>
-            <ol className="ds-rows ln-msgs">
-              {ex.coworkerMessages.map((m) => (
-                <li key={m.id} className="ds-row" data-testid={`coworker-${m.id}`}>
-                  <p className="ln-msg-who">
-                    {m.from}
-                    <span>{KIND_LABELS[m.kind]} message</span>
-                  </p>
-                  <p className="ln-msg-text">{m.text}</p>
-                </li>
-              ))}
-            </ol>
-          </Panel>
-        </Section>
-      )}
     </>
+  );
+
+  const tests = ex.coworkerMessages && (
+      <Section title="Test messages" id="tests" desc="Your bot will be tested on these three">
+        <Panel list>
+          <ol className="ds-rows ln-msgs">
+            {ex.coworkerMessages.map((m) => (
+              <li key={m.id} className="ds-row" data-testid={`coworker-${m.id}`}>
+                <p className="ln-msg-who">
+                  {m.from}
+                  <span>{KIND_LABELS[m.kind]} message</span>
+                </p>
+                <p className="ln-msg-text">{m.text}</p>
+              </li>
+            ))}
+          </ol>
+        </Panel>
+      </Section>
   );
 
   const head: TaskHead = {
     title: ex.title,
     brief: ex.scenario,
     task,
+    tests,
     module: ex.module,
     earlier:
       earlier.length > 0 ? (

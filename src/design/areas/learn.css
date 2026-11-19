@@ -27,7 +27,22 @@
 .ln-page > .ds-crumbs { margin: 4px 0 0; }
 .ln-page > .ln-where { margin: 0; }
 .ln-page .ds-sheet { container-type: inline-size; }
-.ln-solo { width: 100%; max-width: 820px; margin: 0 auto; }
+
+/* Two columns inside the sheet (added 2026-11-19, Logan: the pages were squished in the middle and long to scroll).
+ * One task is split across the columns: the first holds what to read, the second what to do. Below about 820px of sheet
+ * width it is one column in the same order. The columns are containers, so a block inside a column (the worked
+ * example, the tool boxes) stacks by the column's own width and not the sheet's. Reading order is the visual order. */
+.ln-split { display: grid; grid-template-columns: minmax(0, 1fr); gap: 44px 40px; align-items: start; }
+.ln-split > * { min-width: 0; container-type: inline-size; }
+.ln-split > .ln-col > :first-child { margin-top: 0; }
+.ln-full { margin-top: 44px; }
+.ln-lead { margin: 0 0 28px; }
+@container (min-width: 820px) {
+  .ln-split { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ln-split.is-task { grid-template-columns: minmax(0, 4fr) minmax(0, 5fr); }
+  .ln-split.is-demo { grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); }
+  .ln-split.is-check { grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); }
+}
 .ln-i1 { --i: 1; }
 .ln-i2 { --i: 2; }
 
@@ -135,8 +150,7 @@ textarea.ln-input:disabled { opacity: .7; }
 .ln-say.is-bot { padding: 12px 16px; border-radius: var(--r-inner); background: var(--step); }
 
 /* ------------------------------------------------------------------ Model Arena */
-.ln-steps { list-style: none; margin: 44px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 24px; font-size: var(--fs-small); line-height: 1.42; }
-.ln-steps + .ds-section { margin-top: 16px; }
+.ln-steps { list-style: none; margin: 0 0 28px; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 24px; font-size: var(--fs-small); line-height: 1.42; }
 .ln-steps li { display: inline-flex; align-items: center; gap: 8px; color: var(--t2); }
 .ln-steps li[data-state="on"] { color: var(--t1); font-weight: 600; }
 .ln-steps .ds-icon { width: 16px; height: 16px; }
@@ -290,3 +304,11 @@ textarea.ln-input.ln-slot-input:focus { border-color: var(--t2); }
   .ln-answer { padding: 16px; }
   .ln-btn-sm { flex: 1 1 auto; }
 }
+
+/* ------------------------------------------------------------------ wide extras */
+/* Results on the check's last screen: the skills in two columns on a wide sheet. */
+@container (min-width: 820px) {
+  .ln-skills-wide .ds-skills > .ds-rows { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 40px; }
+  .ln-skills-wide .ds-skills > .ds-rows > .ds-skill:nth-child(2) { border-top: 0; padding-top: 4px; }
+}
+.ln-expect > .ds-row { padding-top: 14px; padding-bottom: 14px; line-height: 1.5; max-width: none; }
