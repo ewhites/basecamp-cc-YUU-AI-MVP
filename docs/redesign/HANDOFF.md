@@ -7,7 +7,7 @@ The redesign moves from Logan's personal Claude account to his Year Up United en
 | What | Where |
 | :-- | :-- |
 | Repo on this Mac | `~/Downloads/cc-basecamp-cohort1/CC Basecamp Modules/basecamp-cc-YUU-AI-MVP` (the path has spaces: quote it) |
-| Branch | `logan`. All redesign work is here. Not pushed yet at the time of writing (see the last section). |
+| Branch | `logan`. All redesign work is here, pushed to GitHub on 2026-11-19 (commit `97b93d8`). |
 | GitHub | `ewhites/basecamp-cc-YUU-AI-MVP` (Ethan White's account). `main` is the demo. |
 | Vercel | Project `yuu-ai-lab` (linked in `.vercel/project.json`). Pushing `logan` makes a preview deploy. |
 | Secrets | `.env.local` holds the Anthropic key and Upstash settings. Never read, print or commit it. Names only: `docs/secrets.md`. |

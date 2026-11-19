@@ -5,7 +5,7 @@ Project: the Year Up United AI Lab prototype, a Next.js 16 app where Year Up stu
 Folder on this Mac (the path has spaces, quote it):
 ~/Downloads/cc-basecamp-cohort1/CC Basecamp Modules/basecamp-cc-YUU-AI-MVP
 
-Branch: logan (all redesign work is committed there; the latest commit is the handoff note). GitHub: ewhites/basecamp-cc-YUU-AI-MVP (Ethan White's repo). Vercel project: yuu-ai-lab (pushing logan makes a preview deploy). The logan branch has not been pushed with this work yet: push it once you have checked it builds.
+Branch: logan (all redesign work is committed there; the latest commit is the handoff note). GitHub: ewhites/basecamp-cc-YUU-AI-MVP (Ethan White's repo). Vercel project: yuu-ai-lab (pushing logan makes a preview deploy). The logan branch is pushed to GitHub (commit 97b93d8 and later).
 
 Read these first, in order:
 1. CLAUDE.md (project rules; never weaken them)
