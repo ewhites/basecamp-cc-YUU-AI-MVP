@@ -1,5 +1,9 @@
 /* Page styles for reading pages (How it works). Tokens only. */
-.info .ds-sheet { max-width: 52em; }
+/* The sheet fills the page area. The three sections sit side by side when the page is wide (container "page"). */
+.info-cols { display: grid; grid-template-columns: minmax(0, 1fr); gap: 32px; }
+.info-cols > .ds-section { margin-top: 0; min-width: 0; }
+.info-cols > .ds-section > .ds-panel { min-height: 0; }
+@container page (min-width: 880px) { .info-cols { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; align-items: start; } }
 .info .ds-panel p, .info .ds-fold-body p { margin: 0 0 10px; max-width: 36em; text-wrap: pretty; }
 .info .ds-panel p:last-child, .info .ds-fold-body p:last-child { margin-bottom: 0; }
 .info .ds-fold-body h3 { margin: 12px 0 4px; }

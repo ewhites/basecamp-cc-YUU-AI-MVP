@@ -116,9 +116,21 @@
 .en-use li { line-height: 1.45; }
 
 /* ------------------------------------------------------------------ course home */
-.en-home .ds-sheet { max-width: 60em; }
+/* The sheet fills the page area. Layouts follow the width of the page area (container "page"), not the window,
+ * because the side rail takes room from the page from 1200px up. */
 .en-home .ds-progress { margin: 14px 0 0; max-width: 40em; }
-.en-home .ds-section:first-of-type { margin-top: 36px; }
+.en-home .ds-section:first-of-type { margin-top: 32px; }
+.en-home .ds-sheet-body > :is(.en-top, .ds-section) + .ds-section { margin-top: 36px; }
+
+/* Top row: what to do next on the left, the three modules on the right. One column until the page is wide. */
+.en-top { display: grid; grid-template-columns: minmax(0, 1fr); gap: 36px; margin-top: 8px; }
+.en-top > .ds-section, .en-top-main > .ds-section { margin-top: 0; }
+.en-top-main { display: grid; gap: 28px; align-content: start; min-width: 0; }
+.en-top-main > .ds-section { display: flex; flex-direction: column; }
+.en-top-main > .ds-section:first-child > .ds-panel { flex: 1; }
+@container page (min-width: 880px) {
+  .en-top { grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 32px; align-items: start; }
+}
 
 /* Up next: the step, what it is, one orange button */
 .en-next { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 16px 32px; }
@@ -126,15 +138,20 @@
 .en-next p { margin: 0; }
 .en-next-meta { margin-top: 2px; font-size: var(--fs-small); color: var(--t2); }
 .en-next-blurb { margin-top: 8px; max-width: 34em; text-wrap: pretty; }
-@media (max-width: 640px) {
+@container page (max-width: 640px) {
   .en-next { grid-template-columns: minmax(0, 1fr); }
   .en-next .ds-btn { width: 100%; }
 }
+/* Beside the modules the panel is narrow: the button goes under the text, full width. */
+@container page (min-width: 880px) {
+  .en-top .en-next { grid-template-columns: minmax(0, 1fr); align-content: space-between; }
+  .en-top .en-next .ds-btn { width: 100%; }
+}
 
 /* The three doors: cards that open a module. Blue "Open module" line and chevron say "click". */
-.en-doors { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.en-doors { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
 .en-doors > li { display: grid; }
-@media (max-width: 760px) { .en-doors { grid-template-columns: minmax(0, 1fr); gap: 12px; } }
+@container page (min-width: 700px) { .en-doors { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; } }
 .en-door {
   display: flex; flex-direction: column; gap: 6px; padding: 18px 20px;
   border-radius: var(--r-card); background: var(--panel); border: 1px solid var(--panel-line);
@@ -156,10 +173,64 @@
 .en-door-go .ds-icon { width: 18px; height: 18px; transition: transform var(--t-hover) var(--ease); }
 .en-door:hover .en-door-go .ds-icon { transform: translateX(3px); }
 
+/* Beside "Up next" the doors stack as compact cards: text on the left; the blue "open" line and the step meter on the right. */
+@container page (min-width: 880px) {
+  .en-doors { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .en-door { display: grid; grid-template-columns: minmax(0, 1fr) 9.5em; column-gap: 16px; row-gap: 0; align-items: center; padding: 12px 18px; }
+  .en-door > :not(.en-door-go, .en-meter) { grid-column: 1; }
+  .en-door-top { justify-content: flex-start; gap: 10px; }
+  .en-door h3 { margin: 0; }
+  .en-door p { flex: none; }
+  .en-door-go { grid-column: 2; grid-row: 1 / 3; margin: 0; justify-self: end; }
+  .en-meter { grid-column: 2; grid-row: 3; margin: 0; }
+}
+
 /* The lamp signature: a finished module's lamp is lit with the orange marble. Nowhere else. */
 .en-lamp { flex: none; width: 14px; height: 20px; border-radius: 5px 5px 7px 7px; border: 1.5px solid var(--hair-2); }
 .en-door.is-lit .en-lamp { background: var(--accent-soft); border-color: var(--accent-soft); }
 .en-door.is-lit { border-color: var(--accent-soft); }
+
+/* All steps: one panel per part of the course, side by side when the page is wide. The first and last parts
+ * (one or two steps) run the full width. */
+.en-steps { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
+.en-steps > .ds-sub { margin-top: 0; min-width: 0; }
+@container page (min-width: 560px) {
+  .en-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 16px; }
+  .en-steps > .en-steps-wide { grid-column: 1 / -1; }
+}
+@container page (min-width: 880px) {
+  .en-steps { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@container page (min-width: 700px) {
+  .en-steps-wide > .ds-panel.is-list > .ds-rows { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .en-steps-wide > .ds-panel.is-list > .ds-rows > li + li { border-top: 0; border-left: 1px solid var(--panel-line); }
+  .en-steps-wide > .ds-panel.is-list > .ds-rows > li > .ds-rowlink { border-radius: var(--r-card); }
+  .en-steps-wide > .ds-panel.is-list > .ds-rows > li:only-child { grid-column: 1 / -1; }
+}
+.en-steps .ds-rowlink { gap: 12px; }
+.en-steps .ds-rowlink-end { max-width: 8em; white-space: normal; }
+.en-steps .en-state { white-space: normal; }
+/* In the narrow panels the status goes under the title, so the title keeps the width. */
+@container page (max-width: 559px) {
+  .en-steps .ds-rowlink { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 10px; row-gap: 2px; align-items: center; }
+  .en-steps .ds-rowlink-main { display: contents; }
+  .en-steps .ds-rowlink-title { grid-column: 1; grid-row: 1; }
+  .en-steps .ds-rowlink-meta { grid-column: 1; grid-row: 2; }
+  .en-steps .ds-rowlink-end { grid-column: 1; grid-row: 3; max-width: none; text-align: left; }
+  .en-steps .ds-rowlink > .ds-chev { grid-column: 2; grid-row: 1 / -1; }
+}
+@container page (min-width: 560px) {
+  .en-steps > .ds-sub:not(.en-steps-wide) .ds-rowlink {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto auto; column-gap: 10px; row-gap: 2px; align-items: baseline;
+    min-height: 0; padding-top: 10px; padding-bottom: 10px;
+  }
+  .en-steps > .ds-sub:not(.en-steps-wide) .ds-rowlink-main { display: contents; }
+  .en-steps > .ds-sub:not(.en-steps-wide) .ds-rowlink-title { grid-column: 1 / 3; grid-row: 1; }
+  .en-steps > .ds-sub:not(.en-steps-wide) .ds-rowlink-meta { grid-column: 1; grid-row: 2; }
+  .en-steps > .ds-sub:not(.en-steps-wide) .ds-rowlink-end { grid-column: 2; grid-row: 2; max-width: none; white-space: nowrap; }
+  .en-steps > .ds-sub:not(.en-steps-wide) .en-state { white-space: nowrap; }
+  .en-steps > .ds-sub:not(.en-steps-wide) .ds-rowlink > .ds-chev { grid-column: 3; grid-row: 1 / -1; align-self: center; }
+}
 
 /* Step rows (RowLink): type and minutes under the title, status at the end */
 .en-row[aria-current="step"] { background: var(--hover); }
