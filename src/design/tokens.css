@@ -116,6 +116,9 @@
   --wrap: 1200px;
   --gutter: clamp(16px, 4vw, 48px);
   --dock-room: 140px;
+  --rail-w: 272px;
+  --frame-max: 1760px;
+  --topbar-h: 65px;
 
   /* motion: one curve */
   --ease: cubic-bezier(.2, .7, .2, 1);

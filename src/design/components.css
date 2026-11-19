@@ -33,7 +33,13 @@
 
 /* The one page template: the sheet, and the coach panel to its right on wide screens. */
 .ds-work { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
-@media (min-width: 980px) { .ds-work { grid-template-columns: minmax(0, 1fr) var(--coach-w); } }
+/* The page area is a container, so the coach goes beside the work when the AREA is wide enough (with the side rail
+   open that is not the same as the window being wide). */
+.ds-content { container: page / inline-size; }
+@container page (min-width: 920px) { .ds-work { grid-template-columns: minmax(0, 1fr) var(--coach-w); } }
+@container page (min-width: 920px) {
+  .ds-work > .ds-coach { position: sticky; top: calc(var(--topbar-h) + 24px); max-height: calc(100dvh - var(--topbar-h) - 48px); overflow-y: auto; overscroll-behavior: contain; }
+}
 
 /* ------------------------------------------------------------------ top bar */
 .ds-topbar {
@@ -463,3 +469,78 @@
 /* ---------------------------------------------------------------- secondary button: clearly a button, not text */
 .ds-btn-secondary { background: transparent; color: var(--link); box-shadow: inset 0 0 0 1.5px currentColor; }
 .ds-btn-secondary:hover, .ds-btn-secondary.is-hover { background: var(--hover); color: var(--link-hover); }
+
+
+/* ================================================================== the frame and the frozen side rail (2026-11-19)
+ * Logan: the centred single column was squished, long to scroll, and had nothing to hold onto. From 1200px wide the
+ * lab is a frame: a rail that stays put on the left (places, next step, the course or the facilitator's sections,
+ * and "On this page"), and the page filling the rest. Below 1200px the bottom dock does the rail's job. */
+.ds-frame { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; }
+.ds-rail { display: none; }
+.ds-content :is(h2, section[id]) { scroll-margin-top: calc(var(--topbar-h) + 24px); }
+
+@media (min-width: 1200px) {
+  .ds-frame {
+    grid-template-columns: var(--rail-w) minmax(0, 1fr); column-gap: 32px; width: 100%;
+    max-width: calc(var(--frame-max) + 2 * var(--gutter)); margin: 0 auto; padding: 0 var(--gutter);
+  }
+  .ds-frame > .ds-content { max-width: none; margin: 0; padding: 24px 0 56px; }
+  .ds-frame ~ .ds-dock { display: none; }
+  .ds-ground:has(.ds-frame) .ds-topbar-in { max-width: calc(var(--frame-max) + 2 * var(--gutter)); }
+
+  .ds-rail {
+    display: flex; flex-direction: column; gap: 4px;
+    position: sticky; top: calc(var(--topbar-h) + 24px); align-self: start; margin-top: 24px;
+    max-height: calc(100dvh - var(--topbar-h) - 48px); overflow-y: auto; overscroll-behavior: contain;
+    padding: 12px; border-radius: var(--r-panel); color: var(--t1);
+    background: var(--glass-bar); border: 1px solid var(--glass-line); box-shadow: var(--glass-edge-bar);
+    -webkit-backdrop-filter: var(--blur-bar); backdrop-filter: var(--blur-bar);
+  }
+}
+
+.ds-rail-places { position: relative; isolation: isolate; display: grid; gap: 2px; }
+.ds-rail-places > a, .ds-rail a.ds-rail-step {
+  display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 6px 12px; border-radius: var(--r-ctl);
+  color: var(--t2); text-decoration: none; font: 600 var(--fs-small)/1.3 var(--sans);
+  transition: color var(--t-color) var(--ease), background-color var(--t-hover) var(--ease);
+}
+.ds-rail-places > a:hover, .ds-rail a.ds-rail-step:hover { color: var(--t1); background: var(--hover); text-decoration: none; }
+.ds-rail-places > a[aria-current="page"] { color: var(--t1); }
+.ds-rail-places > a .ds-icon { width: 20px; height: 20px; }
+.ds-rail-places > .kmk { border-radius: var(--r-ctl); background: var(--mark-quiet); }
+.ds-rail-places > a:hover { background: transparent; }
+.ds-rail .ds-rail-next { margin: 10px 0 6px; }
+
+.ds-rail-sec { margin-top: 12px; padding-top: 14px; border-top: 1px solid var(--glass-line); }
+.ds-rail-sec ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; }
+.ds-rail-h { font: 600 var(--fs-fine)/1.2 var(--sans); letter-spacing: .06em; text-transform: uppercase; color: var(--t2); margin: 0 0 8px 12px; }
+.ds-rail-empty { margin: 0 12px; font-size: var(--fs-small); color: var(--t2); }
+.ds-rail-prog { display: flex; align-items: center; gap: 12px; margin: 0 12px 10px; font-size: var(--fs-fine); color: var(--t2); }
+.ds-rail-prog .ds-track { flex: 1; min-width: 0; }
+
+.ds-rail-group { margin-top: 2px; }
+.ds-rail-group > summary {
+  list-style: none; display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 4px 12px; cursor: pointer;
+  border-radius: var(--r-ctl); color: var(--t1); font: 600 var(--fs-small)/1.3 var(--sans);
+  transition: background-color var(--t-hover) var(--ease);
+}
+.ds-rail-group > summary::-webkit-details-marker { display: none; }
+.ds-rail-group > summary:hover { background: var(--hover); }
+.ds-rail-gt { flex: 1; min-width: 0; }
+.ds-rail-gn { font-weight: 400; font-size: var(--fs-fine); color: var(--t2); }
+.ds-rail-group > summary .ds-chev { width: 16px; height: 16px; color: var(--t2); transition: transform var(--t-hover) var(--ease); }
+.ds-rail-group[open] > summary .ds-chev { transform: rotate(180deg); }
+.ds-rail-group ul { padding-left: 6px; }
+.ds-rail a.ds-rail-step { min-height: 40px; font-weight: 400; font-size: var(--fs-small); }
+.ds-rail a.ds-rail-step[aria-current="page"] { background: var(--mark-quiet); color: var(--t1); font-weight: 600; }
+.ds-rail-ic { flex: none; width: 18px; height: 18px; display: grid; place-items: center; color: var(--t1); }
+.ds-rail-ic .ds-icon { width: 16px; height: 16px; }
+.ds-rail a.ds-rail-item { display: block; }
+.ds-rail a.ds-rail-item small { display: block; font-weight: 400; font-size: var(--fs-fine); color: var(--t2); line-height: 1.35; }
+
+.ds-rail-sec > ul a:not(.ds-rail-step) {
+  display: block; padding: 6px 12px; border-radius: var(--r-ctl); color: var(--t2); text-decoration: none;
+  font-size: var(--fs-small); line-height: 1.35; transition: color var(--t-color) var(--ease), background-color var(--t-hover) var(--ease);
+}
+.ds-rail-sec > ul a:not(.ds-rail-step):hover { color: var(--t1); background: var(--hover); }
+.ds-rail-sec > ul a[aria-current="location"] { color: var(--t1); font-weight: 600; background: var(--mark-quiet); }

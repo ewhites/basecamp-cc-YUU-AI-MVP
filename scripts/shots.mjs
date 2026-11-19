@@ -32,7 +32,7 @@ const ROUTES = [
   ["admin", "lee", "/lab/admin"],
 ];
 
-const SIZES = (process.env.SIZES ?? "d,m").split(",").map((k) => ({ d: ["d", 1440, 900], t: ["t", 1024, 768], m: ["m", 390, 844], n: ["n", 320, 640] })[k]).filter(Boolean);
+const SIZES = (process.env.SIZES ?? "d,m").split(",").map((k) => ({ d: ["d", 1440, 900], w: ["w", 1920, 1080], t: ["t", 1024, 768], m: ["m", 390, 844], n: ["n", 320, 640] })[k]).filter(Boolean);
 const browser = await chromium.launch();
 for (const [w, width, height] of SIZES) {
   const ctx = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: 1 });
