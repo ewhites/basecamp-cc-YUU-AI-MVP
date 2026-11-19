@@ -6,6 +6,7 @@ import { AnswerList } from "@/design/AnswerList";
 import { Button } from "@/design/Button";
 import { Icon } from "@/design/icons";
 import { Progress } from "@/design/Progress";
+import { Panel } from "@/design/Structure";
 import { EXPERIENCE, WORK, type Experience, type Intro, type Work } from "../intro";
 import { saveIntro } from "./actions";
 
@@ -20,7 +21,6 @@ function Continue({ disabled, submit, onNext }: { disabled: boolean; submit: boo
   return (
     <Button
       lift
-      block
       className="en-go"
       type={submit ? "submit" : "button"}
       disabled={disabled || pending}
@@ -68,18 +68,20 @@ export function Welcome({ first, tasks, minutes, initial }: { first: string; tas
   const step = [
     {
       q: `Welcome, ${first}`,
-      brief: `Two questions, then ${tasks} short tasks. About ${minutes} minutes. Nothing here is graded.`,
+      brief: `Two questions, then ${tasks} short tasks, about ${minutes} minutes. Not graded.`,
       ready: true,
     },
     {
       q: "Before you start",
       body: (
-        <ul className="en-use">
-          <li>The coach is AI. It can be wrong, so check what it says.</li>
-          <li>Do not paste personal, confidential or restricted information.</li>
-          <li>Use is logged to track cost, with a daily limit.</li>
-          <li>Your facilitator reviews every score.</li>
-        </ul>
+        <Panel>
+          <ul className="en-use">
+            <li>The coach is AI. It can be wrong, so check what it says.</li>
+            <li>Do not paste personal, confidential or restricted information.</li>
+            <li>Use is logged to track cost, with a daily limit.</li>
+            <li>Your facilitator reviews every score.</li>
+          </ul>
+        </Panel>
       ),
       ready: true,
     },
@@ -117,15 +119,7 @@ export function Welcome({ first, tasks, minutes, initial }: { first: string; tas
       <input type="hidden" name="work" value={work ?? ""} />
       <input type="hidden" name="experience" value={experience ?? ""} />
       <input type="hidden" name="start" value={start ?? ""} />
-      <Progress
-        value={(at + 1) / STEPS}
-        end={<span className="ds-sr">Step {at + 1} of {STEPS}</span>}
-        label={
-          <button type="button" className="en-back" onClick={() => go(-1)} aria-label="Back" aria-hidden={at === 0} tabIndex={at === 0 ? -1 : 0} disabled={at === 0}>
-            <Icon name="back" />
-          </button>
-        }
-      />
+      <Progress label={`Step ${at + 1} of ${STEPS}`} value={(at + 1) / STEPS} />
       <div className={`en-swap${out ? " is-out" : ""}`}>
         <h1 className="en-q" ref={title} tabIndex={-1}>
           {step.q}
@@ -133,7 +127,15 @@ export function Welcome({ first, tasks, minutes, initial }: { first: string; tas
         {step.brief && <p className="en-q-brief">{step.brief}</p>}
         {step.body}
       </div>
-      <Continue disabled={!step.ready || out} submit={last} onNext={() => go(1)} />
+      <div className="en-actions">
+        {at > 0 && (
+          <Button variant="secondary" className="en-back" onClick={() => go(-1)} disabled={out} data-testid="welcome-back">
+            <Icon name="back" />
+            Back
+          </Button>
+        )}
+        <Continue disabled={!step.ready || out} submit={last} onNext={() => go(1)} />
+      </div>
     </form>
   );
 }
