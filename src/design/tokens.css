@@ -33,7 +33,7 @@
   /* glass: deep navy tint, so the ribbons blur through it */
   --glass: linear-gradient(180deg, rgba(12, 24, 60, .58), rgba(8, 18, 48, .55));
   /* the top bar and dock: denser, because the cream sheet scrolls under them and their labels must stay at 4.5:1 */
-  --glass-bar: rgba(8, 18, 48, .8);
+  --glass-bar: rgba(8, 18, 48, .9);
   --glass-solid: #0C1838;
   --glass-line: rgba(255, 255, 255, .14);
   --glass-edge: inset 0 1px 0 rgba(255, 255, 255, .12);

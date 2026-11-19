@@ -56,7 +56,7 @@
 .ds-logo img { height: 26px; width: auto; }
 .ds-name { font: 650 20px/1 var(--sans); letter-spacing: -.04em; white-space: nowrap; }
 .ds-topbar .ds-gap { flex: 1; }
-.ds-sample { font-size: var(--fs-fine); color: var(--t3); white-space: nowrap; }
+.ds-sample { font-size: var(--fs-fine); color: var(--t2); white-space: nowrap; }
 
 .ds-account { position: relative; }
 .ds-initials {
