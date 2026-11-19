@@ -110,7 +110,8 @@ test("lesson: worked example first, then Start practice opens the first task", a
 
 test("instructor console leads with who needs help, then the lift", async ({ page }) => {
   await page.goto("/launch?as=rivera");
-  await expect(page).toHaveURL(/\/home$/);
+  // No Brightspace page any more: a facilitator lands on their console.
+  await expect(page).toHaveURL(/\/lab\/instructor/);
   await page.goto("/lab/instructor?section=B");
   await expect(page.getByTestId("needs-you")).toBeVisible();
   await expect(page.getByTestId("needs-you-row").first()).toBeVisible();
