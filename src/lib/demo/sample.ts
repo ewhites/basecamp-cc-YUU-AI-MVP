@@ -65,7 +65,10 @@ export const PERSONA_IDS: Record<string, string> = {
 /** Probability a given check passes, from the patterns the PRD asks for. */
 function passProb(opts: { skill: Skill; attemptNo: number; week: number; section: string; studentId: string; ability: number }) {
   let p = 0.5 + opts.ability + 0.1 * (opts.attemptNo - 1) + 0.09 * (opts.week - 1);
-  if (opts.skill === "prompting") p = STUCK_ON_PROMPTING.has(opts.studentId) ? 0.04 : Math.max(0.6, p + 0.08);
+  // Only the planned story shows as stuck: everyone else gets a floor on every skill (five skills means
+  // fewer checks per skill, so chance alone would flag more students than the demo intends).
+  if (opts.skill === "prompting") p = STUCK_ON_PROMPTING.has(opts.studentId) ? 0.04 : Math.max(0.84, p + 0.08);
+  else p = Math.max(0.84, p);
   if (opts.skill === "validation" && opts.section === "C") p -= 0.18;
   return Math.max(0.05, Math.min(0.96, p));
 }

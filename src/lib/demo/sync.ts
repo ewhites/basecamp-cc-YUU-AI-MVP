@@ -15,7 +15,7 @@ import { applyChanges, type Change, type Store } from "./store";
  */
 
 /** Bump with the seed (instance.ts) so a new seed never replays changes made against an old one. */
-export const SEED_VERSION = 5;
+export const SEED_VERSION = 6;
 const KEY = `yuu-ai-lab:changes:v${SEED_VERSION}`;
 const PAGE = 200;
 /** Within one burst of queries (one page render), sync once. */
