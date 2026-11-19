@@ -47,9 +47,17 @@
 }
 .en-display { font-size: var(--fs-display); font-weight: 300; line-height: 1.05; letter-spacing: -.022em; max-width: 12em; }
 .en-lede { margin: 20px 0 0; font-size: var(--fs-lead); line-height: 1.5; color: var(--t2); max-width: 27em; text-wrap: pretty; }
-.en-acts { display: flex; align-items: center; flex-wrap: wrap; gap: 16px 28px; margin-top: 32px; }
-.en-fine { margin: 16px 0 0; }
-.en-off { margin: 32px 0 0; font-size: var(--fs-small); color: var(--t2); }
+.en-off { margin: 0; font-size: var(--fs-small); color: var(--t2); }
+
+/* The accounts: three choices you click. Name and role on two lines, a chevron at the end. */
+.en-signin { max-width: 30em; margin-top: 36px; }
+.en-accounts { display: grid; gap: 12px; padding: 16px; background: var(--glass-solid); }
+.en-account { justify-content: space-between; text-align: left; min-height: 68px; padding: 10px 20px; white-space: normal; }
+.en-account-text { display: grid; gap: 3px; min-width: 0; }
+.en-account-name { font-size: var(--fs-body); line-height: 1.25; }
+.en-account-role { font-size: var(--fs-small); font-weight: 400; line-height: 1.3; opacity: .86; }
+.en-account > .ds-icon { flex: none; width: 18px; height: 18px; transition: transform var(--t-hover) var(--ease); }
+.en-account:hover > .ds-icon { transform: translateX(3px); }
 
 /* The glass device: a sample coach result. It can be held and tilted (pointer drag), and springs back. */
 .en-device {
@@ -57,14 +65,14 @@
   padding: 16px 16px 8px;
   transform: perspective(1200px) rotateX(var(--rx, 2deg)) rotateY(var(--ry, -6deg));
   transition: transform 450ms var(--ease);
-  cursor: grab;
   touch-action: pan-y;
   user-select: none;
   -webkit-user-select: none;
 }
-.en-device.is-held { transition: none; cursor: grabbing; }
+.en-device.is-held { transition: none; }
 @media (max-width: 900px) { .en-device { --rx: 0deg; --ry: 0deg; } }
-@media (prefers-reduced-motion: reduce) { .en-device, .en-device.is-held { transform: none; cursor: default; } }
+@media (prefers-reduced-motion: reduce) { .en-device, .en-device.is-held { transform: none; } }
+.en-device-cap { margin: 0 6px 10px; font-size: var(--fs-small); color: var(--t2); line-height: 1.4; }
 .en-device-in { border-radius: var(--r-row); background: var(--well); border: 1px solid var(--hair); padding: 18px; }
 .en-device-in p { margin: 0; font-size: var(--fs-small); line-height: 1.42; }
 .en-device-score {
@@ -79,114 +87,91 @@
 /* ------------------------------------------------------------------ first visit */
 .en-welcome { display: grid; place-items: start center; padding-top: clamp(8px, 4vh, 48px); }
 .en-card { width: min(560px, 100%); }
-.en-card.ds-sheet { padding: 24px 28px 32px; }
+.en-card.ds-sheet { padding: 24px 28px 28px; }
 @media (max-width: 520px) { .en-card.ds-sheet { padding: 16px 20px 24px; } }
-.en-card .ds-progress { margin: 0; gap: 10px; flex-wrap: nowrap; }
-.en-card .ds-progress .ds-track { order: 0; flex-basis: auto; }
-.en-back {
-  width: 44px; height: 44px; margin-left: -12px; border: 0; background: none; border-radius: var(--r-ctl);
-  display: grid; place-items: center; color: var(--t2);
-  transition: background-color var(--t-hover) var(--ease), color var(--t-hover) var(--ease);
-}
-.en-back:hover { background: var(--step); color: var(--t1); }
-.en-back[aria-hidden="true"] { visibility: hidden; }
-.en-q { margin: 28px 0 20px; min-height: 2.16em; outline: none; }
+.en-card .ds-progress { margin: 0; }
+.en-q { margin: 24px 0 12px; outline: none; }
 .en-q:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; }
-.en-q-brief { margin: -8px 0 4px; color: var(--t2); }
+.en-q-brief { margin: 0 0 4px; color: var(--t2); max-width: 30em; }
 .en-swap { transition: opacity 220ms var(--ease), transform 220ms var(--ease); }
 .en-swap.is-out { opacity: 0; transform: translateY(8px); }
-.en-go { margin-top: 28px; }
+.en-swap .ds-panel, .en-swap .ds-answers { margin-top: 16px; }
+.en-actions { display: flex; gap: 12px; margin-top: 28px; }
+.en-actions .en-go { flex: 1; min-width: 0; }
+.en-actions .en-back { flex: none; padding: 0 20px 0 14px; }
+
+/* Answer rows read as choices: a radio circle at the start, filled when chosen. */
+.en-card .ds-answers > button { display: flex; align-items: center; gap: 14px; }
+.en-card .ds-answers > button::before {
+  content: ""; flex: none; width: 20px; height: 20px; border-radius: 50%;
+  border: 1.5px solid var(--t3); background: none;
+  transition: border-color var(--t-color) var(--ease), background-color var(--t-color) var(--ease), box-shadow var(--t-color) var(--ease);
+}
+.en-card .ds-answers > button[aria-checked="true"]::before {
+  border-color: var(--accent-fill); background: var(--accent-fill); box-shadow: inset 0 0 0 4px var(--cream);
+}
+
+/* the acceptable-use screen: four short lines in one panel, separated by space */
+.en-use { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.en-use li { line-height: 1.45; }
 
 /* ------------------------------------------------------------------ course home */
-.en-home { display: grid; gap: 32px; }
-.en-home-head .ds-kicker { margin: 0; }
-.en-home-head h1 { margin: 6px 0 4px; }
-.en-home-head .ds-progress { margin: 12px 0 0; max-width: 640px; }
+.en-home .ds-sheet { max-width: 60em; }
+.en-home .ds-progress { margin: 14px 0 0; max-width: 40em; }
+.en-home .ds-section:first-of-type { margin-top: 36px; }
 
+/* Up next: the step, what it is, one orange button */
 .en-next { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 16px 32px; }
-.en-next .ds-kicker { margin: 0; }
-.en-next h2 { margin: 6px 0 6px; }
-.en-next p.ds-brief { margin: 0; }
-@media (max-width: 720px) {
+.en-next h3 { margin: 0; }
+.en-next p { margin: 0; }
+.en-next-meta { margin-top: 2px; font-size: var(--fs-small); color: var(--t2); }
+.en-next-blurb { margin-top: 8px; max-width: 34em; text-wrap: pretty; }
+@media (max-width: 640px) {
   .en-next { grid-template-columns: minmax(0, 1fr); }
   .en-next .ds-btn { width: 100%; }
 }
 
-/* The three doors. The lamp signature: a finished module's door is lit with the orange marble. Nowhere else. */
+/* The three doors: cards that open a module. Blue "Open module" line and chevron say "click". */
 .en-doors { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
 .en-doors > li { display: grid; }
 @media (max-width: 760px) { .en-doors { grid-template-columns: minmax(0, 1fr); gap: 12px; } }
 .en-door {
-  position: relative; overflow: hidden; isolation: isolate;
-  min-height: clamp(196px, 17vw, 236px);
-  border-radius: 140px 140px var(--r-card) var(--r-card);
-  padding: 0 20px 18px;
-  display: flex; flex-direction: column; justify-content: flex-end; gap: 6px;
+  display: flex; flex-direction: column; gap: 6px; padding: 18px 20px;
+  border-radius: var(--r-card); background: var(--panel); border: 1px solid var(--panel-line);
   color: var(--t1); text-decoration: none;
-  transition: transform 320ms var(--ease), border-color var(--t-hover) var(--ease);
+  transition: background-color var(--t-hover) var(--ease), border-color var(--t-hover) var(--ease), transform 320ms var(--ease);
 }
-@media (max-width: 760px) {
-  .en-door { min-height: 128px; border-radius: 96px 96px var(--r-card) var(--r-card); padding-top: 48px; }
-  .en-door p { display: none; }
-  .en-lamp { height: 12%; }
-}
-.en-door:hover { transform: translateY(-4px); text-decoration: none; color: var(--t1); border-color: var(--hair-2); }
-.en-door:active { transform: translateY(-2px) scale(.99); }
-.en-door:focus-visible { outline-offset: 4px; }
-.en-door > * { position: relative; }
-.en-lamp { position: absolute; left: 50%; top: 0; width: 1px; height: 16%; background: var(--hair-2); }
-.en-lamp::after {
-  content: ""; position: absolute; left: -7px; top: 100%; width: 15px; height: 22px;
-  border-radius: 6px 6px 8px 8px; border: 1px solid var(--hair-2);
-}
-.en-door small { font-size: var(--fs-fine); color: var(--t2); line-height: 1.4; }
-.en-door h3 { font-size: var(--fs-card); font-weight: 400; line-height: 1.1; letter-spacing: -.018em; }
-.en-door p { margin: 0; font-size: var(--fs-small); color: var(--t2); line-height: 1.42; }
-@media (min-width: 761px) { .en-door p { min-height: calc(2 * 1.42em); } }
-.en-meter { display: flex; gap: 4px; margin-top: 10px; }
+.en-door:hover { background: var(--hover); border-color: var(--link); color: var(--t1); text-decoration: none; transform: translateY(-2px); }
+.en-door:active { transform: scale(.99); }
+.en-door:focus-visible { outline-offset: 3px; }
+.en-door-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.en-door small { font-size: var(--fs-small); color: var(--t2); line-height: 1.4; }
+.en-door h3 { font: 400 var(--fs-card)/1.1 var(--serif); font-variation-settings: var(--soft); letter-spacing: -.018em; margin: 4px 0 0; }
+.en-door p { margin: 0; font-size: var(--fs-small); color: var(--t2); line-height: 1.42; flex: 1; }
+.en-meter { display: flex; gap: 4px; margin-top: 8px; }
 .en-meter i { flex: 1; height: 4px; border-radius: 2px; background: var(--step-2); }
 .en-meter i.is-on { background: var(--t1); }
+.en-door-go { display: inline-flex; align-items: center; gap: 4px; margin-top: 10px; font-weight: 600; color: var(--link); }
+.en-door:hover .en-door-go { color: var(--link-hover); }
+.en-door-go .ds-icon { width: 18px; height: 18px; transition: transform var(--t-hover) var(--ease); }
+.en-door:hover .en-door-go .ds-icon { transform: translateX(3px); }
 
-.en-door.is-lit { border-color: color-mix(in srgb, var(--accent-soft) 45%, transparent); }
-.en-door.is-lit::before {
-  content: ""; position: absolute; inset: 0; z-index: -1;
-  background:
-    linear-gradient(180deg, transparent 20%, color-mix(in srgb, var(--glass-solid) 90%, transparent) 78%),
-    var(--marble-img) 40% 30% / 900px auto no-repeat,
-    var(--glass-solid);
-}
-.en-door.is-lit .en-lamp::after { background: var(--accent-soft); border-color: var(--accent-soft); }
-.en-door.is-lit small, .en-door.is-lit p { color: var(--t1); }
+/* The lamp signature: a finished module's lamp is lit with the orange marble. Nowhere else. */
+.en-lamp { flex: none; width: 14px; height: 20px; border-radius: 5px 5px 7px 7px; border: 1.5px solid var(--hair-2); }
+.en-door.is-lit .en-lamp { background: var(--accent-soft); border-color: var(--accent-soft); }
+.en-door.is-lit { border-color: var(--accent-soft); }
 
-/* The whole curriculum as rows on the cream sheet, grouped by module. Each row opens its step. */
-.en-group + .en-group { margin-top: 28px; }
-.en-group h3 { font: 600 var(--fs-small)/1.42 var(--sans); letter-spacing: 0; color: var(--t2); margin: 0 0 4px; }
-.en-row-kind { font-size: var(--fs-fine); color: var(--t2); line-height: 1.4; }
-.en-row[aria-current="step"] .en-row-text b { color: var(--t1); }
-.en-row-state[data-state="next"] { color: var(--t1); font-weight: 600; }
-.en-rows-sheet h2 { margin: 0 0 8px; }
-.en-rows-sheet > * + h2, .en-rows-sheet section + section { margin-top: 32px; }
-.en-row { display: flex; align-items: center; gap: 16px; min-height: var(--h-row); padding: 10px 0; border-top: 1px solid var(--hair); color: var(--t1); text-decoration: none; }
-.ds-rows > li:first-child > .en-row { border-top: 0; }
-.en-row:hover { text-decoration: none; color: var(--t1); }
-.en-row-text { flex: 1; min-width: 0; display: grid; gap: 2px; }
-.en-row-text b { font-weight: 600; font-size: var(--fs-body); line-height: 1.3; }
-.en-row-text span { font-size: var(--fs-small); color: var(--t2); line-height: 1.42; }
-.en-row-state { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-small); color: var(--t2); white-space: nowrap; font-variant-numeric: tabular-nums; }
-.en-row-state .ds-icon { width: 16px; height: 16px; }
-.en-row > .ds-icon { width: 16px; height: 16px; color: var(--t2); transition: transform var(--t-hover) var(--ease); }
-.en-row:hover > .ds-icon { transform: translateX(3px); color: var(--t1); }
-.en-focus { display: grid; gap: 6px; }
-.en-focus p { margin: 0; max-width: 36em; }
-.en-focus .ds-quiet { justify-self: start; }
-.en-head-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
-.en-head-row h2 { margin: 0; }
+/* Step rows (RowLink): type and minutes under the title, status at the end */
+.en-row[aria-current="step"] { background: var(--hover); }
+.en-state { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.en-state .ds-icon { width: 16px; height: 16px; }
+.en-state[data-state="next"] { color: var(--t1); font-weight: 600; }
+.en-state[data-state="done"] { color: var(--t1); }
+@media (max-width: 420px) { .en-row .ds-rowlink-end { max-width: 6.5em; white-space: normal; } .en-state { white-space: normal; } }
 
-/* sign in: the line above the two accounts */
-.en-with { margin: 28px 0 0; font: 600 var(--fs-small)/1.42 var(--sans); letter-spacing: 0; color: var(--t2); }
-.en-with + .en-acts { margin-top: 12px; }
-
-/* first visit: the acceptable-use screen, four short lines separated by space and a hairline */
-.en-use { list-style: none; margin: 0; padding: 0; max-width: 36em; }
-.en-use li { padding: 12px 0; border-top: 1px solid var(--hair); line-height: 1.45; }
-.en-use li:first-child { border-top: 0; padding-top: 0; }
+/* Work on this, and the folded skills */
+.en-focus { display: grid; gap: 8px; justify-items: start; }
+.en-focus h3, .en-focus p { margin: 0; }
+.en-focus p { max-width: 36em; }
+.en-focus .ds-btn { margin-top: 6px; }
+.en-fold-act { margin-top: 16px; }

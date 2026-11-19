@@ -52,6 +52,7 @@ export function SignInDevice() {
 
   return (
     <div ref={ref} className="en-device ds-glass ds-sq ds-rise" style={{ "--i": 3 } as React.CSSProperties} aria-hidden>
+      <p className="en-device-cap">Example coach result</p>
       <div className="en-device-in">
         <p>You are a senior help-desk technician. Summarize this ticket for the next-shift technician.</p>
       </div>

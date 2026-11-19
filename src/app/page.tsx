@@ -4,6 +4,7 @@ import { SampleTag, SimulatedTag } from "@/components/Tags";
 import { buttonClass } from "@/design/Button";
 import { Ground } from "@/design/Ground";
 import { Icon } from "@/design/icons";
+import { Panel, Section } from "@/design/Structure";
 import { PERSONAS } from "@/lib/personas";
 import { sessionPersona } from "@/lib/db";
 import { demoLoginEnabled } from "@/lib/demo/secret";
@@ -36,37 +37,42 @@ export default async function SignIn() {
               <p className="en-lede ds-rise" style={{ "--i": 1 } as React.CSSProperties}>
                 Write it yourself. See exactly what to fix.
               </p>
-              <section className="ds-rise" style={{ "--i": 2 } as React.CSSProperties} aria-labelledby="signin-with">
-                <h2 id="signin-with" className="en-with">
-                  Sign in with your Year Up account
-                </h2>
+              <Section
+                className="ds-rise en-signin"
+                style={{ "--i": 2 } as React.CSSProperties}
+                id="signin-with"
+                title="Sign in"
+                aside={<SimulatedTag what="Year Up sign-in" />}
+              >
                 {enabled ? (
-                  <div className="en-acts">
+                  <Panel className="en-accounts">
                     {PERSONAS.map((p) => {
                       const student = p.role === "student";
-                      const who = student ? p.name.split(" ")[0] : p.name;
-                      const role = student ? "student" : p.role === "admin" ? "admin" : "facilitator";
                       return (
                         <a
                           key={p.key}
                           href={`/launch?as=${p.key}`}
-                          className={`${buttonClass({ variant: student ? "paper" : "quiet" })} account`}
+                          className={`${buttonClass({ variant: student ? "primary" : "secondary", block: true })} en-account account`}
                           data-testid={`signin-${p.key}`}
                         >
-                          Sign in as {who}
-                          <span className="ds-sr">, {role}</span>
-                          {!student && <Icon name="arrow" />}
+                          <span className="en-account-text">
+                            <span className="en-account-name">
+                              <span className="ds-sr">Sign in as </span>
+                              {p.name}
+                            </span>
+                            <span className="en-account-role">{p.description}</span>
+                          </span>
+                          <Icon name="chev" />
                         </a>
                       );
                     })}
-                  </div>
+                  </Panel>
                 ) : (
-                  <p className="en-off">Demo sign-in is turned off on this server</p>
+                  <Panel>
+                    <p className="en-off">Demo sign-in is turned off on this server</p>
+                  </Panel>
                 )}
-                <p className="en-fine">
-                  <SimulatedTag what="Year Up sign-in" />
-                </p>
-              </section>
+              </Section>
             </div>
             <SignInDevice />
           </div>
