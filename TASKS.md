@@ -54,18 +54,19 @@ Status 2026-11-19: done. Build, lint, type check and 51 unit tests pass. Screens
 - [x] Structure pieces and rules 32 to 40 (Section, Panel, RowLink, Fold, Crumbs, one heading scale, blue = clickable)
 - [x] Entry screens
 - [x] Staff screens
-- [ ] Learning screens
+- [x] Learning screens
 
 ## Phase 5: finish
 - [x] Old CSS and unused components deleted, `@brightspace-ui/core` removed
-- [ ] End-to-end test updated for the first visit, nothing weakened
-- [ ] `npm run lint && npm run typecheck && npm test && npm run build` pass
-- [ ] `npm run test:e2e` passes
-- [ ] Screenshots of every route at 1440x900 and 390x844, read against the checklists
-- [ ] axe-core clean, contrast checked, no sideways scroll at 320px, reduced motion checked
+- [x] End-to-end test updated for the first visit, nothing weakened
+- [x] `npm run lint && npm run typecheck && npm test && npm run build` pass
+- [x] `npm run test:e2e` passes (9 of 9; the 2 live-Claude tests need a working key)
+- [x] Screenshots of every route at 1440x900 and 390x844, read against the checklists
+- [x] axe-core clean, contrast checked, no sideways scroll at 320px, reduced motion checked
 - [x] No hex colour outside `src/design/tokens.css` (tests/design-tokens.test.ts)
 - [x] `CLAUDE.md` and `docs/demo-script.md` updated
-- [ ] `logan` pushed, Vercel preview checked, address sent to Logan
+- [ ] `logan` pushed (blocked: the safety check refused a push to Ethan's repo; Logan pushes)
+- [x] Vercel preview deployed from this folder and checked: https://yuu-ai-p5al1kjkk-logan-kays-projects.vercel.app
 
 ## Blocked on Logan
 - [ ] Merge to `main` (project rule: ask first). Ask once, after the preview is checked.
