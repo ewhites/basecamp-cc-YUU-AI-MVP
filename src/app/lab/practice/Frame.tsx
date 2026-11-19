@@ -6,18 +6,67 @@ export interface TaskHead {
   brief: string;
   /** Material, knowledge sheet, test messages, the checklist and the worked-example link (server-rendered). */
   task: React.ReactNode;
+  /** The live build's test messages: they sit under the instructions in the second column. */
+  tests?: React.ReactNode;
   /** Earlier attempts, folded (server-rendered), shown under the latest result in the coach panel. */
   earlier?: React.ReactNode;
   module: string;
 }
 
-/** The one page template for a practice task: the sheet (task, then the work) and the coach panel to its right. */
-export function Frame({ head, coach, children }: { head: TaskHead; coach: React.ReactNode; children: React.ReactNode }) {
+/**
+ * Two columns inside a sheet: what to read on the left, what to do on the right. One column on narrow sheets, same order.
+ * `kind` sets the proportions (see learn.css).
+ */
+export function Split({ kind, a, b, className = "" }: { kind?: "task" | "demo" | "check"; a: React.ReactNode; b: React.ReactNode; className?: string }) {
+  return (
+    <div className={`ln-split${kind ? ` is-${kind}` : ""} ${className}`.trim()}>
+      <div className="ln-col">{a}</div>
+      <div className="ln-col">{b}</div>
+    </div>
+  );
+}
+
+/**
+ * The one page template for a practice task: the sheet and the coach panel to its right.
+ * In the sheet: `lead` (optional, full width), then the task on the left and the work (children) on the right,
+ * then `after` (optional, full width: results that need the width, and the Continue row).
+ * `beside` sits in the left column under the task (the live build's tool picker).
+ */
+export function Frame({
+  head,
+  coach,
+  lead,
+  beside,
+  after,
+  children,
+}: {
+  head: TaskHead;
+  coach: React.ReactNode;
+  lead?: React.ReactNode;
+  beside?: React.ReactNode;
+  after?: React.ReactNode;
+  children: React.ReactNode;
+}) {
   return (
     <div className="ds-work">
       <Sheet className="ds-rise ln-i1" title={head.title} brief={head.brief}>
-        {head.task}
-        {children}
+        {lead}
+        <Split
+          kind="task"
+          a={
+            <>
+              {head.task}
+              {beside}
+            </>
+          }
+          b={
+            <>
+              {children}
+              {head.tests}
+            </>
+          }
+        />
+        {after && <div className="ln-full">{after}</div>}
       </Sheet>
       {coach}
     </div>

@@ -19,10 +19,10 @@
 .sb-sim { flex: none; font-size: var(--fs-fine); line-height: 1.4; font-weight: 400; color: var(--t2); white-space: nowrap; }
 
 /* ------------------------------------------------------------------ the four tool boxes */
-/* Spreadsheet and outbox across, notes doc and memory side by side. */
+/* A 2x2 grid: spreadsheet and outbox, notes doc and memory. One column when the space around it is narrow.
+ * Each box is a container, so a table inside it stacks by the box's own width. */
 .sb-tools { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
-.sb-tools > .sb-panel.sb-panel { margin-top: 0; padding: 18px 20px; }
-.sb-panel[data-tool="sheet"], .sb-panel[data-tool="outbox"] { grid-column: 1 / -1; }
+.sb-tools > .sb-panel.sb-panel { margin-top: 0; padding: 18px 20px; container-type: inline-size; }
 .sb-panel[data-granted="no"] { background: transparent; border-style: dashed; }
 .sb-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0 12px; margin-bottom: 10px; }
 .sb-head h3 { margin: 0; }
@@ -69,8 +69,10 @@
 @keyframes sb-in { from { opacity: 0; } to { opacity: 1; } }
 
 /* ------------------------------------------------------------------ narrow */
-@container (max-width: 560px) {
+@container (max-width: 440px) {
   .sb-tools { grid-template-columns: minmax(0, 1fr); }
+}
+@container (max-width: 400px) {
   .sb-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
   .sb-table, .sb-table tbody { display: block; }
   .sb-table tr { display: grid; gap: 2px; padding: 8px 0; border-top: 1px solid var(--panel-line); }
