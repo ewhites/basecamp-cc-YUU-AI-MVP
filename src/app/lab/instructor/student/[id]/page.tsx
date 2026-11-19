@@ -42,7 +42,7 @@ export default async function StudentPage({ params, searchParams }: { params: Pr
 
   if (!student) {
     return (
-      <div className="ds-page st-page st-narrow">
+      <div className="ds-page st-page">
         <Crumbs items={[{ label: "Your sections", href: "/lab/instructor" }, { label: "Student not found" }]} />
         <Sheet className="ds-rise">
           <Section title="Student not found">
@@ -117,7 +117,7 @@ export default async function StudentPage({ params, searchParams }: { params: Pr
     <div className="ds-page st-page" data-testid="student-detail">
       <Crumbs items={[{ label: `Section ${student.section_id}`, href: sectionHref(student.section_id) }, { label: student.display_name }]} />
       <div className="ds-work">
-        <Sheet>
+        <Sheet className="st-wide">
           <header className="st-head ds-rise" style={rise(0)}>
             <div>
               <p className="ds-kicker">
@@ -128,76 +128,82 @@ export default async function StudentPage({ params, searchParams }: { params: Pr
             </div>
           </header>
 
-          <WhyCard first={first} reasons={reasons} handled={handled} studentId={student.id} />
+          <div className="st-cols">
+            <div className="st-col">
+              <WhyCard first={first} reasons={reasons} handled={handled} studentId={student.id} />
 
-          {attemptId && !ok && (
-            <Section title="Attempt not available" className="ds-rise" style={rise(2)}>
-              <Panel>
-                <p className="st-said" data-ok="no">
-                  <Icon name="minus" />
-                  <span>That attempt is not available.</span>
-                </p>
-              </Panel>
-            </Section>
-          )}
-          {ok && <Replay attempt={ok} />}
+              {attemptId && !ok && (
+                <Section title="Attempt not available" className="ds-rise" style={rise(2)}>
+                  <Panel>
+                    <p className="st-said" data-ok="no">
+                      <Icon name="minus" />
+                      <span>That attempt is not available.</span>
+                    </p>
+                  </Panel>
+                </Section>
+              )}
+              {ok && <Replay attempt={ok} />}
 
-          <Section title="Attempts" id="attempts" className="ds-rise" style={rise(3)} aside={attempts.length > 0 ? `${attempts.length} in all` : undefined}>
-            {attempts.length === 0 ? (
-              <Panel>
-                <p>No attempts yet.</p>
-              </Panel>
-            ) : (
-              <>
-                <Panel list data-testid="attempt-list">
-                  <ol className="ds-rows">{attempts.slice(0, shownAttempts).map((a) => attemptRow(a))}</ol>
-                </Panel>
-                {attempts.length > shownAttempts && (
-                  <Fold label={`Show ${attempts.length - shownAttempts} older attempts`}>
-                    <ol className="ds-rows st-flush">{attempts.slice(shownAttempts).map((a) => attemptRow(a))}</ol>
-                  </Fold>
+              <Section title="Attempts" id="attempts" className="ds-rise" style={rise(3)} aside={attempts.length > 0 ? `${attempts.length} in all` : undefined}>
+                {attempts.length === 0 ? (
+                  <Panel>
+                    <p>No attempts yet.</p>
+                  </Panel>
+                ) : (
+                  <>
+                    <Panel list data-testid="attempt-list">
+                      <ol className="ds-rows">{attempts.slice(0, shownAttempts).map((a) => attemptRow(a))}</ol>
+                    </Panel>
+                    {attempts.length > shownAttempts && (
+                      <Fold label={`Show ${attempts.length - shownAttempts} older attempts`}>
+                        <ol className="ds-rows st-flush">{attempts.slice(shownAttempts).map((a) => attemptRow(a))}</ol>
+                      </Fold>
+                    )}
+                  </>
                 )}
-              </>
-            )}
-          </Section>
+              </Section>
+            </div>
 
-          <Section title="Skills" id="skills" data-testid="student-skills" className="ds-rise" style={rise(4)} desc="Checks passed on the last 3 practice tries.">
-            <Panel list>
-              <ul className="ds-rows">
-                {SKILLS.map((s) => {
-                  const c = levels?.[s].current ?? null;
-                  const a = start[s];
-                  const b = final[s];
-                  const stuck = stuckSkills.has(s);
-                  return (
-                    <li key={s} className="ds-row st-row" data-testid={stuck ? "stuck-skill" : undefined}>
-                      <span className="st-row-main">
-                        <span className="st-row-title">{SKILL_LABELS[s]}</span>
-                        <span className="st-row-meta">
-                          {a === null
-                            ? "No starting point check yet"
-                            : b === null
-                              ? `Starting point check ${percent(a)}`
-                              : `Checks ${percent(a)} at the start, ${percent(b)} at the end`}
-                        </span>
-                      </span>
-                      {stuck && (
-                        <span className="st-flagtext">
-                          <Icon name="minus" />
-                          Stuck
-                        </span>
-                      )}
-                      <span className="st-cell ds-num" data-band={c === null ? "na" : c < 0.4 ? "low" : c < 0.7 ? "mid" : "high"}>
-                        {c === null ? "Not yet" : percent(c)}
-                      </span>
-                    </li>
-                  );
-                })}
-              </ul>
-            </Panel>
-          </Section>
+            <div className="st-col">
+              <Section title="Skills" id="skills" data-testid="student-skills" className="ds-rise" style={rise(4)} desc="Checks passed on the last 3 practice tries.">
+                <Panel list>
+                  <ul className="ds-rows">
+                    {SKILLS.map((s) => {
+                      const c = levels?.[s].current ?? null;
+                      const a = start[s];
+                      const b = final[s];
+                      const stuck = stuckSkills.has(s);
+                      return (
+                        <li key={s} className="ds-row st-row" data-testid={stuck ? "stuck-skill" : undefined}>
+                          <span className="st-row-main">
+                            <span className="st-row-title">{SKILL_LABELS[s]}</span>
+                            <span className="st-row-meta">
+                              {a === null
+                                ? "No starting point check yet"
+                                : b === null
+                                  ? `Starting point check ${percent(a)}`
+                                  : `Checks ${percent(a)} at the start, ${percent(b)} at the end`}
+                            </span>
+                          </span>
+                          {stuck && (
+                            <span className="st-flagtext">
+                              <Icon name="minus" />
+                              Stuck
+                            </span>
+                          )}
+                          <span className="st-cell ds-num" data-band={c === null ? "na" : c < 0.4 ? "low" : c < 0.7 ? "mid" : "high"}>
+                            {c === null ? "Not yet" : percent(c)}
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </Panel>
+              </Section>
 
-          {cap && <DailyLimit studentId={student.id} first={first} cap={cap} changes={limitChanges} viewerId={viewer.userId} />}
+              {cap && <DailyLimit studentId={student.id} first={first} cap={cap} changes={limitChanges} viewerId={viewer.userId} />}
+            </div>
+          </div>
         </Sheet>
 
         <CoachDraft attempt={ok} first={first} />
