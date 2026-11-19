@@ -7,6 +7,7 @@ import { AttemptResult, attemptQuotes } from "@/components/AttemptResult";
 import { ToolPanels, type DraftStatus } from "@/components/ToolPanels";
 import { Button } from "@/design/Button";
 import { Checkbox } from "@/design/Checkbox";
+import { Panel, Section } from "@/design/Structure";
 import type { AttemptView } from "@/lib/attempts";
 import type { CoworkerMessage } from "@/lib/curriculum/types";
 import { cleanTools, SANDBOX_EXERCISE, TOOL_BLURBS, TOOL_IDS, TOOL_LABELS, type SandboxResult, type ToolId } from "@/lib/sandbox/tools";
@@ -68,6 +69,34 @@ export function AgentForm({
         />
       }
     >
+      {sandbox && (
+        <Section
+          title="Pick the bot's tools"
+          id="tools"
+          desc="Fewer tools means fewer ways for the bot to go wrong"
+          className="sb-picker"
+          data-testid="tool-picker"
+        >
+          <Panel list role="group" aria-labelledby="tools-h" className="sb-picks">
+            {TOOL_IDS.map((id) => (
+              <Checkbox
+                key={id}
+                checked={tools.includes(id)}
+                onChange={(on) => setTools((t) => cleanTools(on ? [...t, id] : t.filter((x) => x !== id)))}
+                data-testid={`tool-pick-${id}`}
+              >
+                <span className="sb-pick">
+                  <span className="sb-pick-name">{TOOL_LABELS[id]}</span>
+                  <span className="sb-pick-note">{TOOL_BLURBS[id]}</span>
+                </span>
+                <span className="sb-sim">Simulated</span>
+              </Checkbox>
+            ))}
+          </Panel>
+        </Section>
+      )}
+
+      <Section title="Your bot's instructions" id="work">
       <form
         className="ln-work"
         onSubmit={(e) => {
@@ -80,30 +109,6 @@ export function AgentForm({
           });
         }}
       >
-        {sandbox && (
-          <section className="sb-picker" data-testid="tool-picker" aria-labelledby="tools-title">
-            <h2 id="tools-title" className="ln-label">
-              Tools your bot gets
-            </h2>
-            <p className="ln-hint">Every tool is one more thing the bot can do, and one more thing that can go wrong</p>
-            <div role="group" aria-labelledby="tools-title" className="sb-picks">
-              {TOOL_IDS.map((id) => (
-                <Checkbox
-                  key={id}
-                  checked={tools.includes(id)}
-                  onChange={(on) => setTools((t) => cleanTools(on ? [...t, id] : t.filter((x) => x !== id)))}
-                  data-testid={`tool-pick-${id}`}
-                >
-                  <span className="sb-pick">
-                    <span className="sb-pick-name">{TOOL_LABELS[id]}</span>
-                    <span className="sb-pick-note">{TOOL_BLURBS[id]}</span>
-                    <span className="sb-sim">Simulated</span>
-                  </span>
-                </Checkbox>
-              ))}
-            </div>
-          </section>
-        )}
         <Slab
           note={
             pending ? (
@@ -116,7 +121,7 @@ export function AgentForm({
             )
           }
           action={
-            <Button type="submit" variant={passed ? "paper" : "primary"} disabled={pending || !instructions.trim()} data-testid="agent-submit">
+            <Button type="submit" variant={passed ? "secondary" : "primary"} disabled={pending || !instructions.trim()} data-testid="agent-submit">
               {pending ? "Testing" : attempt ? "Test bot again" : "Test your bot"}
             </Button>
           }
@@ -135,12 +140,11 @@ export function AgentForm({
         </Slab>
         {error && <ErrorLine>{error}</ErrorLine>}
       </form>
+      </Section>
 
       {transcript.length > 0 && (
-        <section className="ln-output" data-testid="bot-transcript" aria-labelledby="bot-answered">
-          <h2 id="bot-answered" className="ln-h">
-            How your bot answered
-          </h2>
+        <Section title="How your bot answered" id="bot-answered" data-testid="bot-transcript">
+          <Panel>
           <ol key={attempt?.id} className="ln-convo">
             {transcript.map((t) => {
               const kind = kindOf(t.id);
@@ -163,7 +167,8 @@ export function AgentForm({
               );
             })}
           </ol>
-        </section>
+          </Panel>
+        </Section>
       )}
 
       {used && <UsedTools key={attempt?.id} used={used} messages={messages} />}
@@ -183,11 +188,7 @@ function UsedTools({ used, messages }: { used: SandboxResult; messages: Coworker
   const sheet = used.sheet;
   const looked = sheet?.lookups.length ?? 0;
   return (
-    <section className="ln-output" data-testid="sandbox-result" aria-labelledby="used-title">
-      <h2 id="used-title" className="ln-h">
-        What your bot used
-      </h2>
-      <div className="ds-slab ds-sq ln-slab sb-stage">
+    <Section title="What your bot used" id="used" data-testid="sandbox-result" desc="Nothing is sent. Approve and Send back only show what a person would decide">
         <ToolPanels
           granted={used.tools}
           who="your bot"
@@ -208,8 +209,6 @@ function UsedTools({ used, messages }: { used: SandboxResult; messages: Coworker
           drafts={used.outbox.map((d) => ({ ...d, label: label(d.messageId), status: status[d.id] ?? "waiting" }))}
           onDecide={(id, decision) => setStatus((s) => ({ ...s, [id]: decision === "approve" ? "sent" : "sent_back" }))}
         />
-      </div>
-      <p className="ln-hint">Nothing is sent. Approve and Send back only show what a person would decide</p>
-    </section>
+    </Section>
   );
 }

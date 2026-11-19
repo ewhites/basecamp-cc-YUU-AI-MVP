@@ -2,7 +2,9 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { CoachSide } from "@/components/AskCoach";
+import { Button } from "@/design/Button";
 import { Icon } from "@/design/icons";
+import { Fold, Section } from "@/design/Structure";
 import type { ComparisonRow, LessonPart, Segment } from "@/lib/curriculum/lessons";
 import { Comparison, ExampleRows, exampleRows, PartNotes } from "./ui";
 
@@ -123,67 +125,61 @@ export function WorkedExample({ openByDefault }: { openByDefault: boolean }) {
   const playing = phase === "typing" || phase === "output" || phase === "notes";
   const showOutput = !!data.exchange && (phase === "idle" || phase === "output" || phase === "notes" || phase === "done");
   return (
-    <details
-      className="ln-section ln-worked"
-      open={open}
-      onToggle={(e) => setOpen((e.currentTarget as HTMLDetailsElement).open)}
-    >
-      <summary>
-        <h2 className="ln-h" id="worked">
-          See it done
-        </h2>
-        <Icon name="down" />
-      </summary>
-      <div className="ln-section-body">
-        <p className="ln-read">{data.scenario}</p>
-        {data.comparison && <Comparison rows={data.comparison} />}
-        <div className="ln-demo-bar">
-          <span className="ln-label">{data.head}</span>
-          <div className="ln-demo-ctl">
-            {playing ? (
-              <button type="button" className="ln-demo-btn" onClick={skip}>
-                Skip demo
-              </button>
-            ) : null}
-            <button
-              type="button"
-              className="ln-demo-btn"
-              data-testid="watch-demo"
-              disabled={playing}
-              onClick={() => {
-                setOpen(true);
-                start();
-              }}
-            >
-              <Icon name="play" />
-              {phase === "idle" ? "Watch demo" : "Replay demo"}
-            </button>
+    <Section title="See it done" id="worked">
+      <Fold label="The worked example" hint={open ? undefined : "A strong answer, part by part"} open={open} onToggle={(e) => setOpen((e.currentTarget as HTMLDetailsElement).open)}>
+        <div className="ln-stack">
+          <p className="ln-read">{data.scenario}</p>
+          {data.comparison && <Comparison rows={data.comparison} />}
+          <div className="ln-demo-bar">
+            <h3>{data.head}</h3>
+            <div className="ln-demo-ctl">
+              {playing ? (
+                <Button variant="secondary" className="ln-btn-sm" onClick={skip}>
+                  Skip demo
+                </Button>
+              ) : null}
+              <Button
+                variant="secondary"
+                className="ln-btn-sm"
+                data-testid="watch-demo"
+                disabled={playing}
+                onClick={() => {
+                  setOpen(true);
+                  start();
+                }}
+              >
+                <Icon name="play" />
+                {phase === "idle" ? "Watch demo" : "Replay demo"}
+              </Button>
+            </div>
           </div>
-        </div>
-        <div className="ds-slab ds-sq ln-slab ln-demo" data-testid="worked-example" aria-label={`${data.head}, read only`} aria-busy={playing}>
-          <ExampleRows segments={data.segments} parts={data.parts} typed={phase === "typing" ? typed : undefined} marked={phase === "notes" || phase === "done"} />
-        </div>
-        {data.exchange && (
-          <div className={`ln-demo-out${showOutput ? "" : " is-waiting"}`} aria-hidden={!showOutput}>
-            <span className="ln-label">How it answers a tricky message</span>
-            <ol className="ln-convo">
-              <li>
-                <div className="ln-say">
-                  <span className="ln-label">{data.exchange.from}</span>
-                  <p>{data.exchange.text}</p>
-                </div>
-                <div className="ln-say is-bot">
-                  <span className="ln-label">Bot</span>
-                  <p>{data.exchange.reply}</p>
-                </div>
-              </li>
-            </ol>
+          <div className="ds-slab ds-sq ln-slab ln-demo" data-testid="worked-example" aria-label={`${data.head}, read only`} aria-busy={playing}>
+            <ExampleRows segments={data.segments} parts={data.parts} typed={phase === "typing" ? typed : undefined} marked={phase === "notes" || phase === "done"} />
           </div>
-        )}
-        <PartNotes parts={data.parts} />
-        {data.aside && <p className="ln-hint">{data.aside}</p>}
-      </div>
-    </details>
+          {data.exchange && (
+            <div className={`ln-demo-out${showOutput ? "" : " is-waiting"}`} aria-hidden={!showOutput}>
+              <h3>How it answers a tricky message</h3>
+              <ol className="ln-convo">
+                <li>
+                  <div className="ln-say">
+                    <span className="ln-label">{data.exchange.from}</span>
+                    <p>{data.exchange.text}</p>
+                  </div>
+                  <div className="ln-say is-bot">
+                    <span className="ln-label">Bot</span>
+                    <p>{data.exchange.reply}</p>
+                  </div>
+                </li>
+              </ol>
+            </div>
+          )}
+          <Fold label="What each part does">
+            <PartNotes parts={data.parts} />
+            {data.aside && <p className="ln-hint ln-aside">{data.aside}</p>}
+          </Fold>
+        </div>
+      </Fold>
+    </Section>
   );
 }
 
@@ -194,7 +190,7 @@ function shortQuote(text: string, words = 8): string {
 }
 
 /** The lesson's coach panel: the ask thread, and during the demo the coach's notes on each part, then one tip. */
-export function LessonCoach({ exerciseId, module, next }: { exerciseId: string; module: string; next: { href: string } | null }) {
+export function LessonCoach({ exerciseId, module, next }: { exerciseId: string; module: string; next: { href: string; title?: string } | null }) {
   const { data, phase, run } = useDemo();
   const notes = phase === "notes" || phase === "done";
   const rows = exampleRows(data.segments, data.parts).filter((r) => r.part);
@@ -209,6 +205,7 @@ export function LessonCoach({ exerciseId, module, next }: { exerciseId: string; 
     >
       {notes ? (
         <>
+          <h3 className="ln-coach-h">Notes on the example</h3>
           <ul className="ln-checks" aria-label="The coach's notes on the example">
             {rows.map((r, i) => {
               const part = data.parts.find((p) => p.key === r.part);

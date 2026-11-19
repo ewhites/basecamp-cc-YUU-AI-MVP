@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { Progress } from "@/design/Progress";
+import { Crumbs } from "@/design/Structure";
 import { ALL_STEPS, COURSE, MODULE_INFO, moduleBySlug } from "@/lib/curriculum/course";
 import { myProgress } from "@/lib/progress";
 import { DEMOS, demoBySlug } from "@/lib/sandbox/demos";
@@ -24,11 +25,17 @@ export default async function DemoPage({ params }: { params: Promise<{ module: s
 
   return (
     <div className="ds-page ln-page">
+      <Crumbs
+        items={[
+          { label: "Home", href: "/lab" },
+          { label: `Module ${MODULE_INFO[m].number}: ${MODULE_INFO[m].title}`, href: group.steps.find((x) => x.kind === "lesson")?.href ?? "/lab" },
+          { label: demo.title },
+        ]}
+      />
       <Progress className="ln-where ds-rise" label={MODULE_INFO[m].title} value={doneInModule / group.steps.length} end={`Demo ${n} of ${DEMOS.length}`} />
       <SandboxDemo
         key={demo.id}
         demo={demo}
-        where={`Demo ${n} of ${DEMOS.length}`}
         next={after ? { title: after.title, href: after.href } : null}
         coachExerciseId={SANDBOX_EXERCISE}
       />

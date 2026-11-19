@@ -3,8 +3,8 @@ import { notFound, redirect } from "next/navigation";
 import { AttemptResult } from "@/components/AttemptResult";
 import { ExerciseBrief, Material } from "@/components/ExercisePicker";
 import { Button } from "@/design/Button";
-import { Icon } from "@/design/icons";
 import { Progress } from "@/design/Progress";
+import { Crumbs, Fold, Panel, Section } from "@/design/Structure";
 import { COURSE, MODULE_INFO } from "@/lib/curriculum/course";
 import { getExercise } from "@/lib/curriculum/exercises";
 import { lessonFor } from "@/lib/curriculum/lessons";
@@ -46,45 +46,26 @@ export default async function PracticePage({ params }: { params: Promise<{ id: s
   const lesson = lessonFor(ex.module);
   const doneInModule = group.steps.filter((s) => progress.states[s.id]?.done).length;
 
+  const taskText = sandbox ? "Write the bot's instructions and pick its tools. Then we test it on three coworker messages." : ex.brief;
   const task = (
-    <div className="ln-task">
-      <p className="ln-question">{sandbox ? "Write the bot's instructions and pick its tools. We test it on three messages from coworkers. Use the four-part spec: Job, Tools and limits, Stop rule, Handoff" : ex.brief}</p>
-      <ExerciseBrief ex={ex} />
-      {ex.knowledge && (
-        <Material
-          label={sandbox ? "The IT guide" : "The bot's knowledge sheet"}
-          note={sandbox ? "Your bot can read it only with the Spreadsheet tool" : "The only thing it may answer from"}
-          text={ex.knowledge}
-          testId="knowledge-sheet"
-        />
-      )}
-      {ex.coworkerMessages && (
-        <section className="ln-tests" aria-labelledby="tests-title">
-          <h2 id="tests-title" className="ln-label">
-            Your bot will be tested on these three messages
-          </h2>
-          <ol className="ln-convo">
-            {ex.coworkerMessages.map((m) => (
-              <li key={m.id} data-testid={`coworker-${m.id}`}>
-                <div className="ln-say">
-                  <span className="ln-label">
-                    {m.from}, {KIND_LABELS[m.kind].toLowerCase()} message
-                  </span>
-                  <p>{m.text}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
-        </section>
-      )}
-      <div className="ln-task-links">
+    <>
+      <Section title="Your task" id="task">
+        <Panel>
+          <p className="ln-read">{taskText}</p>
+          {sandbox && <p className="ln-hint">Use the four-part spec: Job, Tools and limits, Stop rule, Handoff</p>}
+        </Panel>
+        <ExerciseBrief ex={ex} />
+        {ex.knowledge && (
+          <Material
+            label={sandbox ? "The IT guide" : "The bot's knowledge sheet"}
+            note={sandbox ? "Your bot can read it only with the Spreadsheet tool" : "The only thing it may answer from"}
+            text={ex.knowledge}
+            testId="knowledge-sheet"
+          />
+        )}
         {ex.studio === "prompt" && (
-          <details className="ln-fold" data-testid="strong-prompt-checklist">
-            <summary>
-              What a strong prompt has
-              <Icon name="down" />
-            </summary>
-            <ul className="ln-hints ln-fold-body">
+          <Fold label="What a strong prompt has" data-testid="strong-prompt-checklist">
+            <ul className="ln-hints">
               {lesson.checklist.map((c) => (
                 <li key={c.label}>
                   <b>{c.label}</b>
@@ -92,39 +73,58 @@ export default async function PracticePage({ params }: { params: Promise<{ id: s
                 </li>
               ))}
             </ul>
-          </details>
+          </Fold>
         )}
-        <Button variant="quiet" href={lessonHref} data-testid="see-worked-example">
-          See the worked example
-        </Button>
-      </div>
-    </div>
+        <div className="ln-help">
+          <Button variant="secondary" arrow href={lessonHref} data-testid="see-worked-example">
+            See the worked example
+          </Button>
+        </div>
+      </Section>
+      {ex.coworkerMessages && (
+        <Section title="Test messages" id="tests" desc="Your bot will be tested on these three">
+          <Panel list>
+            <ol className="ds-rows ln-msgs">
+              {ex.coworkerMessages.map((m) => (
+                <li key={m.id} className="ds-row" data-testid={`coworker-${m.id}`}>
+                  <p className="ln-msg-who">
+                    {m.from}
+                    <span>{KIND_LABELS[m.kind]} message</span>
+                  </p>
+                  <p className="ln-msg-text">{m.text}</p>
+                </li>
+              ))}
+            </ol>
+          </Panel>
+        </Section>
+      )}
+    </>
   );
 
   const head: TaskHead = {
-    kicker: ex.track,
     title: ex.title,
     brief: ex.scenario,
     task,
     module: ex.module,
     earlier:
       earlier.length > 0 ? (
-        <details className="ln-fold ln-earlier" data-testid="attempt-history">
-          <summary>
-            Earlier attempts ({earlier.length})
-            <Icon name="down" />
-          </summary>
-          <div className="ln-fold-body">
-            {earlier.map((a) => (
-              <AttemptResult key={a.id} exerciseId={ex.id} attempt={a} compact />
-            ))}
-          </div>
-        </details>
+        <Fold label={`Earlier attempts (${earlier.length})`} className="ln-earlier" data-testid="attempt-history">
+          {earlier.map((a) => (
+            <AttemptResult key={a.id} exerciseId={ex.id} attempt={a} compact />
+          ))}
+        </Fold>
       ) : undefined,
   };
 
   return (
     <div className="ds-page ln-page">
+      <Crumbs
+        items={[
+          { label: "Home", href: "/lab" },
+          { label: `Module ${info.number}: ${info.title}`, href: lessonHref },
+          { label: ex.title },
+        ]}
+      />
       <Progress className="ln-where ds-rise" label={info.title} value={doneInModule / group.steps.length} end={`Task ${index + 1} of ${practice.length}`} />
       {ex.studio === "prompt" && <PromptForm key={ex.id} exerciseId={ex.id} latest={latest} next={next} alreadyDone={alreadyDone} head={head} />}
       {ex.studio === "arena" && <ArenaForm key={ex.id} exerciseId={ex.id} latest={latest} next={next} alreadyDone={alreadyDone} head={head} />}

@@ -7,6 +7,7 @@ import { DraftBlock, DraftControls, ToolPanels, type DraftView } from "@/compone
 import { Button } from "@/design/Button";
 import { Icon } from "@/design/icons";
 import { Sheet } from "@/design/Sheet";
+import { Panel, Section } from "@/design/Structure";
 import { panelsAt, type Demo } from "@/lib/sandbox/demos";
 import { TOOL_LABELS } from "@/lib/sandbox/tools";
 
@@ -25,13 +26,10 @@ function reduced(): boolean {
 
 export function SandboxDemo({
   demo,
-  where,
   next,
   coachExerciseId,
 }: {
   demo: Demo;
-  /** For example "Demo 1 of 2". */
-  where: string;
   /** What follows this demo on the course map. */
   next: { title: string; href: string } | null;
   coachExerciseId: string;
@@ -109,7 +107,6 @@ export function SandboxDemo({
     <div className="ds-work">
       <Sheet
         className="ds-rise ln-i1"
-        kicker={`${where}, watch the agent work`}
         title={demo.title}
         brief={demo.scenario}
         actions={
@@ -135,117 +132,130 @@ export function SandboxDemo({
           </>
         }
       >
-        <div className="ln-task" data-testid="sandbox-demo" data-state={approved ? "done" : atGate ? "gate" : "running"}>
-          <p className="ln-question">Step through what the agent does. When it drafts an email, you decide what happens to it</p>
-          <div className="ln-say">
-            <span className="ln-label">{demo.request.from}</span>
-            <p>{demo.request.text}</p>
-          </div>
-        </div>
+        <div data-testid="sandbox-demo" data-state={approved ? "done" : atGate ? "gate" : "running"} ref={slab}>
+          <Section title="The request" id="request">
+            <Panel>
+              <p className="ln-who">{demo.request.from}</p>
+              <p className="ln-read">{demo.request.text}</p>
+            </Panel>
+          </Section>
 
-        <div className="ds-slab ds-sq ln-slab sb-stage" ref={slab}>
-          <h2 className="ln-label sb-region">Tools</h2>
-          <ToolPanels
-            granted={demo.tools}
-            sheet={{ name: demo.sheet.name, columns: demo.sheet.columns, rows: demo.sheet.rows, read: sheetRead, idle: "Not read yet" }}
-            notes={panels.notes.map((text) => ({ text }))}
-            memory={panels.memory.map((text) => ({ text }))}
-            drafts={drafts}
-          />
+          <Section title="The agent's tools" id="tools" desc="Pretend tools. They fill in as the agent works">
+            <ToolPanels
+              granted={demo.tools}
+              sheet={{ name: demo.sheet.name, columns: demo.sheet.columns, rows: demo.sheet.rows, read: sheetRead, idle: "Not read yet" }}
+              notes={panels.notes.map((text) => ({ text }))}
+              memory={panels.memory.map((text) => ({ text }))}
+              drafts={drafts}
+            />
+          </Section>
 
-          <div className="sb-bar">
-            <h2 className="ln-label">What the agent does</h2>
-            <div className="ln-demo-ctl">
+          <Section
+            title="What the agent does"
+            id="steps"
+            aside={shown > 0 && !approved ? `Step ${Math.min(shown, total)} of ${total}` : undefined}
+            desc="Press Continue to reveal each step. When it drafts an email, you decide what happens to it"
+          >
+            <div className="sb-bar">
               {approved ? (
-                <button type="button" className="ln-demo-btn" onClick={restart} data-testid="demo-replay">
+                <Button variant="secondary" className="ln-btn-sm" onClick={restart} data-testid="demo-replay">
                   Replay demo
-                </button>
+                </Button>
               ) : (
-                <button type="button" className="ln-demo-btn" data-testid="demo-play" aria-pressed={running} disabled={atGate} onClick={togglePlay}>
+                <Button variant="secondary" className="ln-btn-sm" data-testid="demo-play" aria-pressed={running} disabled={atGate} onClick={togglePlay}>
                   {!running && <Icon name="play" />}
-                  {running ? "Pause" : "Play"}
-                </button>
+                  {running ? "Pause" : "Play all steps"}
+                </Button>
               )}
             </div>
-          </div>
 
-          <ol className="sb-trace" aria-live="polite" aria-label="The agent's steps" data-testid="demo-trace">
-            {shown === 0 && <li className="sb-idle">Press Continue to start</li>}
-            {demo.steps.slice(0, shown).map((s, i) => (
-              <li key={s.id} className="sb-beat" data-testid={`demo-step-${i + 1}`}>
-                <span className="ln-label">Agent thinks</span>
-                <p>{s.reasoning}</p>
-                {s.call && (
-                  <div className="sb-call">
-                    <span className="ln-label">Uses {TOOL_LABELS[s.call.tool]}, simulated</span>
-                    <dl className="sb-input">
-                      <div>
-                        <dt>Tool</dt>
-                        <dd>{s.call.name}</dd>
-                      </div>
-                      {Object.entries(s.call.input).map(([k, v]) => (
-                        <div key={k}>
-                          <dt>{k}</dt>
-                          <dd>{v}</dd>
+            <Panel as="ol" className="sb-trace" aria-live="polite" aria-label="The agent's steps" data-testid="demo-trace">
+              {shown === 0 && <li className="sb-idle">Press Continue to start</li>}
+              {demo.steps.slice(0, shown).map((s, i) => (
+                <li key={s.id} className="sb-beat" data-testid={`demo-step-${i + 1}`}>
+                  <h3>Step {i + 1}</h3>
+                  <p>
+                    <span className="sb-tag">Thinks</span>
+                    {s.reasoning}
+                  </p>
+                  {s.call && (
+                    <div className="sb-call">
+                      <p className="sb-uses">
+                        Uses {TOOL_LABELS[s.call.tool]}
+                        <span className="sb-sim">Simulated</span>
+                      </p>
+                      <dl className="sb-input">
+                        <div>
+                          <dt>Tool</dt>
+                          <dd>{s.call.name}</dd>
                         </div>
-                      ))}
-                    </dl>
-                    <p className="sb-result">
-                      <Icon name="check" />
-                      <span>{s.call.result}</span>
-                    </p>
-                  </div>
-                )}
-              </li>
-            ))}
-            {shown === total && sentBack && draft && (
-              <li className="sb-beat" data-testid="demo-revised">
-                <span className="ln-label">Agent thinks</span>
-                <p>{draft.revised.reasoning}</p>
-              </li>
-            )}
-            {shown === total && draft && (
-              <li className="sb-beat sb-gate" data-testid="demo-gate">
-                <span className="ln-label">{sentBack ? "The revised draft in the outbox" : "The draft in the outbox"}</span>
-                <DraftBlock draft={{ to: draft.to, subject: draft.subject, body: sentBack ? draft.revised.body : draft.body }} />
-                {!approved && (
-                  <>
-                    <p className="sb-status">
-                      <Icon name="clock" />
-                      <span>Waiting for approval</span>
-                    </p>
-                    <DraftControls onApprove={approve} onSendBack={sendBack} canSendBack={!sentBack} approveTestId="demo-approve" sendBackTestId="demo-send-back" />
-                  </>
-                )}
-              </li>
-            )}
-            {approved && (
-              <li className="sb-beat" data-testid="demo-sent">
-                <p className="sb-status sb-done">
-                  <Icon name="check" />
-                  <span>{demo.sent}</span>
-                </p>
-              </li>
-            )}
-          </ol>
-        </div>
-        {saveFailed && <p className="ln-hint">Your progress could not be saved. You can still continue</p>}
-
-        {approved && (
-          <section className="ln-section" aria-labelledby="learned" data-testid="demo-learned">
-            <h2 className="ln-h" id="learned">
-              What this showed
-            </h2>
-            <dl className="ln-notes">
-              {demo.teach.map((t) => (
-                <div key={t.title}>
-                  <dt>{t.title}</dt>
-                  <dd>{t.text}</dd>
-                </div>
+                        {Object.entries(s.call.input).map(([k, v]) => (
+                          <div key={k}>
+                            <dt>{k}</dt>
+                            <dd>{v}</dd>
+                          </div>
+                        ))}
+                      </dl>
+                      <p className="sb-result">
+                        <Icon name="check" />
+                        <span>{s.call.result}</span>
+                      </p>
+                    </div>
+                  )}
+                </li>
               ))}
-            </dl>
-          </section>
-        )}
+              {shown === total && sentBack && draft && (
+                <li className="sb-beat" data-testid="demo-revised">
+                  <h3>The agent revises</h3>
+                  <p>
+                    <span className="sb-tag">Thinks</span>
+                    {draft.revised.reasoning}
+                  </p>
+                </li>
+              )}
+              {shown === total && draft && (
+                <li className="sb-beat sb-gate" data-testid="demo-gate">
+                  <h3>{sentBack ? "The revised draft in the outbox" : "The draft in the outbox"}</h3>
+                  <DraftBlock draft={{ to: draft.to, subject: draft.subject, body: sentBack ? draft.revised.body : draft.body }} />
+                  {!approved && (
+                    <>
+                      <p className="sb-status">
+                        <Icon name="clock" />
+                        <span>Waiting for approval</span>
+                      </p>
+                      <DraftControls main onApprove={approve} onSendBack={sendBack} canSendBack={!sentBack} approveTestId="demo-approve" sendBackTestId="demo-send-back" />
+                    </>
+                  )}
+                </li>
+              )}
+              {approved && (
+                <li className="sb-beat" data-testid="demo-sent">
+                  <p className="sb-status sb-done">
+                    <Icon name="check" />
+                    <span>{demo.sent}</span>
+                  </p>
+                </li>
+              )}
+            </Panel>
+          </Section>
+
+          {saveFailed && <p className="ln-hint">Your progress could not be saved. You can still continue</p>}
+
+          {approved && (
+            <Section title="What this showed" id="learned" data-testid="demo-learned">
+              <Panel list>
+                <ul className="ds-rows ln-lessons">
+                  {demo.teach.map((t) => (
+                    <li key={t.title} className="ds-row">
+                      <h3>{t.title}</h3>
+                      <p>{t.text}</p>
+                    </li>
+                  ))}
+                </ul>
+              </Panel>
+            </Section>
+          )}
+        </div>
       </Sheet>
 
       <CoachSide

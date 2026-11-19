@@ -45,6 +45,7 @@ export function CheckResult({ attempt, checkTexts, exerciseId }: { attempt: Atte
       </div>
       {attempt.piiRemoved && <p className="ln-coach-note">Personal details were removed before anything went to the AI: {attempt.piiRemoved}.</p>}
       {attempt.status === "needs_review" && <p className="ln-coach-note">Your facilitator will check the items marked for review.</p>}
+      <h3 className="ln-coach-h">Checks</h3>
       <CheckList exerciseId={exerciseId} checks={attempt.checks} texts={checkTexts} />
       {attempt.tip && (
         <div className="ds-tip" data-testid="coach-tip" style={{ "--tip-delay": tipDelay } as React.CSSProperties}>

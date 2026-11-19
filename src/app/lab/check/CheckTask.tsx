@@ -8,6 +8,7 @@ import { CoachSide } from "@/components/AskCoach";
 import { attemptQuotes } from "@/components/AttemptResult";
 import { Button } from "@/design/Button";
 import { Sheet } from "@/design/Sheet";
+import { Panel, Section } from "@/design/Structure";
 import type { AttemptView } from "@/lib/attempts";
 import { CheckResult } from "./CheckResult";
 
@@ -74,9 +75,8 @@ export function CheckTask({
           action={
             <>
               {result && !pending && (
-                <button
-                  type="button"
-                  className="ln-demo-btn ln-on-slab"
+                <Button
+                  variant="secondary"
                   onClick={() => {
                     setAnswer(submitted);
                     setEditing(false);
@@ -84,7 +84,7 @@ export function CheckTask({
                   }}
                 >
                   Keep last answer
-                </button>
+                </Button>
               )}
               <Button type="submit" data-testid="check-submit" disabled={pending || !answer.trim()}>
                 {pending ? "Checking" : "Submit answer"}
@@ -114,14 +114,13 @@ export function CheckTask({
       <div className="ln-work">
         {submitted && (
           <Slab>
-            <span className="ln-label">Your answer</span>
             <p key={result.id} className="ln-answer-read">
               <Highlighted text={submitted} quotes={quotes} />
             </p>
           </Slab>
         )}
         <div className="ln-actions">
-          <Button variant="quiet" onClick={() => setEditing(true)} data-testid="check-again">
+          <Button variant="secondary" onClick={() => setEditing(true)} data-testid="check-again">
             Answer again
           </Button>
           <Button href={nextHref} arrow data-testid="check-next">
@@ -135,13 +134,19 @@ export function CheckTask({
   return (
     <div className="ds-work">
       <Sheet className="ds-rise ln-i1" kicker={kicker} title={title} brief={brief}>
-        <div className="ln-task">
+        <Section title="Your task" id="task">
+          <Panel>
+            <p className="ln-read" id="check-question">
+              {question}
+            </p>
+          </Panel>
           {material}
-          <p className="ln-question" id="check-question">
-            {question}
-          </p>
-        </div>
-        {work}
+        </Section>
+        {work && (
+          <Section title="Your answer" id="work">
+            {work}
+          </Section>
+        )}
       </Sheet>
       <CoachSide
         className="ds-rise ln-i2"

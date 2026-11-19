@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { Progress } from "@/design/Progress";
 import { Sheet } from "@/design/Sheet";
+import { Crumbs, Panel, Section } from "@/design/Structure";
 import { COURSE, MODULE_INFO, moduleBySlug } from "@/lib/curriculum/course";
 import { lessonFor } from "@/lib/curriculum/lessons";
 import { myProgress } from "@/lib/progress";
@@ -32,6 +33,7 @@ export default async function LessonPage({ params }: { params: Promise<{ module:
 
   return (
     <div className="ds-page ln-page">
+      <Crumbs items={[{ label: "Home", href: "/lab" }, { label: `Module ${info.number}: ${info.title}` }]} />
       <Progress className="ln-where ds-rise" label={info.title} value={doneInModule / group.steps.length} end={`Lesson, ${lessonStep.minutes} min`} />
       <DemoProvider
         data={{
@@ -49,9 +51,7 @@ export default async function LessonPage({ params }: { params: Promise<{ module:
         <div className="ds-work">
           <Sheet
             className="ds-rise ln-i1"
-            kicker={`Module ${info.number} lesson`}
             title={info.lessonTitle}
-            brief={lesson.intro}
             actions={
               <>
                 <span className="ln-foot-line">Up next: {up.title}</span>
@@ -59,27 +59,31 @@ export default async function LessonPage({ params }: { params: Promise<{ module:
               </>
             }
           >
+            <Section title="The idea" id="idea">
+              <Panel>
+                <p className="ln-read">{lesson.intro}</p>
+              </Panel>
+            </Section>
+
             <WorkedExample openByDefault={exampleOpenByDefault(intro)} />
 
-            <section className="ln-section" aria-labelledby="your-turn">
-              <h2 className="ln-h" id="your-turn">
-                Your turn
-              </h2>
+            <Section title="Your turn" id="your-turn">
               <FadedExample faded={lesson.faded} parts={lesson.parts} />
-            </section>
+            </Section>
 
-            <section className="ln-section" aria-labelledby="rule">
-              <h2 className="ln-h" id="rule">
-                The rule
-              </h2>
-              <ol className="ln-rule">
-                {lesson.recap.map((line) => (
-                  <li key={line}>{line}</li>
-                ))}
-              </ol>
-            </section>
+            <Section title="The rule" id="rule">
+              <Panel list>
+                <ol className="ds-rows ln-rule">
+                  {lesson.recap.map((line) => (
+                    <li key={line} className="ds-row">
+                      {line}
+                    </li>
+                  ))}
+                </ol>
+              </Panel>
+            </Section>
           </Sheet>
-          <LessonCoach exerciseId={firstPractice.exerciseId!} module={m} next={{ href: up.href }} />
+          <LessonCoach exerciseId={firstPractice.exerciseId!} module={m} next={{ href: up.href, title: up.title }} />
         </div>
       </DemoProvider>
     </div>

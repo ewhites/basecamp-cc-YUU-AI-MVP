@@ -6,8 +6,8 @@ import { Icon } from "@/design/icons";
 import { TOOL_LABELS, type ToolId } from "@/lib/sandbox/tools";
 
 /**
- * The four pretend tools as panels: spreadsheet, outbox, notes doc and memory. They sit on a dark surface
- * (the caller wraps them in .ds-slab.ln-slab), so the demos and the live build look the same.
+ * The four pretend tools as panels: spreadsheet, outbox, notes doc and memory. They sit on the sheet.
+ * Each tool is its own labelled box (a h3, "Simulated", then what is in it), so the demos and the live build look the same.
  * Every panel says "Simulated" in plain small text. A tool the agent was not given says so.
  * Styles: src/design/areas/sandbox.css.
  */
@@ -47,29 +47,35 @@ const STATUS_TEXT: Record<DraftStatus, { icon: "clock" | "check" | "minus"; text
   sent_back: { icon: "minus", text: "Sent back" },
 };
 
-/** Approve and Send back. Approve is the cream button; Send back is the outlined one (one orange button per screen). */
+/**
+ * Approve and Send back, both real buttons. Send back is always outlined. Approve is the one orange button when
+ * `main` is set (a demo stops at the draft until the student decides); otherwise it is outlined too, because the
+ * screen's main button is somewhere else (one orange button per screen).
+ */
 export function DraftControls({
   onApprove,
   onSendBack,
   canSendBack = true,
+  main = false,
   approveTestId = "draft-approve",
   sendBackTestId = "draft-send-back",
 }: {
   onApprove: () => void;
   onSendBack: () => void;
   canSendBack?: boolean;
+  main?: boolean;
   approveTestId?: string;
   sendBackTestId?: string;
 }) {
   return (
     <div className="sb-controls">
-      <Button variant="paper" onClick={onApprove} data-testid={approveTestId}>
+      <Button variant={main ? "primary" : "secondary"} onClick={onApprove} data-testid={approveTestId}>
         Approve draft
       </Button>
       {canSendBack && (
-        <button type="button" className="sb-ghost" onClick={onSendBack} data-testid={sendBackTestId}>
+        <Button variant="secondary" onClick={onSendBack} data-testid={sendBackTestId}>
           Send back
-        </button>
+        </Button>
       )}
     </div>
   );
@@ -95,9 +101,9 @@ export function DraftBlock({ draft, children }: { draft: Pick<DraftView, "to" | 
   );
 }
 
-function Panel({ tool, granted, id, children, testId }: { tool: ToolId; granted: boolean; id: string; children: React.ReactNode; testId: string }) {
+function ToolPanel({ tool, granted, id, children, testId }: { tool: ToolId; granted: boolean; id: string; children: React.ReactNode; testId: string }) {
   return (
-    <section className="sb-panel" data-tool={tool} data-granted={granted ? "yes" : "no"} data-testid={testId} aria-labelledby={id}>
+    <section className="sb-panel ds-panel ds-sq" data-tool={tool} data-granted={granted ? "yes" : "no"} data-testid={testId} aria-labelledby={id}>
       <header className="sb-head">
         <h3 id={id}>{TOOL_LABELS[tool]}</h3>
         <span className="sb-sim">Simulated</span>
@@ -129,7 +135,7 @@ export function ToolPanels({
   const has = (t: ToolId) => granted.includes(t);
   return (
     <div className="sb-tools" data-testid="tool-panels">
-      <Panel tool="sheet" granted={has("sheet")} id={`${uid}-sheet`} testId="tool-panel-sheet">
+      <ToolPanel tool="sheet" granted={has("sheet")} id={`${uid}-sheet`} testId="tool-panel-sheet">
         {sheet && sheet.read ? (
           <>
             <p className="sb-meta">{sheet.name}</p>
@@ -160,9 +166,9 @@ export function ToolPanels({
         ) : (
           <p className="sb-empty">{sheet?.idle ?? "Not read yet"}</p>
         )}
-      </Panel>
+      </ToolPanel>
 
-      <Panel tool="outbox" granted={has("outbox")} id={`${uid}-outbox`} testId="tool-panel-outbox">
+      <ToolPanel tool="outbox" granted={has("outbox")} id={`${uid}-outbox`} testId="tool-panel-outbox">
         {drafts.length ? (
           <ol className="sb-drafts">
             {drafts.map((d) => {
@@ -191,15 +197,15 @@ export function ToolPanels({
         ) : (
           <p className="sb-empty">No drafts yet</p>
         )}
-      </Panel>
+      </ToolPanel>
 
-      <Panel tool="notes" granted={has("notes")} id={`${uid}-notes`} testId="tool-panel-notes">
+      <ToolPanel tool="notes" granted={has("notes")} id={`${uid}-notes`} testId="tool-panel-notes">
         <Lines lines={notes} empty={`Nothing written by ${who}`} />
-      </Panel>
+      </ToolPanel>
 
-      <Panel tool="memory" granted={has("memory")} id={`${uid}-memory`} testId="tool-panel-memory">
+      <ToolPanel tool="memory" granted={has("memory")} id={`${uid}-memory`} testId="tool-panel-memory">
         <Lines lines={memory} empty={`Nothing remembered by ${who}`} />
-      </Panel>
+      </ToolPanel>
     </div>
   );
 }

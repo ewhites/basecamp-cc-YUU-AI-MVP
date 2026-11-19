@@ -48,7 +48,12 @@ export function AttemptResult({ exerciseId, attempt, compact = false }: { exerci
           {attempt.message}
         </p>
       )}
-      {attempt.checks.length > 0 && <CheckList exerciseId={exerciseId} checks={attempt.checks} />}
+      {attempt.checks.length > 0 && (
+        <>
+          {!compact && <h3 className="ln-coach-h">Checks</h3>}
+          <CheckList exerciseId={exerciseId} checks={attempt.checks} />
+        </>
+      )}
       {attempt.tip && (
         <div className="ds-tip" data-testid="coach-tip" style={{ "--tip-delay": tipDelay } as React.CSSProperties}>
           <small>One tip</small>

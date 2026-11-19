@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Icon } from "@/design/icons";
+import { Fold } from "@/design/Structure";
 import type { Exercise } from "@/lib/curriculum/types";
 
 /** Links between exercises in one studio. Kept for older screens; the course player links steps instead. */
@@ -19,8 +19,8 @@ export function ExercisePicker({ exercises, current, basePath }: { exercises: Ex
 const LONG_MATERIAL = 420;
 
 /**
- * Attached material as one row that opens: its name, "Open" or "Close", then the text.
- * note: a short line after the name ("Attached to your prompt").
+ * Attached material as a fold: its name, a short note, and a blue chevron. The text sits inside.
+ * note: a short line under the name ("Attached to your prompt").
  */
 export function Material({
   label,
@@ -36,18 +36,11 @@ export function Material({
   testId?: string;
 }) {
   return (
-    <details className="ln-material ds-sq" open={open} data-testid={testId}>
-      <summary>
-        <span className="ln-material-name">{label}</span>
-        {note && <span className="ln-material-note">{note}</span>}
-        <span className="ln-material-act" aria-hidden>
-          <span className="ln-when-closed">Open</span>
-          <span className="ln-when-open">Close</span>
-          <Icon name="down" />
-        </span>
-      </summary>
-      <div className="ln-material-text">{text}</div>
-    </details>
+    <Fold label={label} hint={note} open={open} data-testid={testId}>
+      <div className="ln-material-text" tabIndex={0} role="region" aria-label={label}>
+        {text}
+      </div>
+    </Fold>
   );
 }
 
