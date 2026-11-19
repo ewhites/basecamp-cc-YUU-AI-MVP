@@ -23,42 +23,48 @@ Status 2026-11-19: done. Build, lint, type check and 51 unit tests pass. Screens
 ## Added 2026-11-19: WCR AI SIM requirements (docs/redesign/REQUIREMENTS-WCR.md)
 - [x] Five coached skills in the curriculum, check tasks per skill, sample story "stuck on Prompting"
 - [x] Account menu: How it works instead of Brightspace; How it works page
-- [ ] No Brightspace anywhere (sign-in goes straight to the lab; /home redirects)
-- [ ] Acceptable-use notice in the first visit
-- [ ] Watch demo on lessons, coach chat thread, personal-data warning
-- [ ] Course home: progress bar and lesson rows, doors above
-- [ ] Facilitator naming everywhere, gradebook sync removed, release kept
-- [ ] Agent Builder tool sandbox (1 live build, 2 scripted demos)
-- [ ] Cost console (facilitator cap overrides with log, admin spend view, budget alerts)
-- [ ] Coach evals rerun after the curriculum change
+- [x] No Brightspace anywhere (sign-in goes straight to the lab; /home redirects)
+- [x] Acceptable-use notice in the first visit
+- [x] Watch demo on lessons, coach chat thread, personal-data warning
+- [x] Course home: progress bar and lesson rows, doors above
+- [x] Facilitator naming everywhere, gradebook sync removed, release kept
+- [x] Agent Builder tool sandbox (1 live build, 2 scripted demos)
+- [x] Cost console (facilitator cap overrides with log, admin spend view, budget alerts)
+- [ ] Coach evals rerun after the curriculum change (blocked: the Anthropic key in .env.local is rejected, 401)
 
 ## Phase 2: entry
-- [ ] Sign in (`/`)
-- [ ] Brightspace page, simulated (`/home`)
-- [ ] First visit (`/lab/welcome`), cookie, one-time redirect from `/lab`
-- [ ] Course home with three doors (`/lab`)
+- [x] Sign in (`/`)
+- [x] Brightspace page, simulated (`/home`)
+- [x] First visit (`/lab/welcome`), cookie, one-time redirect from `/lab`
+- [x] Course home with three doors (`/lab`)
 
 ## Phase 3: learning
-- [ ] Lesson (`/lab/lesson/[module]`)
-- [ ] Practice: prompt, arena and agent forms (`/lab/practice/[id]`)
-- [ ] Starting and final check (`/lab/check/[kind]`)
-- [ ] Coach side panel: score, checks with quotes, one tip, ask box
+- [x] Lesson (`/lab/lesson/[module]`)
+- [x] Practice: prompt, arena and agent forms (`/lab/practice/[id]`)
+- [x] Starting and final check (`/lab/check/[kind]`)
+- [x] Coach side panel: score, checks with quotes, one tip, ask box
 
 ## Phase 4: staff and proof
-- [ ] Instructor console (`/lab/instructor`)
-- [ ] Student detail (`/lab/instructor/student/[id]`)
-- [ ] Skills and badge (`/lab/skills`)
-- [ ] Public portfolio (`/portfolio/[token]`)
+- [x] Instructor console (`/lab/instructor`)
+- [x] Student detail (`/lab/instructor/student/[id]`)
+- [x] Skills and badge (`/lab/skills`)
+- [x] Public portfolio (`/portfolio/[token]`)
+
+## Added 2026-11-19: clarity pass (Logan's review: hierarchy and what is clickable)
+- [x] Structure pieces and rules 32 to 40 (Section, Panel, RowLink, Fold, Crumbs, one heading scale, blue = clickable)
+- [x] Entry screens
+- [x] Staff screens
+- [ ] Learning screens
 
 ## Phase 5: finish
-- [ ] Old CSS and unused components deleted, `@brightspace-ui/core` removed if unused
+- [x] Old CSS and unused components deleted, `@brightspace-ui/core` removed
 - [ ] End-to-end test updated for the first visit, nothing weakened
 - [ ] `npm run lint && npm run typecheck && npm test && npm run build` pass
 - [ ] `npm run test:e2e` passes
 - [ ] Screenshots of every route at 1440x900 and 390x844, read against the checklists
 - [ ] axe-core clean, contrast checked, no sideways scroll at 320px, reduced motion checked
-- [ ] No hex colour outside `src/design/tokens.css`
-- [ ] `CLAUDE.md` and `docs/demo-script.md` updated
+- [x] No hex colour outside `src/design/tokens.css` (tests/design-tokens.test.ts)
+- [x] `CLAUDE.md` and `docs/demo-script.md` updated
 - [ ] `logan` pushed, Vercel preview checked, address sent to Logan
 
 ## Blocked on Logan
