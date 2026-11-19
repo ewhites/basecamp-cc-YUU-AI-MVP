@@ -176,6 +176,9 @@ test("facilitator sets a student's daily limit with a reason, and it is logged",
   const shown = Number(tokens).toLocaleString("en-US");
   await expect(page.getByTestId("limit-result")).toContainText(`Limit set to ${shown}`);
   await expect(page.getByTestId("limit-current")).toContainText(shown);
+  // The recent changes sit in a fold: open it, then the new change is the first row.
+  await box.getByText("Recent changes").click();
+  await expect(box.getByTestId("limit-row").first()).toBeVisible();
   await expect(box.getByTestId("limit-row").first()).toContainText("Make-up session after missing class");
   // The console lists the change in the section.
   await page.goto("/lab/instructor?section=B");

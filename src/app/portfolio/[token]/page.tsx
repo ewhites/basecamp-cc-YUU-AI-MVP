@@ -7,6 +7,7 @@ import { skillCheck } from "@/lib/curriculum/skill-checks";
 import { SKILLS } from "@/lib/curriculum/types";
 import { Ground } from "@/design/Ground";
 import { Sheet } from "@/design/Sheet";
+import { Fold, Panel, Section } from "@/design/Structure";
 import { Icon } from "@/design/icons";
 import { Badge } from "@/app/lab/skills/Badge";
 import { BADGE_LINE, SKILL_COUNT, SKILL_COUNT_WORD } from "@/app/lab/skills/count";
@@ -95,25 +96,33 @@ export default async function SharedSkills({ params }: { params: Promise<{ token
               </div>
             </header>
 
-            <section className="st-sec st-sec-first st-badge-sec" data-testid="public-badge" data-earned={p.earned ? "yes" : "no"} aria-labelledby="badge-h">
-              <Badge earned={p.earned} count={SKILL_COUNT} />
-              <div className="st-badge-copy">
-                <h2 id="badge-h">AI Skills badge</h2>
-                <p className="st-goal">
+            <Section
+              title="AI Skills badge"
+              id="badge"
+              data-testid="public-badge"
+              data-earned={p.earned ? "yes" : "no"}
+              aside={
+                <span className="st-goal">
                   <Icon name={p.earned ? "check" : "minus"} />
                   {p.earned ? "Earned" : "In progress"}
-                </p>
-                <p className="st-text">Earned by scoring {line} or better on all {SKILL_COUNT_WORD} AI skills in the course&apos;s final check.</p>
-              </div>
-            </section>
+                </span>
+              }
+            >
+              <Panel className="st-badge-panel">
+                <Badge earned={p.earned} count={SKILL_COUNT} />
+                <div className="st-badge-copy">
+                  <p>Earned by scoring {line} or better on all {SKILL_COUNT_WORD} AI skills in the course&apos;s final check.</p>
+                </div>
+              </Panel>
+            </Section>
 
-            <section className="st-sec" aria-labelledby="skills-h">
-              <h2 id="skills-h">AI skills</h2>
-              <p className="st-fine">Starting point check at the beginning of the course, final check at the end. Same skills, different tasks.</p>
-              {p.tookAny ? <SkillBars start={p.start} final={p.final} /> : <p className="st-text">No skills checks taken yet.</p>}
-            </section>
-
-            <p className="st-fine st-public-foot">Scores are drafted by an AI coach and reviewed by Year Up facilitators. The student&apos;s written work is not shown here.</p>
+            <Section title="AI skills" id="skills">
+              <Panel>{p.tookAny ? <SkillBars start={p.start} final={p.final} /> : <p>No skills checks taken yet.</p>}</Panel>
+              <Fold label="How these scores are made">
+                <p>The starting point check is at the beginning of the course and the final check is at the end. Same skills, different tasks.</p>
+                <p>Scores are drafted by an AI coach and reviewed by Year Up facilitators. The student&apos;s written work is not shown here.</p>
+              </Fold>
+            </Section>
           </Sheet>
         </div>
       </main>

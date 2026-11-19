@@ -3,6 +3,7 @@ import { LimitLog } from "@/components/LimitLog";
 import { SampleTag } from "@/components/Tags";
 import { Icon } from "@/design/icons";
 import { Sheet } from "@/design/Sheet";
+import { Fold, Panel, Section } from "@/design/Structure";
 import { ALERT_LEVELS, budgetAlert } from "@/lib/coach/budget";
 import { MODULE_INFO } from "@/lib/curriculum/course";
 import { getExercise } from "@/lib/curriculum/exercises";
@@ -18,6 +19,8 @@ import { getViewer } from "@/lib/session";
  */
 export const metadata = { title: "Cost and usage · AI Lab" };
 
+/** Rows shown before a "Show all" fold. */
+const SHOWN = 5;
 const rise = (i: number) => ({ "--i": i }) as React.CSSProperties;
 const pct = (x: number | null) => (x === null ? "–" : `${Math.round(x * 100)}%`);
 const day = (d: Date) => d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
@@ -31,7 +34,7 @@ export default async function AdminCost() {
   const p = periods();
 
   return (
-    <div className="ds-page st-page ad-page" data-testid="admin-cost">
+    <div className="ds-page st-page st-narrow ad-page" data-testid="admin-cost">
       <Sheet>
         <header className="st-head ds-rise" style={rise(0)}>
           <div>
@@ -52,25 +55,45 @@ export default async function AdminCost() {
         <ByModel summary={summary} />
         <TopLessons summary={summary} />
 
-        <section className="st-sec ds-rise" style={rise(6)} id="overrides" data-testid="override-log" aria-labelledby="overrides-h">
-          <div className="st-sec-head">
-            <h2 id="overrides-h">Daily limit changes</h2>
-            {log.length > 0 && <span className="st-count ds-num">{log.length} logged</span>}
-          </div>
+        <Section
+          title="Daily limit changes"
+          id="overrides"
+          data-testid="override-log"
+          className="ds-rise"
+          style={rise(6)}
+          aside={log.length > 0 ? `${log.length} logged` : undefined}
+        >
           {log.length === 0 ? (
-            <p className="st-text">No facilitator has changed a daily limit yet.</p>
+            <Panel>
+              <p>No facilitator has changed a daily limit yet.</p>
+            </Panel>
           ) : (
-            <LimitLog
-              rows={log}
-              testid="override-log-rows"
-              student={(id) => ({ label: id, sub: `Section ${id.split("-")[1] ?? ""}` })}
-              actor={(id) => names.get(id) ?? "Facilitator"}
-            />
+            <>
+              <LimitLog
+                rows={log.slice(0, SHOWN)}
+                testid="override-log-rows"
+                student={(id) => ({ label: id, sub: `Section ${id.split("-")[1] ?? ""}` })}
+                actor={(id) => names.get(id) ?? "Facilitator"}
+              />
+              {log.length > SHOWN && (
+                <Fold label={`Show all ${log.length}`}>
+                  <LimitLog
+                    bare
+                    rows={log.slice(SHOWN)}
+                    testid="override-log-more"
+                    student={(id) => ({ label: id, sub: `Section ${id.split("-")[1] ?? ""}` })}
+                    actor={(id) => names.get(id) ?? "Facilitator"}
+                  />
+                </Fold>
+              )}
+            </>
           )}
-          <p className="st-fine st-foot">Facilitators change a limit for one student in their own sections, with a reason. Each change is also in the audit log</p>
-        </section>
+        </Section>
 
-        <p className="st-fine ad-foot">Totals only. Message content never appears in this view, and students are shown by their pseudonymous IDs</p>
+        <Fold label="What this view never shows" className="st-foldend">
+          <p>Totals only. Message content never appears here, and students are shown by pseudonymous ID, so admins do not see names.</p>
+          <p>Facilitators change a limit for one student in their own sections, with a reason. Each change is also in the audit log.</p>
+        </Fold>
       </Sheet>
     </div>
   );
@@ -80,30 +103,33 @@ function Budget({ summary }: { summary: CostSummary }) {
   const alert = budgetAlert(summary.spend_usd, summary.cap_usd);
   const width = Math.min(100, Math.round(alert.share * 100));
   return (
-    <section className="st-sec st-sec-first ds-rise" style={rise(1)} id="cost" data-testid="admin-budget" aria-labelledby="budget-h">
-      <h2 id="budget-h">Monthly budget</h2>
-      <p className="st-stat">
-        <span className="st-stat-n ds-num" data-testid="admin-spend">
-          {usd(summary.spend_usd)}
-        </span>
-        <span>
-          spent of the {usd(summary.cap_usd)} cohort budget ({pct(alert.share)})
-        </span>
-      </p>
-      <div className="ad-bar">
-        <span className="ds-track" role="img" aria-label={`${pct(alert.share)} of the monthly budget spent`}>
-          <i style={{ width: `${width}%` }} />
-        </span>
-        {ALERT_LEVELS.filter((l) => l < 100).map((l) => (
-          <i key={l} className="ad-mark" style={{ left: `${l}%` }} aria-hidden />
-        ))}
-      </div>
-      <p className="ad-alert" data-testid="budget-alert" data-level={alert.level}>
-        <Icon name={alert.level === 0 ? "check" : "flag"} />
-        <span>{alert.message}</span>
-      </p>
-      <p className="st-fine">Alerts at 50%, 80% and 100% of the budget. At 100% new coaching pauses, and attempts are scored after the budget resets</p>
-    </section>
+    <Section title="Monthly budget" id="cost" data-testid="admin-budget" className="ds-rise" style={rise(1)}>
+      <Panel className="st-stack">
+        <p className="st-stat">
+          <span className="st-stat-n ds-num" data-testid="admin-spend">
+            {usd(summary.spend_usd)}
+          </span>
+          <span>
+            spent of the {usd(summary.cap_usd)} cohort budget ({pct(alert.share)})
+          </span>
+        </p>
+        <div className="ad-bar">
+          <span className="ds-track" role="img" aria-label={`${pct(alert.share)} of the monthly budget spent`}>
+            <i style={{ width: `${width}%` }} />
+          </span>
+          {ALERT_LEVELS.filter((l) => l < 100).map((l) => (
+            <i key={l} className="ad-mark" style={{ left: `${l}%` }} aria-hidden />
+          ))}
+        </div>
+        <p className="ad-alert" data-testid="budget-alert" data-level={alert.level}>
+          <Icon name={alert.level === 0 ? "check" : "flag"} />
+          <span>{alert.message}</span>
+        </p>
+      </Panel>
+      <Fold label="How budget alerts work">
+        <p>Alerts at 50%, 80% and 100% of the budget. At 100% new coaching pauses, and attempts are scored after the budget resets.</p>
+      </Fold>
+    </Section>
   );
 }
 
@@ -111,130 +137,156 @@ function Numbers({ summary }: { summary: CostSummary }) {
   const t = summary.tokens;
   const all = t.input + t.output + t.cache_read + t.cache_write;
   return (
-    <section className="st-sec ds-rise" style={rise(2)} data-testid="admin-numbers" aria-labelledby="numbers-h">
-      <h2 id="numbers-h">This month</h2>
-      <dl className="ds-rows st-kv ad-kv">
-        <div className="ds-row">
-          <dt>Spend to date</dt>
-          <dd>
-            <b className="ds-num">{usd(summary.spend_usd)}</b>
-            <span>{tokens(summary.calls)} model calls</span>
-          </dd>
-        </div>
-        <div className="ds-row">
-          <dt>Active students</dt>
-          <dd>
-            <b className="ds-num" data-testid="admin-active">
-              {summary.active_students} of {summary.students_total}
-            </b>
-            <span>Used the Lab in the last 7 days</span>
-          </dd>
-        </div>
-        <div className="ds-row">
-          <dt>Cache hit rate</dt>
-          <dd>
-            <b className="ds-num" data-testid="admin-cache">
-              {pct(summary.cache_hit_rate)}
-            </b>
-            <span>Of input tokens read from the prompt cache</span>
-          </dd>
-        </div>
-        <div className="ds-row">
-          <dt>Tokens</dt>
-          <dd>
-            <b className="ds-num">{shortTokens(all)}</b>
-            <span>Input, output and cache</span>
-          </dd>
-        </div>
-      </dl>
-    </section>
+    <Section title="This month" id="numbers" data-testid="admin-numbers" className="ds-rise" style={rise(2)}>
+      <Panel list>
+        <dl className="ds-rows st-kv ad-kv">
+          <div className="ds-row">
+            <dt>Model calls</dt>
+            <dd>
+              <b className="ds-num">{tokens(summary.calls)}</b>
+              <span>Coaching and model runs</span>
+            </dd>
+          </div>
+          <div className="ds-row">
+            <dt>Active students</dt>
+            <dd>
+              <b className="ds-num" data-testid="admin-active">
+                {summary.active_students} of {summary.students_total}
+              </b>
+              <span>Used the Lab in the last 7 days</span>
+            </dd>
+          </div>
+          <div className="ds-row">
+            <dt>Cache hit rate</dt>
+            <dd>
+              <b className="ds-num" data-testid="admin-cache">
+                {pct(summary.cache_hit_rate)}
+              </b>
+              <span>Of input tokens read from the prompt cache</span>
+            </dd>
+          </div>
+          <div className="ds-row">
+            <dt>Tokens</dt>
+            <dd>
+              <b className="ds-num">{shortTokens(all)}</b>
+              <span>Input, output and cache</span>
+            </dd>
+          </div>
+        </dl>
+      </Panel>
+    </Section>
+  );
+}
+
+/** Ranked rows open nothing (admins see totals only), so they have no blue and no chevron. */
+function RankRow({ name, sub, n, cost, testid }: { name: string; sub: string; n: string; cost: string; testid: string }) {
+  return (
+    <li className="ds-row st-row" data-testid={testid}>
+      <span className="st-row-main">
+        <span className="st-row-title">{name}</span>
+        <span className="st-row-meta">{sub}</span>
+      </span>
+      <span className="st-row-end ad-row-n ds-num">{n}</span>
+      <span className="st-row-end ad-row-cost ds-num">{cost}</span>
+    </li>
   );
 }
 
 function TopSpenders({ summary }: { summary: CostSummary }) {
+  const rows = summary.top_spenders;
+  const row = (s: (typeof rows)[number]) => (
+    <RankRow key={s.student_id} testid="spender-row" name={s.student_id} sub={`Section ${s.section_id}`} n={`${shortTokens(s.tokens)} tokens`} cost={usd(s.cost_usd)} />
+  );
   return (
-    <section className="st-sec ds-rise" style={rise(3)} data-testid="top-spenders" aria-labelledby="spenders-h">
-      <h2 id="spenders-h">Spend per student</h2>
-      {summary.top_spenders.length === 0 ? (
-        <p className="st-text">No student has used the coach this month.</p>
+    <Section title="Spend per student" id="spenders" data-testid="top-spenders" className="ds-rise" style={rise(3)} aside={rows.length > 0 ? `Top ${rows.length}` : undefined}>
+      {rows.length === 0 ? (
+        <Panel>
+          <p>No student has used the coach this month.</p>
+        </Panel>
       ) : (
-        <ol className="ds-rows ad-rows">
-          {summary.top_spenders.map((s) => (
-            <li key={s.student_id} className="ds-row ad-row" data-testid="spender-row">
-              <span className="ad-row-name">
-                <b>{s.student_id}</b>
-                <span>Section {s.section_id}</span>
-              </span>
-              <span className="ad-row-n ds-num">{shortTokens(s.tokens)} tokens</span>
-              <span className="ad-row-cost ds-num">{usd(s.cost_usd)}</span>
-            </li>
-          ))}
-        </ol>
+        <>
+          <Panel list>
+            <ol className="ds-rows">{rows.slice(0, SHOWN).map(row)}</ol>
+          </Panel>
+          {rows.length > SHOWN && (
+            <Fold label={`Show all ${rows.length}`}>
+              <ol className="ds-rows st-flush">{rows.slice(SHOWN).map(row)}</ol>
+            </Fold>
+          )}
+        </>
       )}
-      <p className="st-fine">The top {summary.top_spenders.length} this month. Students are shown by pseudonymous ID; admins do not see names</p>
-    </section>
+    </Section>
   );
 }
 
 function ByModel({ summary }: { summary: CostSummary }) {
   return (
-    <section className="st-sec ds-rise" style={rise(4)} data-testid="tokens-by-model" aria-labelledby="models-h">
-      <h2 id="models-h">Tokens by model</h2>
-      <table className="ad-table">
-        <thead>
-          <tr>
-            <th scope="col">Model</th>
-            <th scope="col">Calls</th>
-            <th scope="col">Input</th>
-            <th scope="col">Output</th>
-            <th scope="col">Cache read</th>
-            <th scope="col">Cost</th>
-          </tr>
-        </thead>
-        <tbody>
-          {summary.by_model.map((m) => (
-            <tr key={m.model}>
-              <th scope="row">{modelLabel(m.model)}</th>
-              <td data-label="Calls">{tokens(m.calls)}</td>
-              <td data-label="Input">{shortTokens(m.input)}</td>
-              <td data-label="Output">{shortTokens(m.output)}</td>
-              <td data-label="Cache read">{shortTokens(m.cache_read)}</td>
-              <td data-label="Cost">{usd(m.cost_usd)}</td>
+    <Section title="Tokens by model" id="models" data-testid="tokens-by-model" className="ds-rise" style={rise(4)}>
+      <Panel className="ad-table-panel">
+        <table className="ad-table">
+          <caption className="ds-sr">Tokens, calls and cost for each model this month</caption>
+          <thead>
+            <tr>
+              <th scope="col">Model</th>
+              <th scope="col">Calls</th>
+              <th scope="col">Input</th>
+              <th scope="col">Output</th>
+              <th scope="col">Cache read</th>
+              <th scope="col">Cost</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </section>
+          </thead>
+          <tbody>
+            {summary.by_model.map((m) => (
+              <tr key={m.model}>
+                <th scope="row">{modelLabel(m.model)}</th>
+                <td data-label="Calls">{tokens(m.calls)}</td>
+                <td data-label="Input">{shortTokens(m.input)}</td>
+                <td data-label="Output">{shortTokens(m.output)}</td>
+                <td data-label="Cache read">{shortTokens(m.cache_read)}</td>
+                <td data-label="Cost">{usd(m.cost_usd)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </Panel>
+    </Section>
   );
 }
 
 function TopLessons({ summary }: { summary: CostSummary }) {
+  const rows = summary.top_lessons;
+  const row = (l: (typeof rows)[number]) => {
+    const ex = getExercise(l.exercise_id);
+    const mod = ex && "module" in ex && ex.module in MODULE_INFO ? MODULE_INFO[ex.module as keyof typeof MODULE_INFO] : null;
+    return (
+      <RankRow
+        key={l.exercise_id}
+        testid="lesson-row"
+        name={exerciseTitle(l.exercise_id)}
+        sub={`${mod ? `Module ${mod.number}, ${mod.title}` : "Practice"} · ${l.students} students`}
+        n={`${shortTokens(l.tokens)} tokens`}
+        cost={usd(l.cost_usd)}
+      />
+    );
+  };
   return (
-    <section className="st-sec ds-rise" style={rise(5)} data-testid="top-lessons" aria-labelledby="lessons-h">
-      <h2 id="lessons-h">Top lessons by usage</h2>
-      {summary.top_lessons.length === 0 ? (
-        <p className="st-text">No lesson task has used the coach this month.</p>
+    <Section title="Top lessons by usage" id="lessons" data-testid="top-lessons" className="ds-rise" style={rise(5)} desc="Tokens this month, coaching and model runs together.">
+      {rows.length === 0 ? (
+        <Panel>
+          <p>No lesson task has used the coach this month.</p>
+        </Panel>
       ) : (
-        <ol className="ds-rows ad-rows">
-          {summary.top_lessons.map((l) => {
-            const ex = getExercise(l.exercise_id);
-            const mod = ex && "module" in ex && ex.module in MODULE_INFO ? MODULE_INFO[ex.module as keyof typeof MODULE_INFO] : null;
-            return (
-              <li key={l.exercise_id} className="ds-row ad-row" data-testid="lesson-row">
-                <span className="ad-row-name">
-                  <b>{exerciseTitle(l.exercise_id)}</b>
-                  <span>
-                    {mod ? `Module ${mod.number}, ${mod.title}` : "Practice"} · {l.students} students
-                  </span>
-                </span>
-                <span className="ad-row-n ds-num">{shortTokens(l.tokens)} tokens</span>
-                <span className="ad-row-cost ds-num">{usd(l.cost_usd)}</span>
-              </li>
-            );
-          })}
-        </ol>
+        <>
+          <Panel list>
+            <ol className="ds-rows">{rows.slice(0, 3).map(row)}</ol>
+          </Panel>
+          {rows.length > 3 && (
+            <Fold label={`Show all ${rows.length}`}>
+              <ol className="ds-rows st-flush">{rows.slice(3).map(row)}</ol>
+            </Fold>
+          )}
+        </>
       )}
-      <p className="st-fine">Practice tasks ranked by tokens this month, coaching and the model runs together</p>
-    </section>
+    </Section>
   );
 }

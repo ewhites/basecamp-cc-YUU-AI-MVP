@@ -1,10 +1,10 @@
-import Link from "next/link";
 import { headers } from "next/headers";
 import { SkillBars } from "@/components/SkillBars";
 import { SampleTag } from "@/components/Tags";
 import { Button } from "@/design/Button";
 import { Icon } from "@/design/icons";
 import { Sheet } from "@/design/Sheet";
+import { Fold, Panel, RowLink, Section } from "@/design/Structure";
 import { COURSE } from "@/lib/curriculum/course";
 import { skillCheck } from "@/lib/curriculum/skill-checks";
 import { SKILL_LABELS, SKILLS } from "@/lib/curriculum/types";
@@ -69,121 +69,136 @@ export default async function SkillsPage() {
   return (
     <div className="ds-page st-page">
       <Sheet>
-        <header className="st-head st-head-badge ds-rise" style={rise(0)}>
+        <header className="st-head ds-rise" style={rise(0)}>
           <div>
-            <p className="ds-kicker">Finish</p>
             <h1 className="ds-sheet-title">Your skills</h1>
             <p className="ds-brief">Where you started, where you are now, and what is left for your AI Skills badge.</p>
             <SampleTag />
           </div>
         </header>
 
-        <section className="st-sec st-sec-first st-badge-sec ds-rise" style={rise(1)} data-testid="skills-badge" data-earned={earned ? "yes" : "no"} aria-labelledby="badge-h">
-          <Badge earned={earned} count={SKILL_COUNT} />
-          <div className="st-badge-copy">
-            <h2 id="badge-h">AI Skills badge</h2>
-            <p className="st-goal">
+        <Section
+          title="AI Skills badge"
+          id="badge"
+          data-testid="skills-badge"
+          data-earned={earned ? "yes" : "no"}
+          className="ds-rise"
+          style={rise(1)}
+          aside={
+            <span className="st-goal">
               <Icon name={earned ? "check" : "minus"} />
               {earned ? "Earned" : "Not yet"}
-            </p>
-            <p className="st-text">
-              {earned
-                ? `You scored ${pct(BADGE_LINE)} or better on all ${SKILL_COUNT_WORD} skills in the final check. It shows on your shared link.`
-                : `Earn it by finishing the final check with ${pct(BADGE_LINE)} or better on all ${SKILL_COUNT_WORD} skills.`}
-            </p>
-            {!earned && todo.length > 0 && (
-              <>
-                <h3 className="st-h3">What is left</h3>
-                <ul className="ds-rows st-todo-rows">
-                  {todo.map((t) => (
-                    <li key={t.key} className="ds-row st-todo-row">
-                      <span className="st-todo-text">
-                        <b>{t.label}</b>
-                        <span>{t.text}</span>
-                      </span>
-                      {t !== primary && (
-                        <Button href={t.href} variant="quiet">
-                          {t.action}
-                        </Button>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-                {primary && (
-                  <div className="ds-sheet-actions">
+            </span>
+          }
+        >
+          <Panel className="st-badge-panel">
+            <Badge earned={earned} count={SKILL_COUNT} />
+            <div className="st-badge-copy">
+              <p>
+                {earned
+                  ? `You scored ${pct(BADGE_LINE)} or better on all ${SKILL_COUNT_WORD} skills in the final check. It shows on your shared link.`
+                  : `Earn it by finishing the final check with ${pct(BADGE_LINE)} or better on all ${SKILL_COUNT_WORD} skills.`}
+              </p>
+              {!earned && primary && (
+                <>
+                  <p className="st-todo-now">
+                    <b>{primary.label}</b>
+                    <span>{primary.text}</span>
+                  </p>
+                  <div className="st-act-row">
                     <Button href={primary.href} data-testid="skills-next">
                       {primary.action}
                     </Button>
                   </div>
-                )}
-              </>
-            )}
-          </div>
-        </section>
+                </>
+              )}
+            </div>
+          </Panel>
+        </Section>
 
-        <section className="st-sec ds-rise" style={rise(2)} aria-labelledby="bars-h">
-          <h2 id="bars-h">Skills</h2>
-          <p className="st-fine">{finalDone || anyFinal ? "Starting point compared with the final check" : "From your starting point check. Your final check will show next to it."}</p>
+        {!earned && todo.length > 1 && (
+          <Section title="Also left for the badge" id="left" className="ds-rise" style={rise(2)}>
+            <Panel list>
+              <ul className="ds-rows">
+                {todo
+                  .filter((t) => t !== primary)
+                  .map((t) => (
+                    <li key={t.key}>
+                      <RowLink href={t.href} title={t.action} meta={`${t.label}: ${t.text}`} />
+                    </li>
+                  ))}
+              </ul>
+            </Panel>
+          </Section>
+        )}
+
+        <Section title="Skills" id="bars" className="ds-rise" style={rise(2)} aside={finalDone || anyFinal ? "Starting point and final check" : undefined}>
           {tookStart || anyFinal ? (
-            <SkillBars start={checks.start} final={checks.final} />
+            <Panel>
+              <SkillBars start={checks.start} final={checks.final} />
+            </Panel>
           ) : (
-            <>
-              <p className="st-text">No scores yet. The starting point check shows where you are starting.</p>
-              <Button href="/lab/check/start" variant="quiet" className="st-preview">
-                Take the starting point check
-              </Button>
-            </>
+            <Panel list>
+              <ul className="ds-rows">
+                <li>
+                  <RowLink href="/lab/check/start" title="Take the starting point check" meta="No scores yet" />
+                </li>
+              </ul>
+            </Panel>
           )}
-        </section>
+        </Section>
 
-        <section className="st-sec ds-rise" style={rise(3)} aria-labelledby="practice-h">
-          <h2 id="practice-h">Practice</h2>
-          <div className="st-modules">
-            {modules.map((g) => {
-              const practice = g.steps.filter((s) => s.kind === "practice");
-              const done = practice.filter((s) => progress.states[s.id]?.done).length;
-              return (
-                <div key={g.id} className="st-module" data-testid={`skills-module-${g.module}`}>
-                  <div className="st-sec-head">
-                    <h3 className="st-h3">{g.title}</h3>
-                    <span className="st-count ds-num">
-                      {done} of {practice.length} done
-                    </span>
-                  </div>
-                  <ul className="ds-rows">
-                    {practice.map((s) => {
-                      const st = progress.states[s.id];
-                      return (
-                        <li key={s.id} className="ds-row st-step" data-done={st?.done ? "yes" : "no"}>
-                          <span className="st-step-mark" aria-hidden>
-                            {st?.done && <Icon name="check" />}
-                          </span>
-                          <span className="ds-sr">{st?.done ? "Done: " : "Not done: "}</span>
-                          <Link href={s.href} className="st-step-link">
-                            {s.title}
-                          </Link>
-                          <span className="st-step-end ds-num">{st?.best ? `Best ${st.best.passed} of ${st.best.total}` : "Not started"}</span>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              );
-            })}
-          </div>
-        </section>
+        <Section title="Practice" id="practice" className="ds-rise" style={rise(3)}>
+          {modules.map((g) => {
+            const practice = g.steps.filter((s) => s.kind === "practice");
+            const done = practice.filter((s) => progress.states[s.id]?.done).length;
+            return (
+              <Fold key={g.id} label={g.title} hint={`${done} of ${practice.length} done`} data-testid={`skills-module-${g.module}`}>
+                <ul className="ds-rows st-flush">
+                  {practice.map((s) => {
+                    const st = progress.states[s.id];
+                    return (
+                      <li key={s.id} data-done={st?.done ? "yes" : "no"}>
+                        <RowLink
+                          href={s.href}
+                          title={
+                            <>
+                              <span className="ds-sr">{st?.done ? "Done: " : "Not done: "}</span>
+                              {s.title}
+                            </>
+                          }
+                          end={
+                            <>
+                              {st?.done && <Icon name="check" />}
+                              {st?.best ? `Best ${st.best.passed} of ${st.best.total}` : "Not started"}
+                            </>
+                          }
+                        />
+                      </li>
+                    );
+                  })}
+                </ul>
+              </Fold>
+            );
+          })}
+        </Section>
 
-        <section className="st-sec ds-rise" style={rise(4)} data-testid="share-box" aria-labelledby="share-h">
-          <h2 id="share-h">Share your skills</h2>
-          <p className="st-text">
-            Send this read-only link to an internship partner. They see your first name and last initial, your track, your {SKILL_COUNT_WORD} skill scores and your badge. They never see what you wrote.
-          </p>
-          <CopyLink url={`${proto}://${host}${sharePath}`} />
-          <Link href={sharePath} target="_blank" className="ds-quiet st-preview" data-testid="share-preview">
-            Preview what they see
-            <Icon name="open" />
-          </Link>
-        </section>
+        <Section title="Share your skills" id="share" data-testid="share-box" className="ds-rise" style={rise(4)} desc="A read-only link for an internship partner.">
+          <Panel className="st-stack">
+            <CopyLink url={`${proto}://${host}${sharePath}`} />
+            <div className="st-act-row">
+              <Button href={sharePath} target="_blank" variant="secondary" data-testid="share-preview">
+                Preview what they see
+                <Icon name="open" />
+              </Button>
+            </div>
+          </Panel>
+          <Fold label="What they can see">
+            <p>
+              Your first name and last initial, your track, your {SKILL_COUNT_WORD} skill scores and your badge. They never see what you wrote.
+            </p>
+          </Fold>
+        </Section>
       </Sheet>
     </div>
   );
