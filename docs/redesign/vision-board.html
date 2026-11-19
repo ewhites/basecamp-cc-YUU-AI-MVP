@@ -131,7 +131,7 @@ button{cursor:pointer}
 .go{width:100%;margin-top:24px;box-shadow:inset 0 1px 0 rgba(255,222,196,.5), 0 4px 0 #A84300}
 .go:hover{transform:none}
 .go:active{transform:translateY(4px);box-shadow:inset 0 1px 0 rgba(255,222,196,.5), 0 0 0 #A84300}
-.go[disabled]{background:var(--step-2);color:var(--t3);box-shadow:0 4px 0 rgba(255,255,255,.06);cursor:default}
+.go[disabled]{background:var(--step-2);color:var(--t3);box-shadow:0 4px 0 var(--step);cursor:default}
 .swap{transition:opacity 220ms var(--ease),transform 220ms var(--ease)}
 .swap.out{opacity:0;transform:translateY(8px)}
 
@@ -238,6 +238,15 @@ button{cursor:pointer}
 .cb[aria-checked="false"] .box svg{transition-delay:0ms}
 /* the fill gets wider first, then taller, then settles: real width and height, never a scale */
 @keyframes fill{0%{width:6px;height:6px;opacity:0}45%{width:32px;height:20px;opacity:1}72%{width:24px;height:29px}100%{width:26px;height:26px}}
+
+/* ---- the light look: reading surfaces become the Kaleos cream sheet ---- */
+[data-look="light"] .card,[data-look="light"] .ctl,[data-look="light"] .rules{background:var(--cream);border-color:rgba(255,255,255,.6);box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;color:var(--t1);
+  --t1:#170055;--t2:rgba(23,0,85,.76);--t3:rgba(23,0,85,.62);--hair:rgba(23,0,85,.16);--hair-2:rgba(23,0,85,.34);--step:rgba(23,0,85,.05);--step-2:rgba(23,0,85,.10)}
+[data-look="light"] .ctl .seg .kmk{background:#170055;box-shadow:none}
+[data-look="light"] .ctl .seg button[aria-pressed="true"]{color:var(--cream)}
+[data-look="light"] .ctl .sw .kmk{background:#fff;box-shadow:0 1px 3px rgba(23,0,85,.28)}
+[data-look="light"] .ctl .box::before{background:#170055}
+[data-look="light"] .ctl .box svg{stroke:var(--cream)}
 
 /* ---- 6. the rules ---- */
 .rules{padding:clamp(20px,3.4vw,40px);display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 48px}
@@ -391,7 +400,7 @@ footer a{color:var(--t1);text-decoration:none}
   <!-- 6 -->
   <section class="stage">
     <h2>The rules this follows</h2>
-    <div class="frame rules sq">
+    <div class="frame sq" style="padding:clamp(12px,2vw,24px)"><div class="rules glass sq" style="border-radius:var(--r-card)">
       <p><b>One job a screen</b> <span>One title, one main button, one warm element: the coach</span></p>
       <p><b>Same order every time</b> <span>Where you are, the task, your work, the button</span></p>
       <p><b>Fewer words</b> <span>A line stays only if it stops a mistake</span></p>
@@ -400,7 +409,7 @@ footer a{color:var(--t1);text-decoration:none}
       <p><b>Three places in the dock</b> <span>Account and sign out sit under your initials</span></p>
       <p><b>Kaleos type</b> <span>Fraunces 300 and Hanken Grotesk, at the site's own sizes</span></p>
       <p><b>Motion with weight</b> <span>Shapes get longer, then settle. Nothing loops</span></p>
-    </div>
+    </div></div>
   </section>
 
   <footer>Sample data. The audit rules come from unslop by Damir Sokolovsky (<a href="https://github.com/heydamir/unslop">github.com/heydamir/unslop</a>, CC BY 4.0). The stretch motion is the elastic marker from kaleoshq.com.</footer>
@@ -619,6 +628,8 @@ var KMK = (function(){
     var b=e.target.closest('button'); if(!b) return; var key=seg.dataset.set;
     [].forEach.call(seg.children,function(x){if(x.tagName==='BUTTON')x.setAttribute('aria-pressed',String(x===b))});
     root.setAttribute('data-'+key,b.dataset.v);
+    if(key==='look'){var vis=$$('.card,.sheet,.ctl,.rules').some(function(n){var r=n.getBoundingClientRect();return r.bottom>120&&r.top<innerHeight-120});
+      if(!vis) $('.onb').scrollIntoView({behavior:reduce?'auto':'smooth',block:'center'})}
     if(key==='coach'){$('#floatCoach').classList.remove('closed');play()}
   })});
   $('#orbCoach').addEventListener('click',function(e){e.preventDefault();$('#floatCoach').classList.toggle('closed')});
