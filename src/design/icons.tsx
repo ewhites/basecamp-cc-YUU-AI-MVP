@@ -12,6 +12,14 @@ const PATHS = {
   back: { box: 18, d: "M11 4L6 9l5 5" },
   out: { box: 16, d: "M6 3H3.5v10H6M10.5 5l3 3-3 3M13.5 8H6" },
   open: { box: 16, d: "M9 3h4v4M13 3L7.5 8.5M11 9.5V13H3V5h3.5" },
+  clock: { box: 18, d: "M9 15.5a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13zM9 5.5V9l2.5 1.5" },
+  flag: { box: 18, d: "M4 16V3M4 3.5h9l-2 3 2 3H4" },
+  copy: { box: 16, d: "M5.5 5.5V3h7.5v7.5h-2.5M3 5.5h7.5V13H3z" },
+  play: { box: 16, d: "M5 3.5v9l7-4.5z" },
+  down: { box: 16, d: "M4 6l4 4 4-4" },
+  lock: { box: 16, d: "M4 7.5h8V13H4zM5.5 7.5V5.5a2.5 2.5 0 0 1 5 0v2" },
+  chat: { box: 18, d: "M3 4h12v8H8l-3.5 3v-3H3z" },
+  bot: { box: 18, d: "M4 6.5h10v8H4zM9 3.5v3M6.8 10h.01M11.2 10h.01" },
 } as const;
 
 export type IconName = keyof typeof PATHS;

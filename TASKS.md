@@ -12,13 +12,13 @@ Logan's picks, 2026-11-19: Kaleos HQ design in Year Up colours, light reading sh
 - [x] Handoff to the Year Up enterprise account (`docs/redesign/HANDOFF.md`)
 
 ## Phase 1: foundation
-Status 2026-11-19: partly built (commit e6cb13d). Type check, lint and unit tests pass. Build, screenshots, ground wiring, show and study grounds, dock dimming still open. See docs/redesign/HANDOFF.md.
-- [ ] `src/design/tokens.css`, `base.css`, `components.css`
-- [ ] Fonts with `next/font` (Fraunces, Hanken Grotesk)
-- [ ] `kmk.ts` and `Elastic.tsx` (the elastic marker)
-- [ ] `TopBar`, `Dock`, `Sheet`, `Glass`, `Button`, `Progress`, `Segmented`, `Switch`, `Checkbox`, `AnswerList`, `CoachPanel`
-- [ ] New lab shell in `src/app/lab/layout.tsx` (no syllabus rail), loading state
-- [ ] Lint, type check and unit tests pass
+Status 2026-11-19: done. Build, lint, type check and 51 unit tests pass. Screenshots of /design and /lab at 1440x900 and 390x844 checked against the board (scripts/shots.mjs).
+- [x] `src/design/tokens.css`, `base.css`, `components.css`
+- [x] Fonts with `next/font` (Fraunces, Hanken Grotesk)
+- [x] `kmk.ts` and `Elastic.tsx` (the elastic marker)
+- [x] `TopBar`, `Dock`, `Sheet`, `Glass`, `Button`, `Progress`, `Segmented`, `Switch`, `Checkbox`, `AnswerList`, `CoachPanel`
+- [x] New lab shell in `src/app/lab/layout.tsx` (no syllabus rail), loading state
+- [x] Lint, type check and unit tests pass
 
 ## Phase 2: entry
 - [ ] Sign in (`/`)
@@ -54,3 +54,5 @@ Status 2026-11-19: partly built (commit e6cb13d). Type check, lint and unit test
 
 ## Choices made during the build
 (Add one line per design choice made without asking, with the rule it came from.)
+- Area stylesheets live in src/design/areas/ (not src/app/styles/, which holds the old CSS until Phase 5). Rule: one CSS file per area, tokens only.
+- Status of an attempt is plain text with one icon, not a coloured tag (rule 11, no badges).

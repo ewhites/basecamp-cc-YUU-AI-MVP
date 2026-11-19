@@ -366,6 +366,29 @@
 .ds-bone { display: block; border-radius: var(--r-inner); background: var(--step-2); }
 .ds-bone + .ds-bone { margin-top: 12px; }
 
+/* ------------------------------------------------------------------ notes and status (plain text, never a pill) */
+.ds-note { font-size: var(--fs-fine); line-height: 1.4; color: var(--t3); white-space: nowrap; }
+.ds-status { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-fine); line-height: 1.4; color: var(--t2); white-space: nowrap; }
+.ds-status .ds-icon { width: 14px; height: 14px; }
+
+/* ------------------------------------------------------------------ skill bars (rows) */
+.ds-skills { display: grid; gap: 8px; }
+.ds-skill { display: grid; gap: 2px; padding: 14px 0; border-top: 1px solid var(--hair); }
+.ds-skills .ds-rows > .ds-skill:first-child { border-top: 0; padding-top: 4px; }
+.ds-skill-head { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
+.ds-skill-head b { font-weight: 600; font-size: var(--fs-body); }
+.ds-skill-head span { font-size: var(--fs-small); color: var(--t2); }
+.ds-skill-blurb { font-size: var(--fs-small); color: var(--t2); line-height: 1.42; }
+.ds-skill-bars { display: grid; gap: 4px; margin-top: 8px; }
+.ds-skill-bars .ds-track { flex: none; height: 6px; }
+.ds-track-start > i, .ds-key-start { background: var(--hair-2); }
+.ds-skill-bars .ds-track:only-child { height: 8px; }
+.ds-skill-bars .ds-track-start:only-child > i { background: var(--accent-fill); }
+.ds-skill-key { display: flex; gap: 20px; margin: 0; font-size: var(--fs-fine); color: var(--t2); }
+.ds-skill-key span { display: inline-flex; align-items: center; gap: 8px; }
+.ds-skill-key i { display: block; width: 16px; height: 4px; border-radius: 2px; }
+.ds-key-final { background: var(--accent-fill); }
+
 /* ------------------------------------------------------------------ legacy bridge (delete in Phase 5)
  * Pages not yet redesigned render inside the new shell. Their root elements sit on a linen panel in
  * indigo ink, so the old dark-on-light styles stay readable on the night ground. A redesigned page
