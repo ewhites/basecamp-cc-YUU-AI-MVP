@@ -142,6 +142,7 @@
 .en-door small { font-size: var(--fs-fine); color: var(--t2); line-height: 1.4; }
 .en-door h3 { font-size: var(--fs-card); font-weight: 400; line-height: 1.1; letter-spacing: -.018em; }
 .en-door p { margin: 0; font-size: var(--fs-small); color: var(--t2); line-height: 1.42; }
+@media (min-width: 761px) { .en-door p { min-height: calc(2 * 1.42em); } }
 .en-meter { display: flex; gap: 4px; margin-top: 10px; }
 .en-meter i { flex: 1; height: 4px; border-radius: 2px; background: var(--step-2); }
 .en-meter i.is-on { background: var(--t1); }
