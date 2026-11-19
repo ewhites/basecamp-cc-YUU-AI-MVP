@@ -388,15 +388,3 @@
 .ds-skill-key span { display: inline-flex; align-items: center; gap: 8px; }
 .ds-skill-key i { display: block; width: 16px; height: 4px; border-radius: 2px; }
 .ds-key-final { background: var(--accent-fill); }
-
-/* ------------------------------------------------------------------ legacy bridge (delete in Phase 5)
- * Pages not yet redesigned render inside the new shell. Their root elements sit on a linen panel in
- * indigo ink, so the old dark-on-light styles stay readable on the night ground. A redesigned page
- * marks its root with .ds-page and skips this. */
-.ds-content > :not(.ds-page) {
-  background: var(--linen);
-  color: var(--indigo);
-  border-radius: var(--r-panel);
-  padding: clamp(20px, 2.6vw, 32px);
-}
-.ds-content > :not(.ds-page) + :not(.ds-page) { margin-top: 16px; }

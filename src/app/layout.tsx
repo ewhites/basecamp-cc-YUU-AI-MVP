@@ -1,10 +1,5 @@
 import type { Metadata } from "next";
 import { Fraunces, Hanken_Grotesk } from "next/font/google";
-import "./globals.css";
-import "./styles/learn.css";
-import "./styles/checks.css";
-import "./styles/instructor.css";
-// The new design loads last, so its base rules win over the old globals.css until Phase 5 deletes them.
 import "@/design/tokens.css";
 import "@/design/base.css";
 import "@/design/components.css";
