@@ -29,6 +29,9 @@ def main() -> int:
     with open(os.path.join(HERE, "kmk.js"), encoding="utf-8") as f:
         kmk = f.read()
     logo = "data:image/png;base64," + b64(os.path.join(REPO, "public", "year-up-united.png"))
+    ground = "data:image/webp;base64," + b64(os.path.join(REPO, "public", "materials", "ground.webp"))
+    marble = "data:image/webp;base64," + b64(os.path.join(REPO, "public", "materials", "marble.webp"))
+    html = html.replace("GROUND_URI", ground).replace("MARBLE_URI", marble)
     html = html.replace("/*FONTS*/", fonts).replace("LOGO_DATA_URI", logo).replace("/*KMK*/", kmk)
     out = os.path.join(REPO, "docs", "redesign", "vision-board.html")
     with open(out, "w", encoding="utf-8") as f:

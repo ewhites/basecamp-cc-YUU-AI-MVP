@@ -105,6 +105,24 @@ A screen uses at most two large sizes. Every word in a line looks the same: no i
 25. Say "check", never "test". Nothing in the first visit is graded, and the screen says so.
 26. No streak guilt, no leaderboards, no reminders before the results screen.
 
+## Materials (added 2026-11-19, later the same day)
+
+Logan's words: "I kind of love this type of look for blue [woven blue linen] and this type of look for the orange [flowing orange marble and silk] intertwined in both the background and main component of the site", then "it should still have that modern sleek pristine and techy aesthetic", then "it should still have a clean look thats not overwhelming tho, as it is still a learning platform".
+
+- The ground is blue linen with two twisting orange marble ribbons, rendered once by a shader (`scripts/materials/`) into `public/materials/*.webp`. No photos are used. This replaces the dark navy ground in the token table above.
+- Glass panels (top bar, coach, dock) are tinted deep navy and blur the ribbons behind them. That is the "intertwined" effect.
+- The coach header and the lit door carry the orange marble. Buttons stay flat matte orange. The cream sheet has no texture.
+- Two ground strengths. **Show** (full ribbons): sign in, Brightspace, first visit, course home, skills, public portfolio. **Study** (ribbons calmed under a navy wash to a faint glow at the bottom): lesson, practice, checks, instructor views.
+- Text never sits on a bare ribbon. Text on the bare ground sits on its calm area, or on glass.
+
+## Learning first
+
+27. One task on screen at a time. On a study screen the sheet is the only bright surface.
+28. Reading text is at most about 36em wide, 17px, line height 1.55. Nothing runs longer than four lines without a break or a heading.
+29. The order never changes: where you are, what to do, the material, your work, the one button.
+30. On study screens motion is feedback only. No ambient motion and nothing that loops.
+31. While a student types, the dock dims and nothing moves.
+
 ## Where Logan's request overrides a source
 
 Stated once, then followed.
