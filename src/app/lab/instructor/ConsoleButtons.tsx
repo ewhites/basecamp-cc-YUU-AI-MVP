@@ -2,12 +2,13 @@
 
 import { useState, useTransition } from "react";
 import { SimulatedTag } from "@/components/Tags";
+import { buttonClass } from "@/design/Button";
 import { Icon } from "@/design/icons";
 import { overrideCheckAction, releaseScoresAction, resolveFlagAction, setDailyCapAction } from "./actions";
 
-/** The outlined second button on the cream sheet. The one orange button on a screen is the main step. */
-const LINE = "ds-btn ds-sq st-btn-line";
-const MAIN = "ds-btn ds-sq ds-btn-primary";
+/** Outlined: every button but the one main step. The one orange button on a screen is `MAIN`. */
+const LINE = buttonClass({ variant: "secondary" });
+const MAIN = buttonClass({ variant: "primary" });
 
 /** One line of feedback after an action: plain text with an icon, never a coloured box alone. */
 function Said({ ok, children, testid }: { ok: boolean; children: React.ReactNode; testid?: string }) {
@@ -39,7 +40,7 @@ export function AssignMiniLesson({ title, primary = false }: { title: string; pr
  * "Release scores": scores reach students only after the facilitator releases them (releaseScoresAction).
  * The gradebook test hooks stay on this control so older scripts still find it.
  */
-export function ReleaseScores({ sectionId, disabled = false }: { sectionId: string; disabled?: boolean }) {
+export function ReleaseScores({ sectionId, disabled = false, primary = false }: { sectionId: string; disabled?: boolean; primary?: boolean }) {
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, start] = useTransition();
   return (
@@ -47,7 +48,7 @@ export function ReleaseScores({ sectionId, disabled = false }: { sectionId: stri
       <div className="st-act-row">
         <button
           type="button"
-          className={LINE}
+          className={primary ? MAIN : LINE}
           disabled={pending || disabled}
           data-testid="send-to-gradebook"
           onClick={() =>
@@ -95,10 +96,10 @@ export function OverrideForm({ attemptId, checkKey, label, pass }: { attemptId: 
         });
       }}
     >
-      <p className="st-ov-head">
-        <b>{label.replace(/\?$/, "")}</b>
+      <div className="st-ov-head">
+        <h3>{label.replace(/\?$/, "")}</h3>
         <span>Now: {pass ? "pass" : "fail"}</span>
-      </p>
+      </div>
       <div className="st-ov-fields">
         <div className="st-field st-field-score">
           <label htmlFor={`ov-${checkKey}`}>Score</label>
@@ -161,10 +162,10 @@ export function ResolveFlagForm({ flagId, label, placeholder, primary = false }:
           <label htmlFor={`flag-note-${flagId}`}>Note (only staff see it)</label>
           <input id={`flag-note-${flagId}`} type="text" value={note} maxLength={500} autoFocus onChange={(e) => setNote(e.target.value)} placeholder={placeholder} />
         </div>
-        <button type="submit" className={MAIN} disabled={pending} data-testid="resolve-flag-save">
+        <button type="submit" className={primary ? MAIN : LINE} disabled={pending} data-testid="resolve-flag-save">
           {pending ? "Saving…" : "Save note"}
         </button>
-        <button type="button" className="ds-quiet st-cancel" onClick={() => setOpen(false)}>
+        <button type="button" className={LINE} onClick={() => setOpen(false)}>
           Cancel
         </button>
       </div>
@@ -236,7 +237,7 @@ export function DailyLimitForm({ studentId, current, min, max }: { studentId: st
         </button>
       </div>
       <p className="st-fine" id="limit-range">
-        From {fmt(min)} to {fmt(max)} tokens. Admins see every change in the limit log
+        From {fmt(min)} to {fmt(max)} tokens
       </p>
       {msg && (
         <Said ok={msg.ok} testid="limit-result">

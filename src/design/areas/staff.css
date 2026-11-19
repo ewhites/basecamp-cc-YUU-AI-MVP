@@ -1,22 +1,15 @@
 /* Page styles for the staff area. Tokens only (src/design/tokens.css): no colour, radius or shadow values here. */
 /* Screens: facilitator console, student detail, skills and badge, public portfolio. Every class starts with st-. */
+/* Structure comes from src/design/Structure.tsx (Section, Panel, RowLink, Fold, Crumbs). This file only adds what those pieces do not cover. */
 
 /* ------------------------------------------------------------------ page frame */
 .st-page { min-width: 0; }
 .st-page p, .st-page ul, .st-page ol, .st-page dl, .st-page dd { margin: 0; }
 .st-page ul, .st-page ol { padding: 0; list-style: none; }
-.st-page a { color: var(--t1); }
-.st-page a:hover { text-decoration: none; }
 .st-page .ds-work > * { min-width: 0; }
+.st-narrow .ds-sheet { max-width: 56em; margin-inline: auto; }
 .st-public { padding-top: 32px; }
 .st-public .st-page { max-width: 860px; margin: 0 auto; }
-.st-public-foot { margin-top: 32px; padding-top: 16px; border-top: 1px solid var(--hair); }
-
-.st-back { margin: 0 0 8px; color: var(--t1); }
-.st-page > .st-back { color: var(--t1); }
-.ds-ground .st-page > .st-back { color: var(--cream); }
-.st-back .ds-icon { transition: transform var(--t-hover) var(--ease); }
-.st-back:hover .ds-icon { transform: translateX(-3px); }
 
 /* Sheet head: kicker, title, one meta line; section tabs on the right when there are any. */
 .st-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 16px 24px; }
@@ -24,100 +17,67 @@
 .st-head .ds-brief { margin-bottom: 8px; }
 .st-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; font-size: var(--fs-small); color: var(--t2); }
 
-/* Section tabs: links with the elastic marker behind the current one. */
+/* Section tabs: every tab is outlined and blue, so each one reads as something to click; the current one is filled. */
 .st-tabs {
-  position: relative; isolation: isolate; display: inline-flex; max-width: 100%; overflow-x: auto;
-  padding: 4px; border-radius: var(--r-row); background: var(--step); border: 1px solid var(--hair);
+  position: relative; isolation: isolate; display: inline-flex; gap: 8px; max-width: 100%; overflow-x: auto; padding: 2px;
 }
 .st-tabs > a {
-  display: inline-flex; align-items: center; min-height: 40px; padding: 0 16px; border-radius: var(--r-inner);
-  font: 600 var(--fs-small)/1 var(--sans); color: var(--t2); white-space: nowrap; text-decoration: none;
-  transition: color var(--t-color) var(--ease);
+  display: inline-flex; align-items: center; min-height: 44px; padding: 0 20px; border-radius: var(--r-inner);
+  font: 600 var(--fs-small)/1 var(--sans); color: var(--link); white-space: nowrap; text-decoration: none;
+  box-shadow: inset 0 0 0 1.5px currentColor; transition: color var(--t-color) var(--ease), background-color var(--t-hover) var(--ease);
 }
-.st-page .st-tabs > a { color: var(--t2); }
-.st-page .st-tabs > a:hover { color: var(--t1); }
-.st-page .st-tabs > a[aria-current="page"] { color: var(--mark-ink); }
+.st-tabs > a:hover { background: var(--hover); color: var(--link-hover); }
+.st-tabs > a[aria-current="page"] { color: var(--mark-ink); box-shadow: none; background: transparent; }
+.st-tabs.kmk-on > a[aria-current="page"]:hover { background: transparent; }
 .st-tabs > .kmk { border-radius: var(--r-inner); background: var(--mark); }
-@media (max-width: 520px) { .st-tabs > a { min-height: 44px; } }
 
-/* ------------------------------------------------------------------ sections inside the one sheet */
-.st-sec { padding-top: 32px; margin-top: 32px; border-top: 1px solid var(--hair); display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; align-content: start; min-width: 0; }
-.st-sec-first { margin-top: 24px; }
-.st-sec > h2 { margin-bottom: 4px; }
-.st-sec-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px 16px; }
-.st-count { font-size: var(--fs-small); color: var(--t2); white-space: nowrap; }
-.st-text { font-size: var(--fs-body); line-height: 1.55; color: var(--t1); max-width: 36em; text-wrap: pretty; }
-.st-lead { font: 600 var(--fs-body)/1.45 var(--sans); max-width: 36em; }
-.st-fine { font-size: var(--fs-fine); line-height: 1.45; color: var(--t2); max-width: 46em; }
-.st-foot { margin-top: 4px; }
-.st-soft { color: var(--t2); }
-.st-sub { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; margin-top: 8px; min-width: 0; }
-.st-h3 { font: 600 var(--fs-body)/1.4 var(--sans); letter-spacing: 0; }
+/* ------------------------------------------------------------------ text inside panels and folds */
+.ds-panel p, .ds-fold-body p { line-height: 1.5; max-width: 40em; text-wrap: pretty; }
+.ds-fold-body p + p { margin-top: 8px; }
+.st-stack { display: grid; gap: 12px; align-content: start; }
+.st-lead { font: 600 var(--fs-body)/1.45 var(--sans); }
+.st-fine { font-size: var(--fs-fine); line-height: 1.45; color: var(--t2); }
+.st-sub { display: grid; gap: 8px; min-width: 0; }
+.st-sub > h3 { margin: 0; }
+.st-line { display: block; }
+.st-line b { font-weight: 600; color: var(--t1); }
 
-/* Two sections side by side on wide screens (teach next, and the lift). */
-.st-pair { display: grid; grid-template-columns: minmax(0, 1fr); column-gap: 48px; }
-.st-pair > .st-sec + .st-sec { margin-top: 32px; }
-@media (min-width: 1024px) {
-  .st-pair { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-  .st-pair > .st-sec + .st-sec { margin-top: 32px; }
+/* Rows that open nothing: no blue, no chevron (the clickable twin is RowLink). */
+.st-row { gap: 16px; padding-top: 12px; padding-bottom: 12px; }
+.st-row-main { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.st-row-title { font-weight: 600; line-height: 1.35; color: var(--t1); }
+.st-row-meta { font-size: var(--fs-small); line-height: 1.42; color: var(--t2); }
+.st-row-end { flex: none; font-size: var(--fs-small); color: var(--t2); text-align: right; font-variant-numeric: tabular-nums; }
+
+/* Rows inside a fold run edge to edge of the fold, so they line up with the fold's own label. */
+.st-flush { margin: 0 -20px -20px; }
+.st-flush > li > .ds-rowlink, .st-flush > .ds-row { padding-left: 20px; padding-right: 20px; border-radius: 0; }
+.st-flush > li + li, .st-flush > .ds-row + .ds-row { border-top: 1px solid var(--panel-line); }
+.st-flush > li:last-child > .ds-rowlink { border-radius: 0 0 var(--r-card) var(--r-card); }
+.ds-fold-body > .st-flush:first-child { margin-top: -4px; }
+
+/* On a phone the text gets the width: a student ID is dropped, a date wraps under the name of who changed it. */
+@media (max-width: 520px) {
+  .st-end-hide .ds-rowlink-end { display: none; }
+  .st-limrow .ds-rowlink-end { max-width: 4.5em; white-space: normal; }
+  .st-page .ds-rowlink { gap: 12px; }
 }
-
-/* A solid step inside the sheet (the mini-lesson). */
-.st-inset { border-radius: var(--r-row); background: var(--linen); border: 1px solid var(--hair); padding: 16px 20px; display: grid; gap: 6px; max-width: 40em; }
-.st-inset-label { font-size: var(--fs-fine); color: var(--t2); }
-.st-inset p:last-child { font-size: var(--fs-small); line-height: 1.5; }
 
 /* Feedback after an action: plain text and an icon. */
 .st-said { display: flex; align-items: flex-start; gap: 8px; font-size: var(--fs-small); line-height: 1.42; color: var(--t1); max-width: 40em; }
 .st-said .ds-icon { margin-top: 1px; color: var(--t2); }
-.st-said-block { margin-top: 20px; font-size: var(--fs-body); }
 
-/* ------------------------------------------------------------------ buttons and actions on the sheet */
-.st-btn-line { background: transparent; color: var(--t1); box-shadow: inset 0 0 0 1.5px var(--hair-2); }
-.st-btn-line:hover { background: var(--step); color: var(--t1); }
-.st-act { display: grid; gap: 10px; margin-top: 4px; }
+/* ------------------------------------------------------------------ actions */
+.st-act { display: grid; gap: 10px; }
 .st-act-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; }
 
-/* ------------------------------------------------------------------ needs you today: rows, not cards */
-.st-needs { display: grid; }
-.st-need {
-  display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; align-items: start;
-  padding: 18px 0; border-top: 1px solid var(--hair);
-}
-.st-needs > .st-need:first-child { border-top: 0; padding-top: 8px; }
-.st-need-who { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
-.st-need-who a, .st-need-who b { font-weight: 600; font-size: var(--fs-body); }
-.st-need-who a:hover { text-decoration: underline; }
-.st-need-who span { font-size: var(--fs-fine); color: var(--t2); }
-.st-need-what { display: grid; gap: 4px; min-width: 0; }
-.st-need-what > p:not(.st-need-head):not(.st-fine) { font-size: var(--fs-small); line-height: 1.45; max-width: 40em; }
-.st-need-head { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-size: var(--fs-small); }
-.st-need-head b { font-weight: 600; }
-.st-need-head span { color: var(--t2); }
-.st-need-head .ds-icon { color: var(--t2); width: 16px; height: 16px; }
-.st-need .ds-btn { min-height: 44px; padding: 0 18px; justify-self: start; }
-.st-need .ds-quiet { justify-self: start; }
-@media (min-width: 1024px) {
-  .st-need { grid-template-columns: 11em minmax(0, 1fr) auto; gap: 8px 24px; align-items: center; }
-  .st-need-who { flex-direction: column; gap: 2px; }
-  .st-need .ds-btn, .st-need .ds-quiet { justify-self: end; }
-}
-.st-more > summary, .st-heat > summary, .st-override > summary {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; min-height: 44px; cursor: pointer; list-style: none;
-  font: 600 var(--fs-small)/1.3 var(--sans); color: var(--t1);
-}
-.st-more > summary::-webkit-details-marker, .st-heat > summary::-webkit-details-marker, .st-override > summary::-webkit-details-marker { display: none; }
-.st-more > summary .ds-icon, .st-heat > summary .ds-icon, .st-override > summary .ds-icon { width: 16px; height: 16px; transform: rotate(-90deg); transition: transform var(--t-hover) var(--ease); }
-.st-more[open] > summary .ds-icon, .st-heat[open] > summary .ds-icon, .st-override[open] > summary .ds-icon { transform: none; }
-.st-more { border-top: 1px solid var(--hair); }
-
-/* ------------------------------------------------------------------ the lift */
+/* ------------------------------------------------------------------ the lift and other big numbers */
 .st-stat { display: flex; align-items: baseline; gap: 10px; color: var(--t2); font-size: var(--fs-small); }
 .st-stat-n { font: 400 var(--fs-card)/1 var(--serif); font-variation-settings: var(--soft); letter-spacing: -.018em; color: var(--t1); }
 .st-goal { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-small); color: var(--t1); }
 .st-goal .ds-icon { width: 16px; height: 16px; }
-.st-lift-row { display: grid; gap: 8px; padding: 12px 0; border-top: 1px solid var(--hair); }
-.st-lift > .st-lift-row:first-child { border-top: 0; }
+.st-lift-row { display: grid; gap: 8px; padding: 12px 0; border-top: 1px solid var(--panel-line); }
+.st-lift > .st-lift-row:first-child { border-top: 0; padding-top: 0; }
 .st-lift-head { display: grid; grid-template-columns: minmax(0, 1fr) auto 4em; gap: 12px; align-items: baseline; font-size: var(--fs-small); }
 .st-lift-head b { font-weight: 600; }
 .st-lift-head span { color: var(--t2); white-space: nowrap; }
@@ -125,8 +85,9 @@
 .st-bars { position: relative; display: grid; gap: 4px; }
 .st-bars .ds-track { display: block; flex: none; height: 6px; }
 .st-goal-mark { position: absolute; top: -3px; bottom: -3px; width: 2px; margin-left: -1px; border-radius: 1px; background: var(--t1); }
-.st-key { flex-wrap: wrap; }
+.st-key { flex-wrap: wrap; margin-top: 12px; }
 .st-key-goal { width: 2px !important; height: 12px !important; background: var(--t1); }
+.st-fold-note { margin-top: 12px; }
 
 /* ------------------------------------------------------------------ cohort progress by lesson */
 .st-lesson { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 16px; align-items: center; }
@@ -143,20 +104,21 @@
 }
 
 /* ------------------------------------------------------------------ students by skill (table) */
-.st-scroll { overflow-x: auto; max-width: 100%; border-radius: var(--r-row); border: 1px solid var(--hair); background: var(--linen); }
+.st-scroll { overflow-x: auto; max-width: 100%; border-radius: var(--r-row); border: 1px solid var(--panel-line); }
 .st-scroll:focus-visible { outline-offset: 2px; }
 .st-table { width: 100%; border-collapse: collapse; font-size: var(--fs-small); font-variant-numeric: tabular-nums; }
 .st-table thead th {
   position: sticky; top: 0; text-align: left; font: 600 var(--fs-fine)/1.3 var(--sans); color: var(--t2);
-  padding: 12px 12px; border-bottom: 1px solid var(--hair-2); background: var(--linen); white-space: nowrap;
+  padding: 12px 12px; border-bottom: 1px solid var(--hair-2); background: var(--panel); white-space: nowrap;
 }
-.st-table tbody th, .st-table td { padding: 8px 12px; border-top: 1px solid var(--hair); vertical-align: middle; }
+.st-table tbody th, .st-table td { padding: 8px 12px; border-top: 1px solid var(--panel-line); vertical-align: middle; }
 .st-table tbody tr:first-child > * { border-top: 0; }
 .st-table tbody th { text-align: left; font-weight: 400; white-space: nowrap; }
-.st-table tbody th a { font-weight: 600; }
-.st-table tbody th a:hover { text-decoration: underline; }
+.st-table tbody th a { font-weight: 600; color: var(--link); text-decoration: none; }
+.st-table tbody th a:hover { color: var(--link-hover); text-decoration: underline; text-underline-offset: 3px; }
 .st-table tbody th span { margin-left: 8px; font-size: var(--fs-fine); color: var(--t2); }
 .st-table .st-c { text-align: center; white-space: nowrap; }
+.ds-fold-body > .st-key-heat { margin-top: 12px; }
 
 /* Pass-rate bands: shade plus the printed number (and a minus under 40%), never shade alone. */
 .st-cell {
@@ -171,82 +133,66 @@
 .st-key-heat { display: flex; flex-wrap: wrap; gap: 8px 12px; }
 .st-key-heat .st-cell { font-size: var(--fs-fine); min-height: 28px; }
 
-/* ------------------------------------------------------------------ coach reliability */
-.st-kv .ds-row { justify-content: space-between; flex-wrap: wrap; }
+/* ------------------------------------------------------------------ facts: label on the left, value and a note on the right */
+.st-kv .ds-row, .st-kv .st-kv-row { justify-content: space-between; flex-wrap: wrap; }
+.st-kv .st-kv-row { display: flex; align-items: center; gap: 4px 16px; min-height: 40px; }
+.st-kv .st-kv-row + .st-kv-row { border-top: 1px solid var(--panel-line); }
 .st-kv dt { font-size: var(--fs-small); color: var(--t1); }
 .st-kv dd { display: flex; align-items: center; gap: 16px; }
 .st-kv dd b { font-weight: 600; font-size: var(--fs-body); }
 .st-kv dd span { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-small); color: var(--t2); }
 .st-kv dd .ds-icon { width: 16px; height: 16px; }
-.st-kv { max-width: 40em; }
 
 /* ------------------------------------------------------------------ student detail */
-.st-skillrow { flex-wrap: nowrap; }
-.st-skillrow-name { flex: 1; min-width: 0; display: grid; }
-.st-skillrow-name b { font-weight: 600; font-size: var(--fs-small); }
-.st-skillrow-name span { font-size: var(--fs-fine); color: var(--t2); }
 .st-flagtext { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-fine); color: var(--t1); font-weight: 600; white-space: nowrap; }
 .st-flagtext .ds-icon { width: 14px; height: 14px; }
+.ds-rowlink.is-open { background: var(--hover); }
+.st-attempt-end { display: inline-flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 4px 16px; }
+.st-attempt-score { font-weight: 600; min-width: 3.5em; text-align: right; color: var(--t1); }
 
-.st-attempt { flex-wrap: wrap; gap: 4px 16px; margin: 0 -12px; padding: 8px 12px; }
-.st-attempts > .st-attempt + .st-attempt { border-top-color: var(--hair); }
-.st-attempt.is-open { background: var(--step-2); border-top-color: transparent; border-radius: var(--r-row); }
-.st-attempt.is-open + .st-attempt { border-top-color: transparent; }
-.st-attempt-link { flex: 1; min-width: 12em; display: grid; gap: 2px; min-height: 44px; align-content: center; }
-.st-attempt-link b { font-weight: 600; font-size: var(--fs-small); }
-.st-attempt-link span { font-size: var(--fs-fine); color: var(--t2); }
-.st-attempt-link:hover b { text-decoration: underline; }
-.st-attempt-end { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; }
-.st-attempt-score { font-weight: 600; font-size: var(--fs-small); min-width: 3.5em; text-align: right; }
-
-.st-reasons { display: grid; }
-.st-reason { display: grid; gap: 8px; padding: 16px 0; border-top: 1px solid var(--hair); }
-.st-reasons > .st-reason:first-child { border-top: 0; padding-top: 4px; }
-.st-todo { font-size: var(--fs-small); line-height: 1.5; max-width: 40em; }
-.st-todo b { font-weight: 600; }
-.st-tries { display: grid; gap: 6px; max-width: 40em; }
-.st-trylist .ds-row { min-height: 44px; padding: 0; }
-.st-try { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; font-size: var(--fs-small); }
-.st-try .ds-icon { width: 16px; height: 16px; color: var(--t2); }
-.st-try[data-pass="no"] .ds-icon { color: var(--t1); }
-.st-try-date { margin-left: auto; color: var(--t2); font-size: var(--fs-fine); }
-.st-try:hover span:nth-of-type(2) { text-decoration: underline; }
-.st-handled { display: grid; gap: 4px; padding-top: 12px; border-top: 1px solid var(--hair); }
-.st-handled .st-text { font-size: var(--fs-small); }
+/* One reason: its panel, and the fold with the tries under it. */
+.st-reason + .st-reason { margin-top: 24px; }
+.st-reason > .ds-panel + .ds-fold { margin-top: 8px; }
+.st-reason-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px; }
+.st-reason-head h3 { display: inline-flex; align-items: center; gap: 8px; margin: 0; }
+.st-reason-head h3 .ds-icon { width: 18px; height: 18px; color: var(--t2); }
+.st-reason-head > span { font-size: var(--fs-small); color: var(--t2); }
+.st-try-icon { width: 16px; height: 16px; margin-right: 8px; vertical-align: -2px; color: var(--t2); }
+.st-handled + .st-handled { margin-top: 8px; }
 
 .st-pre {
   margin: 0; max-width: 46em; max-height: 360px; overflow: auto; white-space: pre-wrap; word-break: break-word;
-  padding: 14px 16px; border-radius: var(--r-row); background: var(--linen); border: 1px solid var(--hair);
+  padding: 14px 16px; border-radius: var(--r-row); background: var(--cream); border: 1px solid var(--panel-line);
   font: 400 var(--fs-small)/1.5 var(--sans); color: var(--t1);
 }
-.st-pre-ai { background: var(--step); }
+.st-pre-ai { background: var(--step); border-color: transparent; }
 .st-outs { display: grid; gap: 16px; }
 .st-out-head { font-size: var(--fs-small); margin-bottom: 6px; }
 .st-out-head b { font-weight: 600; }
 .st-out-head span { color: var(--t2); }
 
-.st-override { padding-top: 16px; border-top: 1px solid var(--hair); }
-.st-override[open] { display: grid; gap: 12px; }
-.st-ovs { display: grid; }
-.st-ov { display: grid; gap: 10px; padding: 16px 0; border-top: 1px solid var(--hair); }
-.st-ovs > .st-ov:first-child { border-top: 0; }
+/* Forms: a label above each field, outlined buttons (the one main action on a screen is orange). */
+.st-ovs { display: grid; gap: 4px; }
+.st-ov { display: grid; gap: 10px; padding: 16px 0; border-top: 1px solid var(--panel-line); }
+.st-ovs > .st-ov:first-child { border-top: 0; padding-top: 4px; }
+.st-limit-form { padding: 0; border: 0; }
 .st-ov-flag { padding: 0; border: 0; width: 100%; }
-.st-ov-head { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: var(--fs-small); }
-.st-ov-head b { font-weight: 600; }
-.st-ov-head span { color: var(--t2); }
+.st-ov-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.st-ov-head h3 { margin: 0; }
+.st-ov-head span { font-size: var(--fs-small); color: var(--t2); }
 .st-ov-fields { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; }
 .st-field { display: grid; gap: 6px; }
-.st-field label { display: block; margin: 0; font: 600 var(--fs-fine)/1.3 var(--sans); color: var(--t2); }
+.st-field label { display: block; margin: 0; font: 600 var(--fs-fine)/1.3 var(--sans); color: var(--t1); }
 .st-field-score { width: 8rem; }
 .st-field-grow { flex: 1 1 14rem; min-width: 0; }
+.st-field-tokens { width: 12rem; }
 .st-page .st-field input, .st-page .st-field select, .st-copy input {
   width: 100%; min-height: var(--h-ctl); padding: 0 14px; border-radius: var(--r-ctl);
-  background: var(--linen); border: 1.5px solid var(--hair-2); color: var(--t1); font: 400 var(--fs-small)/1.2 var(--sans);
+  background: var(--cream); border: 1.5px solid var(--hair-2); color: var(--t1); font: 400 var(--fs-small)/1.2 var(--sans);
   transition: border-color var(--t-hover) var(--ease);
 }
 .st-page .st-field input::placeholder { color: var(--t3); }
 .st-page .st-field input:focus, .st-page .st-field select:focus, .st-copy input:focus { outline: 2px solid var(--focus); outline-offset: 2px; border-color: var(--t2); }
-.st-cancel { padding: 0 8px; }
 
 /* The coach draft in the side panel: it stays in view while the facilitator reads the attempt. */
 @media (min-width: 980px) { .st-coach { position: sticky; top: 88px; } }
@@ -254,10 +200,12 @@
 .st-coach .ds-tip { margin-bottom: 24px; }
 
 /* ------------------------------------------------------------------ skills and badge */
-.st-badge-sec { grid-template-columns: minmax(0, 1fr); gap: 24px; align-items: start; }
-@media (min-width: 768px) { .st-badge-sec { grid-template-columns: 200px minmax(0, 1fr); gap: 40px; } }
-.st-badge-copy { display: grid; gap: 12px; min-width: 0; }
-.st-badge-copy .ds-sheet-actions { margin-top: 8px; }
+.st-badge-panel { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; align-items: center; }
+@media (min-width: 640px) { .st-badge-panel { grid-template-columns: 200px minmax(0, 1fr); gap: 32px; } }
+.st-badge-copy { display: grid; gap: 14px; min-width: 0; align-content: center; }
+.st-todo-now { display: grid; gap: 2px; }
+.st-todo-now b { font-weight: 600; }
+.st-todo-now span { font-size: var(--fs-small); color: var(--t2); }
 .st-badge-stage { display: grid; justify-items: center; gap: 8px; perspective: 700px; }
 .st-badge {
   width: 168px; height: 168px; border-radius: 50%; display: grid; place-items: center;
@@ -278,45 +226,10 @@
   .st-badge-hint { display: none; }
 }
 
-.st-todo-row { flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; }
-.st-todo-text { display: grid; min-width: 0; }
-.st-todo-text b { font-weight: 600; font-size: var(--fs-small); }
-.st-todo-text span { font-size: var(--fs-small); color: var(--t2); }
-
-.st-modules { display: grid; gap: 24px; }
-@media (min-width: 1024px) { .st-modules { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; } }
-.st-module { display: grid; gap: 4px; align-content: start; min-width: 0; }
-.st-step { gap: 10px; }
-.st-step-mark { flex: none; width: 22px; height: 22px; border-radius: var(--r-box); display: grid; place-items: center; }
-.st-step[data-done="yes"] .st-step-mark { background: var(--indigo); box-shadow: none; color: var(--cream); }
-.st-step-mark .ds-icon { width: 14px; height: 14px; stroke-width: 2; }
-.st-step-link { flex: 1; min-width: 0; font-size: var(--fs-small); font-weight: 600; min-height: 44px; display: flex; align-items: center; }
-.st-step-link:hover { text-decoration: underline; }
-.st-step-end { font-size: var(--fs-fine); color: var(--t2); white-space: nowrap; }
-
 .st-copy { display: flex; flex-wrap: wrap; gap: 12px; max-width: 46em; }
 .st-copy input { flex: 1 1 16rem; min-width: 0; }
 .st-copy .ds-btn { flex: none; }
-.st-preview { justify-self: start; }
-.st-preview .ds-icon { width: 16px; height: 16px; }
+.st-skills-panel .ds-skills { max-width: 40em; }
 
-/* ------------------------------------------------------------------ daily limit and its log (console, student page, admin) */
+/* ------------------------------------------------------------------ daily limit */
 .st-limit-bar { display: block; height: 6px; max-width: 40em; }
-.st-field-tokens { width: 12rem; }
-.st-limit-form { padding-top: 8px; }
-.st-lims { display: grid; }
-.st-lim { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px 24px; padding: 14px 0; border-top: 1px solid var(--hair); }
-.st-lims > .st-lim:first-child { border-top: 0; padding-top: 4px; }
-.st-lim-who { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; }
-.st-lim-who a, .st-lim-who b { font-weight: 600; font-size: var(--fs-small); }
-.st-lim-who a:hover { text-decoration: underline; }
-.st-lim-who span { font-size: var(--fs-fine); color: var(--t2); }
-.st-lim-what { display: grid; gap: 2px; min-width: 0; font-size: var(--fs-small); }
-.st-lim-what b { font-weight: 600; }
-.st-lim-reason { color: var(--t2); line-height: 1.45; max-width: 40em; overflow-wrap: anywhere; }
-.st-lim-when { display: flex; gap: 10px; font-size: var(--fs-fine); color: var(--t2); white-space: nowrap; }
-@media (min-width: 1024px) {
-  .st-lim { grid-template-columns: 11em minmax(0, 1fr) auto; align-items: baseline; }
-  .st-lim:not(:has(.st-lim-who)) { grid-template-columns: minmax(0, 1fr) auto; }
-  .st-lim-who { flex-direction: column; gap: 2px; }
-}
