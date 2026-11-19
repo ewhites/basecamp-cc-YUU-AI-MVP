@@ -1,20 +1,25 @@
-import Link from "next/link";
+import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
-import { AskCoach } from "@/components/AskCoach";
 import { AttemptResult } from "@/components/AttemptResult";
-import { ExerciseBrief } from "@/components/ExercisePicker";
-import { ALL_STEPS, COURSE, MODULE_INFO } from "@/lib/curriculum/course";
+import { ExerciseBrief, Material } from "@/components/ExercisePicker";
+import { Button } from "@/design/Button";
+import { Icon } from "@/design/icons";
+import { Progress } from "@/design/Progress";
+import { COURSE, MODULE_INFO } from "@/lib/curriculum/course";
 import { getExercise } from "@/lib/curriculum/exercises";
 import { lessonFor } from "@/lib/curriculum/lessons";
 import { myProgress } from "@/lib/progress";
 import { requireRole } from "@/lib/session";
 import { myAttempts } from "@/lib/student-data";
+import { readIntro } from "../../intro";
 import { AgentForm } from "../AgentForm";
 import { ArenaForm } from "../ArenaForm";
-import { KIND_LABELS, KIND_TAG } from "../kinds";
+import type { TaskHead } from "../Frame";
+import { KIND_LABELS } from "../kinds";
+import { nextAfterPractice, orderedPractice } from "../order";
 import { PromptForm } from "../PromptForm";
 
-/** One practice task per screen: the task, the form, the latest result, then earlier attempts. */
+/** One practice task a screen: where you are, the task and your work on the sheet, the coach's latest result beside it. */
 export default async function PracticePage({ params }: { params: Promise<{ id: string }> }) {
   await requireRole("student");
   const { id } = await params;
@@ -22,95 +27,97 @@ export default async function PracticePage({ params }: { params: Promise<{ id: s
   const group = COURSE.find((g) => g.steps.some((s) => s.kind === "practice" && s.exerciseId === id));
   if (!ex || !group || ex.studio === "check") notFound();
 
+  const intro = readIntro(await cookies());
   const info = MODULE_INFO[ex.module];
-  const practice = group.steps.filter((s) => s.kind === "practice");
+  const practice = orderedPractice(ex.module, intro);
   const index = practice.findIndex((s) => s.exerciseId === id);
+  const step = practice[index]!;
   const lessonHref = group.steps.find((s) => s.kind === "lesson")?.href ?? "/lab";
-  const at = ALL_STEPS.findIndex((s) => s.id === practice[index]!.id);
-  const nextStep = ALL_STEPS[at + 1];
-  const next = nextStep ? { title: nextStep.title, href: nextStep.href } : null;
+  const next = nextAfterPractice(ex.module, step.id, intro);
 
   const [history, progress] = await Promise.all([myAttempts(ex.id), myProgress()]);
   const latest = history[0] ?? null;
-  const alreadyDone = progress.states[practice[index]!.id]?.done ?? false;
+  const alreadyDone = progress.states[step.id]?.done ?? false;
   const earlier = history.slice(1);
   const lesson = lessonFor(ex.module);
+  const doneInModule = group.steps.filter((s) => progress.states[s.id]?.done).length;
 
-  return (
-    <div className="practice stack">
-      <header className="stack-sm">
-        <div className="eyebrow">
-          Module {info.number} · Practice {index + 1} of {practice.length}
-        </div>
-        <h1 style={{ margin: 0 }}>{ex.title}</h1>
-      </header>
-
-      <section className="card stack-sm" aria-label="The task">
-        <ExerciseBrief ex={ex} />
-        {ex.knowledge && (
-          <details className="disclosure">
-            <summary>The bot&apos;s knowledge sheet (the only thing it may answer from)</summary>
-            <pre data-testid="knowledge-sheet">{ex.knowledge}</pre>
-          </details>
-        )}
-        {ex.coworkerMessages && (
-          <div className="stack-sm">
-            <div className="eyebrow" style={{ marginTop: 8 }}>Your bot will be tested on these three messages</div>
-            <ul className="test-messages">
-              {ex.coworkerMessages.map((m) => (
-                <li key={m.id} data-testid={`coworker-${m.id}`}>
-                  <div className="row" style={{ gap: 6 }}>
-                    <b className="small">{m.from}</b>
-                    <span className={`tag ${KIND_TAG[m.kind]}`}>{KIND_LABELS[m.kind]}</span>
-                  </div>
-                  <div className="small">{m.text}</div>
+  const task = (
+    <div className="ln-task">
+      <p className="ln-question">{ex.brief}</p>
+      <ExerciseBrief ex={ex} />
+      {ex.knowledge && <Material label="The bot's knowledge sheet" note="The only thing it may answer from" text={ex.knowledge} testId="knowledge-sheet" />}
+      {ex.coworkerMessages && (
+        <section className="ln-tests" aria-labelledby="tests-title">
+          <h2 id="tests-title" className="ln-label">
+            Your bot will be tested on these three messages
+          </h2>
+          <ol className="ln-convo">
+            {ex.coworkerMessages.map((m) => (
+              <li key={m.id} data-testid={`coworker-${m.id}`}>
+                <div className="ln-say">
+                  <span className="ln-label">
+                    {m.from}, {KIND_LABELS[m.kind].toLowerCase()} message
+                  </span>
+                  <p>{m.text}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
+      <div className="ln-task-links">
+        {ex.studio === "prompt" && (
+          <details className="ln-fold" data-testid="strong-prompt-checklist">
+            <summary>
+              What a strong prompt has
+              <Icon name="down" />
+            </summary>
+            <ul className="ln-hints ln-fold-body">
+              {lesson.checklist.map((c) => (
+                <li key={c.label}>
+                  <b>{c.label}</b>
+                  <span>{c.text}</span>
                 </li>
               ))}
             </ul>
-          </div>
+          </details>
         )}
-        <div className="task-links">
-          {ex.studio === "prompt" && (
-            <details className="disclosure" data-testid="strong-prompt-checklist">
-              <summary>What a strong prompt has</summary>
-              <ul className="checklist">
-                {lesson.checklist.map((c) => (
-                  <li key={c.label}>
-                    <b>{c.label}.</b> {c.text}
-                  </li>
-                ))}
-              </ul>
-            </details>
-          )}
-          <Link href={lessonHref} className="small" data-testid="see-worked-example">
-            See the worked example
-          </Link>
-        </div>
-      </section>
+        <Button variant="quiet" href={lessonHref} data-testid="see-worked-example">
+          See the worked example
+        </Button>
+      </div>
+    </div>
+  );
 
-      {ex.studio === "prompt" && <PromptForm key={ex.id} exerciseId={ex.id} latest={latest} next={next} alreadyDone={alreadyDone} />}
-      {ex.studio === "arena" && <ArenaForm key={ex.id} exerciseId={ex.id} latest={latest} next={next} alreadyDone={alreadyDone} />}
-      {ex.studio === "agent" && <AgentForm key={ex.id} exerciseId={ex.id} latest={latest} messages={ex.coworkerMessages ?? []} next={next} alreadyDone={alreadyDone} />}
-
-      {earlier.length > 0 && (
-        <details className="disclosure card card-tight" data-testid="attempt-history">
-          <summary>Earlier attempts ({earlier.length})</summary>
-          <div className="history">
+  const head: TaskHead = {
+    kicker: ex.track,
+    title: ex.title,
+    brief: ex.scenario,
+    task,
+    module: ex.module,
+    earlier:
+      earlier.length > 0 ? (
+        <details className="ln-fold ln-earlier" data-testid="attempt-history">
+          <summary>
+            Earlier attempts ({earlier.length})
+            <Icon name="down" />
+          </summary>
+          <div className="ln-fold-body">
             {earlier.map((a) => (
-              <details key={a.id} className="disclosure">
-                <summary>
-                  Attempt {a.attemptNo} · {a.passed ?? "–"}/{a.total ?? "–"} checks · {new Date(a.createdAt).toLocaleString()}
-                </summary>
-                <div style={{ marginTop: 10 }}>
-                  <AttemptResult exerciseId={ex.id} attempt={a} compact />
-                </div>
-              </details>
+              <AttemptResult key={a.id} exerciseId={ex.id} attempt={a} compact />
             ))}
           </div>
         </details>
-      )}
+      ) : undefined,
+  };
 
-      <AskCoach exerciseId={ex.id} module={ex.module} />
+  return (
+    <div className="ds-page ln-page">
+      <Progress className="ln-where ds-rise" label={info.title} value={doneInModule / group.steps.length} end={`Task ${index + 1} of ${practice.length}`} />
+      {ex.studio === "prompt" && <PromptForm key={ex.id} exerciseId={ex.id} latest={latest} next={next} alreadyDone={alreadyDone} head={head} />}
+      {ex.studio === "arena" && <ArenaForm key={ex.id} exerciseId={ex.id} latest={latest} next={next} alreadyDone={alreadyDone} head={head} />}
+      {ex.studio === "agent" && <AgentForm key={ex.id} exerciseId={ex.id} latest={latest} messages={ex.coworkerMessages ?? []} next={next} alreadyDone={alreadyDone} head={head} />}
     </div>
   );
 }

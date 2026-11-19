@@ -1,14 +1,24 @@
 "use client";
 
-import Link from "next/link";
 import { useState, useTransition } from "react";
-import type { AttemptView } from "@/lib/attempts";
 import { submitCheckAction } from "@/app/lab/actions";
+import { ErrorLine, Slab } from "@/app/lab/practice/Frame";
+import { Highlighted, WriteField } from "@/app/lab/practice/WriteField";
+import { CoachSide } from "@/components/AskCoach";
+import { attemptQuotes } from "@/components/AttemptResult";
+import { Button } from "@/design/Button";
+import { Sheet } from "@/design/Sheet";
+import type { AttemptView } from "@/lib/attempts";
 import { CheckResult } from "./CheckResult";
 
-/** One check task: the answer box, then the coach's feedback and the way on. */
+/** One check task a screen: the task and your answer on the sheet, the coach's feedback beside it, then Continue. */
 export function CheckTask({
   exerciseId,
+  module,
+  kicker,
+  title,
+  brief,
+  material,
   question,
   checkTexts,
   initial,
@@ -17,6 +27,11 @@ export function CheckTask({
   nextLabel,
 }: {
   exerciseId: string;
+  module?: string;
+  kicker: string;
+  title: string;
+  brief: string;
+  material?: React.ReactNode;
   question: string;
   checkTexts: Record<string, string>;
   initial: AttemptView | null;
@@ -47,65 +62,96 @@ export function CheckTask({
     });
   }
 
+  const showResult = !editing && !!result;
+  const quotes = attemptQuotes(result);
+
+  let work: React.ReactNode;
   if (editing || !result) {
-    return (
-      <form onSubmit={submit}>
-        <label htmlFor="check-answer" style={{ fontSize: 16 }}>
-          {question}
-        </label>
-        <textarea
-          id="check-answer"
-          data-testid="check-answer"
-          value={answer}
-          onChange={(e) => setAnswer(e.target.value)}
-          maxLength={3000}
-          rows={6}
-          disabled={pending}
-          placeholder="Write your answer in a few sentences."
-        />
-        {error && (
-          <div className="notice notice-fail small" role="alert" style={{ marginTop: 12 }}>
-            {error}
-          </div>
-        )}
-        <div className="form-foot">
-          <span className="tiny muted" aria-live="polite">
-            {pending ? "The coach is reading your answer." : "The coach checks your answer and gives one tip."}
-          </span>
-          <div className="row">
-            {result && !pending && (
-              <button type="button" className="btn btn-subtle" onClick={() => { setAnswer(submitted); setEditing(false); setError(null); }}>
-                Keep my last answer
-              </button>
-            )}
-            <button type="submit" className="btn btn-primary" data-testid="check-submit" disabled={pending || !answer.trim()}>
-              {pending ? "Checking…" : "Submit answer"}
-            </button>
-          </div>
-        </div>
+    work = (
+      <form className="ln-work" onSubmit={submit}>
+        <Slab
+          note={pending ? "The coach is reading your answer" : "The coach checks your answer and gives one tip"}
+          action={
+            <>
+              {result && !pending && (
+                <button
+                  type="button"
+                  className="ln-demo-btn ln-on-slab"
+                  onClick={() => {
+                    setAnswer(submitted);
+                    setEditing(false);
+                    setError(null);
+                  }}
+                >
+                  Keep last answer
+                </button>
+              )}
+              <Button type="submit" data-testid="check-submit" disabled={pending || !answer.trim()}>
+                {pending ? "Checking" : "Submit answer"}
+              </Button>
+            </>
+          }
+        >
+          <WriteField
+            id="check-answer"
+            label={question}
+            value={answer}
+            onChange={setAnswer}
+            rows={6}
+            maxLength={3000}
+            disabled={pending}
+            placeholder="Write your answer in a few sentences."
+            testId="check-answer"
+          />
+        </Slab>
+        {error && <ErrorLine>{error}</ErrorLine>}
       </form>
+    );
+  } else if (result.status === "distress") {
+    work = null;
+  } else {
+    work = (
+      <div className="ln-work">
+        {submitted && (
+          <Slab>
+            <span className="ln-label">Your answer</span>
+            <p key={result.id} className="ln-answer-read">
+              <Highlighted text={submitted} quotes={quotes} />
+            </p>
+          </Slab>
+        )}
+        <div className="ln-actions">
+          <Button variant="quiet" onClick={() => setEditing(true)} data-testid="check-again">
+            Answer again
+          </Button>
+          <Button href={nextHref} arrow data-testid="check-next">
+            {nextLabel}
+          </Button>
+        </div>
+      </div>
     );
   }
 
-  if (result.status === "distress") return <CheckResult attempt={result} checkTexts={checkTexts} />;
-
   return (
-    <div className="stack">
-      {submitted && (
-        <div>
-          <div className="material-label">Your answer</div>
-          <div className="answer-text">{submitted}</div>
+    <div className="ds-work">
+      <Sheet className="ds-rise ln-i1" kicker={kicker} title={title} brief={brief}>
+        <div className="ln-task">
+          {material}
+          <p className="ln-question" id="check-question">
+            {question}
+          </p>
         </div>
-      )}
-      <CheckResult attempt={result} checkTexts={checkTexts} />
-      <div className="form-foot" style={{ marginTop: 8 }}>
-        <button type="button" className="btn btn-subtle" onClick={() => setEditing(true)} data-testid="check-again">
-          Answer again
-        </button>
-        <Link href={nextHref} className="btn btn-primary" data-testid="check-next">
-          {nextLabel}
-        </Link>
-      </div>
+        {work}
+      </Sheet>
+      <CoachSide
+        className="ds-rise ln-i2"
+        exerciseId={exerciseId}
+        module={module}
+        result={showResult ? <CheckResult attempt={result!} checkTexts={checkTexts} exerciseId={exerciseId} /> : undefined}
+        empty="Submit your answer to see what you did well"
+        next={showResult && result!.status !== "distress" ? { href: nextHref } : null}
+        arriveKey={showResult ? result!.id : undefined}
+      />
     </div>
   );
 }
