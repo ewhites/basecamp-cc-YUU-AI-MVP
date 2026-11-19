@@ -88,7 +88,8 @@ test("Prompt Studio: weak attempt is coached, tip applied, second attempt improv
 
 test("student pages render, and old studio links redirect to the course", async ({ page }) => {
   await page.goto("/launch?as=jasmine");
-  for (const url of ["/lab", "/lab/check/start", "/lab/check/final", "/lab/lesson/m1", "/lab/lesson/m2", "/lab/lesson/m3", "/lab/practice/ps-ticket-summary", "/lab/practice/ma-policy-summary", "/lab/practice/ab-newhire-it", "/lab/skills"]) {
+  await page.waitForLoadState("networkidle"); // let the redirect after sign-in finish before the next goto
+  for (const url of ["/lab", "/lab/check/start", "/lab/check/final", "/lab/lesson/m1", "/lab/lesson/m2", "/lab/lesson/m3", "/lab/practice/ps-ticket-summary", "/lab/practice/ma-policy-summary", "/lab/practice/ab-newhire-it", "/lab/lesson/m3/research", "/lab/lesson/m3/travel", "/lab/skills"]) {
     const res = await page.goto(url);
     expect(res?.status(), url).toBe(200);
     await expect(page.getByText("Sample data").first()).toBeVisible();
@@ -180,4 +181,57 @@ test("facilitator sets a student's daily limit with a reason, and it is logged",
   await page.goto("/lab/instructor?section=B");
   await expect(page.getByTestId("limit-changes").getByTestId("limit-row").first()).toContainText(shown);
   await expect(page.getByText(/3 students stuck on Prompting/i).first()).toBeVisible();
+});
+
+test("agent demo 1: step to the outbox draft, approve it, and the demo counts as done", async ({ page }) => {
+  await page.goto("/launch?as=jasmine&next=/lab/lesson/m3/research");
+  const demo = page.getByTestId("sandbox-demo");
+  await expect(demo).toBeVisible();
+  await expect(page.getByTestId("tool-panel-sheet")).toBeVisible();
+  await expect(page.getByTestId("tool-panel-outbox")).toBeVisible();
+  await expect(page.getByTestId("tool-panel-notes")).toBeVisible();
+  await expect(page.getByTestId("tool-panel-memory")).toBeVisible();
+  await expect(page.getByText("Simulated").first()).toBeVisible();
+  // Continue works only after hydration: retry the first click until the first step shows.
+  const next = page.getByTestId("demo-continue");
+  await expect(async () => {
+    await next.click();
+    await expect(page.getByTestId("demo-step-1")).toBeVisible({ timeout: 1500 });
+  }).toPass({ timeout: 30_000 });
+  // The sheet is read, then notes and memory fill, then the draft waits for the student.
+  await expect(page.getByTestId("tool-panel-sheet")).toContainText("Greenfork Catering");
+  while (!(await page.getByTestId("demo-approve").isVisible())) await next.click();
+  await expect(demo).toHaveAttribute("data-state", "gate");
+  await expect(page.getByTestId("tool-panel-notes")).toContainText("Allergen labels");
+  await expect(page.getByTestId("tool-panel-memory")).toContainText("Dana");
+  await expect(page.getByTestId("tool-panel-outbox")).toContainText("Waiting for approval");
+  await expect(next).toBeDisabled();
+  // Send back: the agent revises, then the student approves.
+  await page.getByTestId("demo-send-back").click();
+  await expect(page.getByTestId("demo-revised")).toBeVisible();
+  await expect(page.getByTestId("demo-send-back")).toHaveCount(0);
+  await page.getByTestId("demo-approve").click();
+  await expect(page.getByTestId("demo-sent")).toContainText("Sent (simulated)");
+  await expect(page.getByTestId("tool-panel-outbox")).toContainText("Sent (simulated)");
+  await expect(page.getByTestId("demo-learned")).toBeVisible();
+  await expect(page.getByTestId("demo-next")).toHaveAttribute("href", /\/lab\/lesson\/m3\/travel$/);
+  // The demo is saved as done: the course home row shows it.
+  // (A student with no first-visit answers is sent to the welcome screens, so set them as the first visit would.)
+  await page.context().addCookies([{ name: "ailab_intro", value: "it.few", domain: new URL(page.url()).hostname, path: "/" }]);
+  await page.goto("/lab");
+  const row = page.locator(".en-row", { hasText: "Research assistant" });
+  await expect(row).toContainText("Done");
+});
+
+test("live build: pick tools, and the picker is a labeled group of four check boxes", async ({ page }) => {
+  await page.goto("/launch?as=jasmine&next=/lab/practice/ab-newhire-it");
+  const picker = page.getByTestId("tool-picker");
+  await expect(picker).toBeVisible();
+  await expect(picker.getByRole("checkbox")).toHaveCount(4);
+  const sheet = page.getByTestId("tool-pick-sheet");
+  await expect(async () => {
+    await sheet.click();
+    await expect(sheet).toHaveAttribute("aria-checked", "true", { timeout: 1000 });
+  }).toPass({ timeout: 30_000 });
+  await expect(page.getByTestId("tool-pick-notes")).toHaveAttribute("aria-checked", "false");
 });

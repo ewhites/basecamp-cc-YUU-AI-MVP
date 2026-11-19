@@ -44,7 +44,6 @@ for (const [width, height] of [[1440, 900], [320, 700]]) {
     if (width === 1440) {
       await page.addScriptTag({ content: axeSource });
       const r = await page.evaluate(() =>
-        // eslint-disable-next-line no-undef
         axe.run(document, { runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"] } }),
       );
       violations = r.violations.map((v) => `${v.id} (${v.nodes.length}): ${v.nodes[0]?.target.join(" ")}`);

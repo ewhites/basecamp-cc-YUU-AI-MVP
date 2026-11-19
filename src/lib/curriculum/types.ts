@@ -1,3 +1,5 @@
+import type { ToolId } from "../sandbox/tools";
+
 /**
  * The five model-facing skills the coach practices (WCR AI SIM design spec, Career Pathways AI Skills curriculum).
  * Changed from the four AI Fluency skills on 2026-11-19 at Logan's request. Every rubric check kept its key,
@@ -98,5 +100,5 @@ export interface Exercise {
 export type AttemptInput =
   | { studio: "prompt"; prompt: string }
   | { studio: "arena"; prompt: string; pickedModel: string; reasoning: string }
-  | { studio: "agent"; instructions: string }
+  | { studio: "agent"; instructions: string; tools?: ToolId[] }
   | { studio: "check"; answer: string };

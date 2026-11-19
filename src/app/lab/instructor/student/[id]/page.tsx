@@ -14,6 +14,7 @@ import {
   checkRowsFor,
   dayText,
   exerciseTitle,
+  findCheck,
   sectionOverview,
   studentAttempts,
   studentById,
@@ -394,8 +395,11 @@ function Replay({ attempt }: { attempt: AttemptReplay }) {
       : null;
   const written = [str(input.instructions), str(input.prompt), str(input.answer)].filter(Boolean);
   const isCheck = attempt.studio === "check";
-  const order = (k: string) => ex?.checks.findIndex((c) => c.key === k) ?? 0;
-  const label = (k: string) => ex?.checks.find((c) => c.key === k)?.text ?? k;
+  const order = (k: string) => {
+    const i = ex?.checks.findIndex((c) => c.key === k) ?? 0;
+    return i < 0 ? 99 : i;
+  };
+  const label = (k: string) => ex?.checks.find((c) => c.key === k)?.text ?? findCheck(k)?.text ?? k;
   const review = attempt.check_results.some((c) => c.needs_review);
 
   return (

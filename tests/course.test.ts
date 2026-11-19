@@ -1,6 +1,6 @@
 /** Course map, skills-check tasks and progress rules. */
 import { describe, expect, it } from "vitest";
-import { ALL_STEPS, COURSE, PASS_MARK } from "../src/lib/curriculum/course";
+import { ALL_STEPS, COURSE, OFF_MAP_EXERCISES, PASS_MARK } from "../src/lib/curriculum/course";
 import { EXERCISES, getExercise } from "../src/lib/curriculum/exercises";
 import { SKILL_CHECKS, skillCheck } from "../src/lib/curriculum/skill-checks";
 import { SKILLS } from "../src/lib/curriculum/types";
@@ -8,17 +8,30 @@ import { coachSystemPrompt } from "../src/lib/coach/prompt";
 import { computeProgress, scoreChecks } from "../src/lib/progress-core";
 
 describe("course map", () => {
-  it("runs start check, three modules (lesson + 3 practice), then final check and skills", () => {
+  it("runs start check, three modules, then final check and skills", () => {
     expect(COURSE.map((g) => g.id)).toEqual(["start", "M01", "M02", "M03", "finish"]);
-    for (const m of ["M01", "M02", "M03"]) {
+    // Modules 1 and 2: a lesson, then three practice tasks.
+    for (const m of ["M01", "M02"]) {
       const g = COURSE.find((x) => x.id === m)!;
       expect(g.steps.map((s) => s.kind)).toEqual(["lesson", "practice", "practice", "practice"]);
     }
+    // Module 3: the lesson, two scripted agent demos, then one live build.
+    const m3 = COURSE.find((x) => x.id === "M03")!;
+    expect(m3.steps.map((s) => s.kind)).toEqual(["lesson", "demo", "demo", "practice"]);
+    expect(m3.steps.map((s) => s.id)).toEqual(["lesson-M03", "demo-research", "demo-travel", "ab-newhire-it"]);
+    expect(m3.steps.filter((s) => s.kind === "demo").map((s) => s.title)).toEqual(["Research assistant", "Travel planner"]);
     expect(ALL_STEPS[0]!.id).toBe("check-start");
     expect(ALL_STEPS.at(-1)!.id).toBe("skills");
     expect(new Set(ALL_STEPS.map((s) => s.id)).size).toBe(ALL_STEPS.length);
-    // Every practice exercise appears exactly once.
-    expect(ALL_STEPS.filter((s) => s.kind === "practice").map((s) => s.exerciseId).sort()).toEqual(EXERCISES.map((e) => e.id).sort());
+    // Every practice exercise is on the map exactly once, except the two agent exercises that only the eval datasets use.
+    expect(ALL_STEPS.filter((s) => s.kind === "practice").map((s) => s.exerciseId).sort()).toEqual(
+      EXERCISES.filter((e) => !OFF_MAP_EXERCISES.includes(e.id)).map((e) => e.id).sort(),
+    );
+    expect([...OFF_MAP_EXERCISES].sort()).toEqual(["ab-expense-policy", "ab-room-booking"]);
+  });
+
+  it("keeps the off-map agent exercises findable, because the eval dataset refers to them", () => {
+    for (const id of OFF_MAP_EXERCISES) expect(getExercise(id)?.studio).toBe("agent");
   });
 });
 
@@ -80,6 +93,15 @@ describe("progress", () => {
     const strong = computeProgress([...start, passAll("ps-ticket-summary", 4, 7), passAll("ps-ticket-summary", 6, 7)], lessons);
     expect(strong.states["ps-ticket-summary"]!.done).toBe(true);
     expect(strong.next?.id).toBe("ps-meeting-recap");
+  });
+
+  it("a demo is done when its step id is in lesson_progress, like a lesson", () => {
+    const none = computeProgress([], new Set());
+    expect(none.states["demo-research"]).toEqual({ done: false, started: false });
+    const seen = computeProgress([], new Set(["demo-research", "lesson-M03"]));
+    expect(seen.states["demo-research"]).toEqual({ done: true, started: true });
+    expect(seen.states["demo-travel"]!.done).toBe(false);
+    expect(seen.total).toBe(computeProgress([], new Set()).total);
   });
 
   it("scores the starting point and final check per skill", () => {

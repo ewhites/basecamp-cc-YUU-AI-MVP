@@ -6,6 +6,7 @@ import { budgetConfig, checkBudget } from "@/lib/coach/budget";
 import { adminClient } from "@/lib/db";
 import { askCoach } from "@/lib/coach/qa";
 import { getExercise } from "@/lib/curriculum/exercises";
+import { cleanTools } from "@/lib/sandbox/tools";
 import { getViewer } from "@/lib/session";
 import { STUDIO_PATHS } from "@/lib/personas";
 
@@ -63,24 +64,35 @@ export async function submitArenaAction(
   );
 }
 
-export async function submitAgentAction(exerciseId: string, instructions: string): Promise<Result> {
+export async function submitAgentAction(exerciseId: string, instructions: string, tools?: string[]): Promise<Result> {
   if (!instructions.trim()) return { ok: false, error: "Write the bot's instructions first." };
   if (instructions.length > 6000) return { ok: false, error: "Instructions are too long (6,000 characters max)." };
   const v = await student();
-  return guard(() => submitAttempt(v, exerciseId, { studio: "agent", instructions }), STUDIO_PATHS.agent);
+  // The tools come from the browser, so keep only the four known ids. Missing means the older test with no tools.
+  const picked = tools === undefined ? undefined : cleanTools(tools);
+  return guard(() => submitAttempt(v, exerciseId, { studio: "agent", instructions, ...(picked ? { tools: picked } : {}) }), STUDIO_PATHS.agent);
 }
 
-/** Marks a lesson finished (the "Start practice" button at the end of each lesson). */
-export async function markLessonDoneAction(stepId: string) {
+async function markStepDone(stepId: string, kind: "lesson" | "demo") {
   const v = await student();
   const { stepFor } = await import("@/lib/curriculum/course");
   const step = stepFor(stepId);
-  if (!step || step.kind !== "lesson") return { ok: false };
+  if (!step || step.kind !== kind) return { ok: false };
   const db = adminClient();
   const { count } = await db.from("lesson_progress").select("step_id", { count: "exact", head: true }).eq("student_id", v.student.id).eq("step_id", stepId);
   if (!count) await db.from("lesson_progress").insert({ student_id: v.student.id, step_id: stepId });
   revalidatePath("/lab", "layout");
   return { ok: true };
+}
+
+/** Marks a lesson finished (the "Start practice" button at the end of each lesson). */
+export async function markLessonDoneAction(stepId: string) {
+  return markStepDone(stepId, "lesson");
+}
+
+/** Marks a scripted agent demo finished: the student reached its last step. Same table as lessons, the demo's step id. */
+export async function markDemoDoneAction(stepId: string) {
+  return markStepDone(stepId, "demo");
 }
 
 export async function submitCheckAction(exerciseId: string, answer: string): Promise<Result> {

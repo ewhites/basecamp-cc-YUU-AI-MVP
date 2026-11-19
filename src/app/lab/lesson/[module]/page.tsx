@@ -24,6 +24,8 @@ export default async function LessonPage({ params }: { params: Promise<{ module:
   const lessonStep = group.steps.find((s) => s.kind === "lesson")!;
   const intro = readIntro(await cookies());
   const firstPractice = orderedPractice(m, intro)[0]!;
+  // Module 3 goes through its scripted demos before the live build.
+  const up = group.steps.find((s) => s.kind === "demo") ?? firstPractice;
   const progress = await myProgress();
   const doneInModule = group.steps.filter((s) => progress.states[s.id]?.done).length;
   const { worked } = lesson;
@@ -52,8 +54,8 @@ export default async function LessonPage({ params }: { params: Promise<{ module:
             brief={lesson.intro}
             actions={
               <>
-                <span className="ln-foot-line">Up next: {firstPractice.title}</span>
-                <StartPractice stepId={lessonStep.id} href={firstPractice.href} />
+                <span className="ln-foot-line">Up next: {up.title}</span>
+                <StartPractice stepId={lessonStep.id} href={up.href} label={up.kind === "demo" ? "Watch first demo" : undefined} pendingLabel={up.kind === "demo" ? "Opening demo" : undefined} />
               </>
             }
           >
@@ -77,7 +79,7 @@ export default async function LessonPage({ params }: { params: Promise<{ module:
               </ol>
             </section>
           </Sheet>
-          <LessonCoach exerciseId={firstPractice.exerciseId!} module={m} next={{ href: firstPractice.href }} />
+          <LessonCoach exerciseId={firstPractice.exerciseId!} module={m} next={{ href: up.href }} />
         </div>
       </DemoProvider>
     </div>

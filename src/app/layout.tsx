@@ -8,6 +8,7 @@ import "@/design/areas/learn.css";
 import "@/design/areas/staff.css";
 import "@/design/areas/info.css";
 import "@/design/areas/admin.css";
+import "@/design/areas/sandbox.css";
 
 /* The Kaleos HQ fonts: Fraunces (soft axis and optical size) for headings, Hanken Grotesk for everything else. */
 const fraunces = Fraunces({ subsets: ["latin"], axes: ["SOFT", "opsz"], variable: "--font-fraunces", display: "swap" });

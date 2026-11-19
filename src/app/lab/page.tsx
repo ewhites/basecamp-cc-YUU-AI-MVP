@@ -14,8 +14,8 @@ import { myProgress, type Progress as CourseProgress } from "@/lib/progress";
 import { myAttempts, myCheckAnswers, myFocus } from "@/lib/student-data";
 import { readIntro } from "./intro";
 
-const KIND_LABEL = { check: "Check", lesson: "Lesson", practice: "Practice", skills: "Summary" } as const;
-const START_LABEL = { check: "Start check", lesson: "Start lesson", practice: "Start practice", skills: "See your skills" } as const;
+const KIND_LABEL = { check: "Check", lesson: "Lesson", demo: "Demo", practice: "Practice", skills: "Summary" } as const;
+const START_LABEL = { check: "Start check", lesson: "Start lesson", demo: "Watch demo", practice: "Start practice", skills: "See your skills" } as const;
 const rise = (i: number) => ({ "--i": i }) as React.CSSProperties;
 const noStop = (s: string) => s.replace(/\.$/, "");
 

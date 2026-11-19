@@ -4,9 +4,12 @@ import { useState, useTransition } from "react";
 import { submitAgentAction } from "@/app/lab/actions";
 import { CoachSide } from "@/components/AskCoach";
 import { AttemptResult, attemptQuotes } from "@/components/AttemptResult";
+import { ToolPanels, type DraftStatus } from "@/components/ToolPanels";
 import { Button } from "@/design/Button";
+import { Checkbox } from "@/design/Checkbox";
 import type { AttemptView } from "@/lib/attempts";
 import type { CoworkerMessage } from "@/lib/curriculum/types";
+import { cleanTools, SANDBOX_EXERCISE, TOOL_BLURBS, TOOL_IDS, TOOL_LABELS, type SandboxResult, type ToolId } from "@/lib/sandbox/tools";
 import { ErrorLine, Frame, Slab, type TaskHead } from "./Frame";
 import { KIND_LABELS } from "./kinds";
 import { attemptPassed, NextStep, type NextLink } from "./NextStep";
@@ -36,11 +39,15 @@ export function AgentForm({
   head: TaskHead;
 }) {
   const last = latest && typeof latest.input === "object" && latest.input && "instructions" in latest.input ? String((latest.input as { instructions: string }).instructions) : "";
+  const sandbox = exerciseId === SANDBOX_EXERCISE;
+  const lastTools = latest && typeof latest.input === "object" && latest.input && "tools" in latest.input ? cleanTools((latest.input as { tools: unknown }).tools) : [];
   const [instructions, setInstructions] = useState(last);
+  const [tools, setTools] = useState<ToolId[]>(lastTools);
   const [attempt, setAttempt] = useState<AttemptView | null>(latest);
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
   const transcript = attempt?.output && "transcript" in attempt.output ? attempt.output.transcript : [];
+  const used = attempt?.output && "sandbox" in attempt.output ? attempt.output.sandbox : undefined;
   const kindOf = (id: string) => messages.find((m) => m.id === id)?.kind;
   const passed = alreadyDone || attemptPassed(attempt);
   const quotes = attemptQuotes(attempt);
@@ -67,12 +74,36 @@ export function AgentForm({
           e.preventDefault();
           setError(null);
           start(async () => {
-            const r = await submitAgentAction(exerciseId, instructions);
+            const r = await submitAgentAction(exerciseId, instructions, sandbox ? tools : undefined);
             if (r.ok) setAttempt(r.attempt);
             else setError(r.error);
           });
         }}
       >
+        {sandbox && (
+          <section className="sb-picker" data-testid="tool-picker" aria-labelledby="tools-title">
+            <h2 id="tools-title" className="ln-label">
+              Tools your bot gets
+            </h2>
+            <p className="ln-hint">Every tool is one more thing the bot can do, and one more thing that can go wrong</p>
+            <div role="group" aria-labelledby="tools-title" className="sb-picks">
+              {TOOL_IDS.map((id) => (
+                <Checkbox
+                  key={id}
+                  checked={tools.includes(id)}
+                  onChange={(on) => setTools((t) => cleanTools(on ? [...t, id] : t.filter((x) => x !== id)))}
+                  data-testid={`tool-pick-${id}`}
+                >
+                  <span className="sb-pick">
+                    <span className="sb-pick-name">{TOOL_LABELS[id]}</span>
+                    <span className="sb-pick-note">{TOOL_BLURBS[id]}</span>
+                    <span className="sb-sim">Simulated</span>
+                  </span>
+                </Checkbox>
+              ))}
+            </div>
+          </section>
+        )}
         <Slab
           note={
             pending ? (
@@ -135,7 +166,50 @@ export function AgentForm({
         </section>
       )}
 
+      {used && <UsedTools key={attempt?.id} used={used} messages={messages} />}
+
       {passed && <NextStep next={next} />}
     </Frame>
+  );
+}
+
+/** After a run: the four panels with what the bot left in each. Approve and Send back are client state only. */
+function UsedTools({ used, messages }: { used: SandboxResult; messages: CoworkerMessage[] }) {
+  const [status, setStatus] = useState<Record<string, DraftStatus>>({});
+  const label = (id: string) => {
+    const m = messages.find((x) => x.id === id);
+    return m ? `${KIND_LABELS[m.kind]} message` : undefined;
+  };
+  const sheet = used.sheet;
+  const looked = sheet?.lookups.length ?? 0;
+  return (
+    <section className="ln-output" data-testid="sandbox-result" aria-labelledby="used-title">
+      <h2 id="used-title" className="ln-h">
+        What your bot used
+      </h2>
+      <div className="ds-slab ds-sq ln-slab sb-stage">
+        <ToolPanels
+          granted={used.tools}
+          who="your bot"
+          sheet={
+            sheet
+              ? {
+                  name: sheet.sheet.name,
+                  columns: sheet.sheet.columns,
+                  rows: sheet.sheet.rows,
+                  read: looked > 0,
+                  note: `Your bot searched the sheet ${looked} ${looked === 1 ? "time" : "times"}`,
+                  idle: "Your bot did not open the sheet",
+                }
+              : null
+          }
+          notes={used.notes.map((n) => ({ text: n.text, label: label(n.messageId) }))}
+          memory={used.memory.map((n) => ({ text: n.text, label: label(n.messageId) }))}
+          drafts={used.outbox.map((d) => ({ ...d, label: label(d.messageId), status: status[d.id] ?? "waiting" }))}
+          onDecide={(id, decision) => setStatus((s) => ({ ...s, [id]: decision === "approve" ? "sent" : "sent_back" }))}
+        />
+      </div>
+      <p className="ln-hint">Nothing is sent. Approve and Send back only show what a person would decide</p>
+    </section>
   );
 }
