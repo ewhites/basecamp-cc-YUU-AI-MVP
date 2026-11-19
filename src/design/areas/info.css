@@ -1,0 +1,12 @@
+/* Page styles for reading pages (How it works). Tokens only. */
+.info .ds-sheet { max-width: 52em; }
+.info-sec { max-width: 36em; padding-top: 24px; margin-top: 24px; border-top: 1px solid var(--hair); }
+.info-sec:first-child { margin-top: 0; }
+.info-sec h2 { margin-bottom: 10px; }
+.info-sec p { margin: 0 0 12px; text-wrap: pretty; }
+.info-table { width: 100%; border-collapse: collapse; margin: 4px 0 16px; font-size: var(--fs-small); }
+.info-table th, .info-table td { text-align: left; padding: 12px 0; border-top: 1px solid var(--hair); }
+.info-table thead th { border-top: 0; color: var(--t2); font-weight: 600; font-size: var(--fs-fine); padding-top: 0; }
+.info-table tbody th { font-weight: 600; }
+.info-table td { text-align: right; }
+.info-table thead th:last-child { text-align: right; }

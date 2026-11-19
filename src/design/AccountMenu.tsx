@@ -56,9 +56,9 @@ export function AccountMenu({ user, defaultOpen = false }: { user: AccountUser; 
           <b>{user.name}</b>
           <span>{user.detail}</span>
         </div>
-        <Link href="/home" onClick={() => setOpen(false)}>
+        <Link href="/lab/how-it-works" onClick={() => setOpen(false)}>
           <Icon name="open" />
-          Brightspace home
+          How it works
         </Link>
         <a href="/signout">
           <Icon name="out" />

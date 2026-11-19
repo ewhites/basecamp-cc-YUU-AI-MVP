@@ -4,7 +4,7 @@ import { AccountMenu, type AccountUser } from "./AccountMenu";
 
 /**
  * The top bar: the Year Up United logo on its cream tile (once, unaltered), "AI Lab", the plain sample note,
- * and the initials button that opens the one menu (name and role, Brightspace home, sign out).
+ * and the initials button that opens the one menu (name and role, How it works, sign out).
  */
 export function TopBar({ user, home = "/lab" }: { user: AccountUser; home?: string }) {
   return (

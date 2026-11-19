@@ -20,6 +20,18 @@ Status 2026-11-19: done. Build, lint, type check and 51 unit tests pass. Screens
 - [x] New lab shell in `src/app/lab/layout.tsx` (no syllabus rail), loading state
 - [x] Lint, type check and unit tests pass
 
+## Added 2026-11-19: WCR AI SIM requirements (docs/redesign/REQUIREMENTS-WCR.md)
+- [x] Five coached skills in the curriculum, check tasks per skill, sample story "stuck on Prompting"
+- [x] Account menu: How it works instead of Brightspace; How it works page
+- [ ] No Brightspace anywhere (sign-in goes straight to the lab; /home redirects)
+- [ ] Acceptable-use notice in the first visit
+- [ ] Watch demo on lessons, coach chat thread, personal-data warning
+- [ ] Course home: progress bar and lesson rows, doors above
+- [ ] Facilitator naming everywhere, gradebook sync removed, release kept
+- [ ] Agent Builder tool sandbox (1 live build, 2 scripted demos)
+- [ ] Cost console (facilitator cap overrides with log, admin spend view, budget alerts)
+- [ ] Coach evals rerun after the curriculum change
+
 ## Phase 2: entry
 - [ ] Sign in (`/`)
 - [ ] Brightspace page, simulated (`/home`)
