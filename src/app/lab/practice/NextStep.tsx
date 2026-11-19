@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { PASS_MARK } from "@/lib/curriculum/course";
 import type { AttemptView } from "@/lib/attempts";
+import { Button } from "@/design/Button";
 
 export interface NextLink {
   title: string;
@@ -14,21 +14,16 @@ export function attemptPassed(a: Pick<AttemptView, "passed" | "total"> | null | 
   return !!a && a.passed !== null && !!a.total && a.passed / a.total >= PASS_MARK;
 }
 
-/** Shown once a practice task is passed: the one primary action on the screen. */
+/** Shown once a practice task is passed: one line, and Continue (the one main button on the screen). */
 export function NextStep({ next }: { next: NextLink | null }) {
   return (
-    <section className="up-next" data-testid="practice-passed">
-      <div>
-        <div className="eyebrow">Passed</div>
-        <p style={{ margin: 0 }}>
-          {next ? "You passed this task. Keep improving it if you like, or move on." : "You passed the last practice task."}
-        </p>
-      </div>
+    <div className="ln-passed" data-testid="practice-passed">
+      <p>{next ? `You passed this task. Up next: ${next.title}` : "You passed the last practice task"}</p>
       {next && (
-        <Link href={next.href} className="btn btn-primary btn-lg" data-testid="next-step">
-          Next: {next.title}
-        </Link>
+        <Button href={next.href} arrow data-testid="next-step">
+          Continue
+        </Button>
       )}
-    </section>
+    </div>
   );
 }
