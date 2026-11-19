@@ -15,19 +15,38 @@ async function fillReady(page: Page, input: string, button: string, text: string
   }).toPass({ timeout: 30_000 });
 }
 
-test("sign-in offers only the student and the instructor, then opens Brightspace", async ({ page }) => {
+test("sign-in offers only the student and the facilitator, then the first visit opens the course", async ({ page }) => {
   await page.goto("/signout");
   await expect(page.getByText(/Simulated/).first()).toBeVisible();
   await expect(page.getByText("Sample data").first()).toBeVisible();
   await expect(page.locator(".account")).toHaveCount(2);
   await expect(page.getByText("Dev Okafor")).toHaveCount(0);
+  await page.context().clearCookies({ name: "ailab_intro" });
   await page.getByTestId("signin-jasmine").click();
-  await expect(page).toHaveURL(/\/home$/);
+  // First visit (no answers saved, no attempts yet): welcome, acceptable use, two questions, starting point.
+  await expect(page).toHaveURL(/\/lab\/welcome$/);
   await expect(page.getByText("Welcome, Jasmine")).toBeVisible();
-  await page.getByTestId("course-tile").click();
+  await expect(page.getByText("Sample data").first()).toBeVisible();
+  const go = page.getByTestId("welcome-continue");
+  // The first click can land before hydration: retry until the next screen shows.
+  await expect(async () => {
+    await go.click();
+    await expect(page.getByText(/can be wrong/)).toBeVisible({ timeout: 1500 });
+  }).toPass({ timeout: 30_000 });
+  await go.click();
+  await expect(go).toBeDisabled();
+  await page.getByRole("radio", { name: "IT support" }).click();
+  await go.click();
+  await page.getByRole("radio", { name: "A few times" }).click();
+  await go.click();
+  await page.getByRole("radio", { name: "Start at the beginning" }).click();
+  await go.click();
   await expect(page).toHaveURL(/\/lab$/);
   await expect(page.getByTestId("up-next")).toContainText(/Starting point check|Up next/);
   await expect(page.getByText("Security check")).toHaveCount(0);
+  // The first visit shows once: the course home now opens directly.
+  await page.goto("/lab");
+  await expect(page).toHaveURL(/\/lab$/);
 });
 
 test("starting point check: one task is coached and counts toward progress", async ({ page }) => {

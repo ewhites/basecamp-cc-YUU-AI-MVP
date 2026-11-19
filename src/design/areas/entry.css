@@ -1,1 +1,191 @@
-/* Page styles for the entry area. Tokens only (src/design/tokens.css): no colour, radius or shadow values here. */
+/* Page styles for the entry area. Tokens only (src/design/tokens.css): no colour, radius or shadow values here.
+ * Screens: sign in (/), the simulated Brightspace page (/home), the first visit (/lab/welcome), the course home (/lab).
+ * Every class starts with en- so it never meets an old globals.css class. */
+
+/* ------------------------------------------------------------------ the plain bar (outside the lab shell) */
+.en-wrap {
+  width: 100%;
+  max-width: calc(var(--wrap) + 2 * var(--gutter));
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+  min-width: 0;
+}
+.en-bar { display: flex; align-items: center; gap: 14px; min-height: 64px; padding-top: clamp(12px, 2.4vw, 28px); }
+.en-bar .ds-brand { gap: 14px; }
+.en-bar .en-gap { flex: 1; }
+.en-bar .en-notes { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px 16px; }
+@media (max-width: 520px) {
+  .en-bar { gap: 10px; }
+  .en-bar .ds-brand { gap: 10px; }
+  .en-bar .ds-logo { padding: 6px 9px; }
+  .en-bar .ds-logo img { height: 22px; }
+  .en-bar .ds-name { font-size: 18px; }
+  .en-bar .en-notes { flex-direction: column; align-items: flex-end; gap: 0; }
+}
+@media (max-width: 360px) {
+  .en-bar .ds-logo img { height: 18px; }
+  .en-bar .ds-name { font-size: 16px; }
+}
+
+/* ------------------------------------------------------------------ sign in */
+.en-hero { padding-bottom: clamp(40px, 7vw, 96px); }
+.en-hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 520px);
+  column-gap: 48px;
+  row-gap: 40px;
+  align-items: center;
+  margin-top: clamp(24px, 4vw, 56px);
+}
+@media (max-width: 900px) { .en-hero-grid { grid-template-columns: minmax(0, 1fr); } }
+.en-firm {
+  margin: 0 0 clamp(14px, 1.5vw, 20px);
+  font: 350 var(--fs-firm)/1.2 var(--serif);
+  font-variation-settings: var(--soft);
+  letter-spacing: -.012em;
+  color: var(--t2);
+}
+.en-display { font-size: var(--fs-display); font-weight: 300; line-height: 1.05; letter-spacing: -.022em; max-width: 12em; }
+.en-lede { margin: 20px 0 0; font-size: var(--fs-lead); line-height: 1.5; color: var(--t2); max-width: 27em; text-wrap: pretty; }
+.en-acts { display: flex; align-items: center; flex-wrap: wrap; gap: 16px 28px; margin-top: 32px; }
+.en-fine { margin: 16px 0 0; }
+.en-off { margin: 32px 0 0; font-size: var(--fs-small); color: var(--t2); }
+
+/* The glass device: a sample coach result. It can be held and tilted (pointer drag), and springs back. */
+.en-device {
+  border-radius: var(--r-panel);
+  padding: 16px 16px 8px;
+  transform: perspective(1200px) rotateX(var(--rx, 2deg)) rotateY(var(--ry, -6deg));
+  transition: transform 450ms var(--ease);
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.en-device.is-held { transition: none; cursor: grabbing; }
+@media (max-width: 900px) { .en-device { --rx: 0deg; --ry: 0deg; } }
+@media (prefers-reduced-motion: reduce) { .en-device, .en-device.is-held { transform: none; cursor: default; } }
+.en-device-in { border-radius: var(--r-row); background: var(--well); border: 1px solid var(--hair); padding: 18px; }
+.en-device-in p { margin: 0; font-size: var(--fs-small); line-height: 1.42; }
+.en-device-score {
+  margin: 18px 6px 6px;
+  font: 350 var(--fs-coach)/1.15 var(--serif);
+  font-variation-settings: var(--soft);
+  letter-spacing: -.018em;
+  font-variant-numeric: tabular-nums;
+}
+.en-device-checks { padding: 0 6px; }
+
+/* ------------------------------------------------------------------ first visit */
+.en-welcome { display: grid; place-items: start center; padding-top: clamp(8px, 4vh, 48px); }
+.en-card { width: min(560px, 100%); }
+.en-card.ds-sheet { padding: 24px 28px 32px; }
+@media (max-width: 520px) { .en-card.ds-sheet { padding: 16px 20px 24px; } }
+.en-card .ds-progress { margin: 0; gap: 10px; flex-wrap: nowrap; }
+.en-card .ds-progress .ds-track { order: 0; flex-basis: auto; }
+.en-back {
+  width: 44px; height: 44px; margin-left: -12px; border: 0; background: none; border-radius: var(--r-ctl);
+  display: grid; place-items: center; color: var(--t2);
+  transition: background-color var(--t-hover) var(--ease), color var(--t-hover) var(--ease);
+}
+.en-back:hover { background: var(--step); color: var(--t1); }
+.en-back[aria-hidden="true"] { visibility: hidden; }
+.en-q { margin: 28px 0 20px; min-height: 2.16em; outline: none; }
+.en-q:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; }
+.en-q-brief { margin: -8px 0 4px; color: var(--t2); }
+.en-swap { transition: opacity 220ms var(--ease), transform 220ms var(--ease); }
+.en-swap.is-out { opacity: 0; transform: translateY(8px); }
+.en-go { margin-top: 28px; }
+
+/* ------------------------------------------------------------------ course home */
+.en-home { display: grid; gap: 32px; }
+.en-home-head .ds-kicker { margin: 0; }
+.en-home-head h1 { margin: 6px 0 4px; }
+.en-home-head .ds-progress { margin: 12px 0 0; max-width: 640px; }
+
+.en-next { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 16px 32px; }
+.en-next .ds-kicker { margin: 0; }
+.en-next h2 { margin: 6px 0 6px; }
+.en-next p.ds-brief { margin: 0; }
+@media (max-width: 720px) {
+  .en-next { grid-template-columns: minmax(0, 1fr); }
+  .en-next .ds-btn { width: 100%; }
+}
+
+/* The three doors. The lamp signature: a finished module's door is lit with the orange marble. Nowhere else. */
+.en-doors { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.en-doors > li { display: grid; }
+@media (max-width: 760px) { .en-doors { grid-template-columns: minmax(0, 1fr); gap: 12px; } }
+.en-door {
+  position: relative; overflow: hidden; isolation: isolate;
+  min-height: clamp(196px, 17vw, 236px);
+  border-radius: 140px 140px var(--r-card) var(--r-card);
+  padding: 0 20px 18px;
+  display: flex; flex-direction: column; justify-content: flex-end; gap: 6px;
+  color: var(--t1); text-decoration: none;
+  transition: transform 320ms var(--ease), border-color var(--t-hover) var(--ease);
+}
+@media (max-width: 760px) {
+  .en-door { min-height: 128px; border-radius: 96px 96px var(--r-card) var(--r-card); padding-top: 48px; }
+  .en-door p { display: none; }
+  .en-lamp { height: 12%; }
+}
+.en-door:hover { transform: translateY(-4px); text-decoration: none; color: var(--t1); border-color: var(--hair-2); }
+.en-door:active { transform: translateY(-2px) scale(.99); }
+.en-door:focus-visible { outline-offset: 4px; }
+.en-door > * { position: relative; }
+.en-lamp { position: absolute; left: 50%; top: 0; width: 1px; height: 16%; background: var(--hair-2); }
+.en-lamp::after {
+  content: ""; position: absolute; left: -7px; top: 100%; width: 15px; height: 22px;
+  border-radius: 6px 6px 8px 8px; border: 1px solid var(--hair-2);
+}
+.en-door small { font-size: var(--fs-fine); color: var(--t2); line-height: 1.4; }
+.en-door h3 { font-size: var(--fs-card); font-weight: 400; line-height: 1.1; letter-spacing: -.018em; }
+.en-door p { margin: 0; font-size: var(--fs-small); color: var(--t2); line-height: 1.42; }
+.en-meter { display: flex; gap: 4px; margin-top: 10px; }
+.en-meter i { flex: 1; height: 4px; border-radius: 2px; background: var(--step-2); }
+.en-meter i.is-on { background: var(--t1); }
+
+.en-door.is-lit { border-color: color-mix(in srgb, var(--accent-soft) 45%, transparent); }
+.en-door.is-lit::before {
+  content: ""; position: absolute; inset: 0; z-index: -1;
+  background:
+    linear-gradient(180deg, transparent 20%, color-mix(in srgb, var(--glass-solid) 90%, transparent) 78%),
+    var(--marble-img) 40% 30% / 900px auto no-repeat,
+    var(--glass-solid);
+}
+.en-door.is-lit .en-lamp::after { background: var(--accent-soft); border-color: var(--accent-soft); }
+.en-door.is-lit small, .en-door.is-lit p { color: var(--t1); }
+
+/* The whole curriculum as rows on the cream sheet, grouped by module. Each row opens its step. */
+.en-group + .en-group { margin-top: 28px; }
+.en-group h3 { font: 600 var(--fs-small)/1.42 var(--sans); letter-spacing: 0; color: var(--t2); margin: 0 0 4px; }
+.en-row-kind { font-size: var(--fs-fine); color: var(--t2); line-height: 1.4; }
+.en-row[aria-current="step"] .en-row-text b { color: var(--t1); }
+.en-row-state[data-state="next"] { color: var(--t1); font-weight: 600; }
+.en-rows-sheet h2 { margin: 0 0 8px; }
+.en-rows-sheet > * + h2, .en-rows-sheet section + section { margin-top: 32px; }
+.en-row { display: flex; align-items: center; gap: 16px; min-height: var(--h-row); padding: 10px 0; border-top: 1px solid var(--hair); color: var(--t1); text-decoration: none; }
+.ds-rows > li:first-child > .en-row { border-top: 0; }
+.en-row:hover { text-decoration: none; color: var(--t1); }
+.en-row-text { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.en-row-text b { font-weight: 600; font-size: var(--fs-body); line-height: 1.3; }
+.en-row-text span { font-size: var(--fs-small); color: var(--t2); line-height: 1.42; }
+.en-row-state { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-small); color: var(--t2); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.en-row-state .ds-icon { width: 16px; height: 16px; }
+.en-row > .ds-icon { width: 16px; height: 16px; color: var(--t2); transition: transform var(--t-hover) var(--ease); }
+.en-row:hover > .ds-icon { transform: translateX(3px); color: var(--t1); }
+.en-focus { display: grid; gap: 6px; }
+.en-focus p { margin: 0; max-width: 36em; }
+.en-focus .ds-quiet { justify-self: start; }
+.en-head-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+.en-head-row h2 { margin: 0; }
+
+/* sign in: the line above the two accounts */
+.en-with { margin: 28px 0 0; font: 600 var(--fs-small)/1.42 var(--sans); letter-spacing: 0; color: var(--t2); }
+.en-with + .en-acts { margin-top: 12px; }
+
+/* first visit: the acceptable-use screen, four short lines separated by space and a hairline */
+.en-use { list-style: none; margin: 0; padding: 0; max-width: 36em; }
+.en-use li { padding: 12px 0; border-top: 1px solid var(--hair); line-height: 1.45; }
+.en-use li:first-child { border-top: 0; padding-top: 0; }
