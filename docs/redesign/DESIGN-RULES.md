@@ -139,6 +139,17 @@ Logan's words: the visual hierarchy is confusing because "the headings of things
 
 Reference page: `src/app/lab/how-it-works/page.tsx`.
 
+## Frame, rail and width (added 2026-11-19, Logan's second review)
+
+Logan's words: the pages are "squished in the middle instead of filling space", there are "massive amounts" to scroll "without like a frozen rail that is always going to be there for me to navigate around", the centralized page is "confusing and overwhelming", and it applies to "the instructor side, the admin and cost side, and the student side, and the homepage". These rules override the older "no left rail" decision (BUILD-PLAN) and the single-column template.
+
+41. From 1200px wide the lab is a frame: a frozen left rail (272px, glass, never scrolls away with the page) and the page filling the rest. Below 1200px the bottom dock is the navigation, as before. Phones and tablets are one column.
+42. The rail holds, top to bottom: the places, one orange Next button, the context outline (student: the whole course with a check on finished steps, the module you are in open; facilitator: sections and the "Needs you" list; admin: none), and "On this page", built automatically from the page's h2 headings and highlighting where you are. Pages never build their own contents list; they give each section a short, clear h2.
+43. Pages use the width. A sheet fills the area it is given (no `max-width` on a whole sheet); only reading lines are capped, at about 40em. Sections sit in columns when there is room (two or three across) and stack when there is not. Layout is decided by the page area's width, not the window's: `.ds-content` is a CSS container named `page`, so use `@container page (min-width: ...)`, because the rail takes about 300px.
+44. The coach panel sits beside the work when the page area is at least 920px wide, and stays in view while the work scrolls.
+
+Code: `src/design/SideRail.tsx` and the end of `src/design/components.css`; the data for each role is built in `src/app/lab/layout.tsx`. The sign-in page and the public portfolio have no rail.
+
 ## Where Logan's request overrides a source
 
 Stated once, then followed.
