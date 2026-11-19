@@ -17,7 +17,7 @@ export interface RunOutput {
   stopReason: string | null;
 }
 
-function textOf(content: Anthropic.Beta.BetaContentBlock[]): string {
+export function textOf(content: Anthropic.Beta.BetaContentBlock[]): string {
   return content
     .filter((b): b is Anthropic.Beta.BetaTextBlock => b.type === "text")
     .map((b) => b.text)
@@ -25,7 +25,7 @@ function textOf(content: Anthropic.Beta.BetaContentBlock[]): string {
     .trim();
 }
 
-function usageOf(u: Anthropic.Beta.BetaUsage): UsageLike {
+export function usageOf(u: Anthropic.Beta.BetaUsage): UsageLike {
   return {
     input_tokens: u.input_tokens,
     output_tokens: u.output_tokens,

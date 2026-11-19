@@ -1,0 +1,93 @@
+/* Page styles for the Agent Builder tool sandbox: the tool picker, the four tool panels, and the scripted demos.
+ * Tokens only (src/design/tokens.css): no colour, radius or shadow values here. Every class starts with sb-.
+ * The panels sit on the dark slab (.ds-slab.ln-slab, learn.css), so text tokens read light inside them. */
+
+/* ------------------------------------------------------------------ the tool picker (live build, on the cream sheet) */
+.sb-picker { display: grid; gap: 4px; margin-top: 8px; }
+.sb-picker .ln-hint { margin-bottom: 4px; }
+.sb-picks { display: grid; }
+.sb-picks .ds-check { align-items: flex-start; width: 100%; padding: 10px 0; border-top: 1px solid var(--hair); }
+.sb-picks .ds-check:first-child { border-top: 0; }
+.sb-picks .ds-box { margin-top: 1px; }
+.sb-pick { display: grid; gap: 2px; min-width: 0; }
+.sb-pick-name { font-weight: 600; font-size: var(--fs-body); line-height: 1.4; }
+.sb-pick-note { font-size: var(--fs-small); line-height: 1.42; color: var(--t2); }
+.sb-sim { font-size: var(--fs-fine); line-height: 1.4; color: var(--t3); white-space: nowrap; }
+
+/* ------------------------------------------------------------------ the dark stage: tools, then the agent's steps */
+.sb-stage { display: grid; gap: 16px; margin-top: 20px; }
+.ln-output .sb-stage { margin-top: 0; }
+.sb-region { margin: 0; }
+
+/* The four panels as one surface divided by hairlines: spreadsheet and outbox across, notes and memory side by side. */
+.sb-tools { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.sb-panel { min-width: 0; padding: 16px 0; border-top: 1px solid var(--hair); }
+.sb-panel:first-child { border-top: 0; padding-top: 0; }
+.sb-panel[data-tool="sheet"], .sb-panel[data-tool="outbox"] { grid-column: 1 / -1; }
+.sb-panel[data-tool="notes"] { padding-right: 20px; }
+.sb-panel[data-tool="memory"] { padding-left: 20px; border-left: 1px solid var(--hair); }
+.sb-panel[data-granted="no"] .sb-head h3 { color: var(--t3); }
+.sb-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0 12px; margin-bottom: 8px; }
+.sb-head h3 { font: 600 var(--fs-small)/1.42 var(--sans); letter-spacing: 0; }
+.sb-off, .sb-empty { margin: 0; font-size: var(--fs-small); line-height: 1.42; color: var(--t3); }
+.sb-meta { display: block; font-size: var(--fs-fine); line-height: 1.4; color: var(--t3); }
+
+.sb-table { width: 100%; margin: 4px 0; border-collapse: collapse; font-size: var(--fs-small); line-height: 1.42; }
+.sb-table th, .sb-table td { text-align: left; vertical-align: top; padding: 8px 14px 8px 0; border-top: 1px solid var(--hair); overflow-wrap: anywhere; }
+.sb-table thead th { border-top: 0; padding-top: 0; font-size: var(--fs-fine); font-weight: 600; color: var(--t3); }
+.sb-table tbody td:first-child { font-weight: 600; }
+
+.sb-lines { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.sb-lines li { display: grid; gap: 2px; font-size: var(--fs-small); line-height: 1.42; overflow-wrap: anywhere; }
+
+.sb-drafts { list-style: none; margin: 0; padding: 0; display: grid; gap: 20px; }
+.sb-drafts > li { display: grid; gap: 4px; }
+.sb-draft { display: grid; gap: 10px; max-width: 40em; }
+.sb-addr { margin: 0; display: grid; gap: 2px; font-size: var(--fs-small); line-height: 1.42; }
+.sb-addr > div { display: grid; grid-template-columns: 5em minmax(0, 1fr); gap: 12px; }
+.sb-addr dt { color: var(--t3); }
+.sb-addr dd { margin: 0; overflow-wrap: anywhere; }
+.sb-body { margin: 0; padding-left: 16px; border-left: 2px solid var(--hair-2); font-size: var(--fs-small); line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+.sb-status { display: flex; align-items: center; gap: 8px; margin: 0; font-size: var(--fs-small); line-height: 1.42; font-weight: 600; }
+.sb-status .ds-icon { width: 16px; height: 16px; }
+.sb-controls { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 4px; }
+.sb-ghost {
+  display: inline-flex; align-items: center; justify-content: center; min-height: var(--h-ctl); padding: 0 22px;
+  border-radius: var(--r-ctl); border: 1.5px solid var(--hair-2); background: transparent; color: var(--t1);
+  font: 600 var(--fs-btn)/1 var(--sans);
+  transition: background-color var(--t-hover) var(--ease), transform var(--t-press) var(--ease);
+}
+.sb-ghost:hover { background: var(--step); }
+.sb-ghost:active { transform: scale(.97); }
+
+/* ------------------------------------------------------------------ the agent's steps (demos) */
+.sb-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; padding-top: 16px; border-top: 1px solid var(--hair); }
+.sb-trace { list-style: none; margin: 0; padding: 0; display: grid; min-width: 0; }
+.sb-idle { font-size: var(--fs-small); line-height: 1.42; color: var(--t3); }
+.sb-beat { display: grid; gap: 6px; padding: 14px 0; border-top: 1px solid var(--hair); max-width: 40em; min-width: 0; animation: sb-in 320ms var(--ease) both; }
+.sb-beat:first-child { border-top: 0; padding-top: 0; }
+.sb-beat p { margin: 0; font-size: var(--fs-small); line-height: 1.5; overflow-wrap: anywhere; }
+.sb-call { display: grid; gap: 6px; padding-left: 16px; border-left: 2px solid var(--hair-2); min-width: 0; }
+.sb-input { margin: 0; display: grid; gap: 2px; font-size: var(--fs-small); line-height: 1.42; }
+.sb-input > div { display: grid; grid-template-columns: 5.5em minmax(0, 1fr); gap: 12px; }
+.sb-input dt { color: var(--t3); }
+.sb-input dd { margin: 0; overflow-wrap: anywhere; }
+.sb-result { display: flex; align-items: flex-start; gap: 8px; }
+.sb-result .ds-icon { width: 16px; height: 16px; margin-top: 3px; }
+@keyframes sb-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* ------------------------------------------------------------------ narrow */
+@container (max-width: 560px) {
+  .sb-tools { grid-template-columns: minmax(0, 1fr); }
+  .sb-panel[data-tool="notes"] { padding-right: 0; }
+  .sb-panel[data-tool="memory"] { padding-left: 0; border-left: 0; border-top: 1px solid var(--hair); }
+  .sb-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .sb-table, .sb-table tbody { display: block; }
+  .sb-table tr { display: grid; gap: 2px; padding: 8px 0; border-top: 1px solid var(--hair); }
+  .sb-table td { display: block; padding: 0; border: 0; }
+  .sb-table td:not(:first-child)::before { content: attr(data-label) ": "; color: var(--t3); }
+  .sb-addr > div, .sb-input > div { grid-template-columns: minmax(0, 1fr); gap: 0; }
+}
+@media (max-width: 520px) {
+  .sb-ghost, .sb-controls .ds-btn { flex: 1 1 100%; }
+}

@@ -6,7 +6,7 @@ import { useState } from "react";
 import type { CourseGroup } from "@/lib/curriculum/course";
 import type { StepState } from "@/lib/progress";
 
-const KIND = { check: "Check", lesson: "Lesson", practice: "Practice", skills: "Summary" } as const;
+const KIND = { check: "Check", lesson: "Lesson", demo: "Demo", practice: "Practice", skills: "Summary" } as const;
 
 /** Coursera-style syllabus: modules, steps, minutes and checkmarks. Highlights the current page. */
 export function Syllabus({ groups, states, done, total }: { groups: CourseGroup[]; states: Record<string, StepState>; done: number; total: number }) {

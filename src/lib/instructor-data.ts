@@ -17,6 +17,7 @@ import {
 import { scoreChecks, type SkillScores } from "./progress";
 import { STAFF_CONTACT } from "./coach/distress";
 import { userClient } from "./db";
+import { TOOLS_CHECK } from "./sandbox/tools";
 
 /**
  * Reads for the instructor console. Every query goes through userClient(), so the access rules
@@ -125,6 +126,7 @@ export function firstAndNow(lv: Record<Skill, SkillLevel> | undefined): { first:
 }
 
 export function findCheck(key: string, skill?: string): RubricCheck | undefined {
+  if (key === TOOLS_CHECK.key && (!skill || skill === TOOLS_CHECK.skill)) return TOOLS_CHECK;
   for (const ex of EXERCISES) {
     const c = ex.checks.find((k) => k.key === key && (!skill || k.skill === skill));
     if (c) return c;

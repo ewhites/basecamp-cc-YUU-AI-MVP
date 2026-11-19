@@ -19,6 +19,8 @@ const ROUTES = [
   ["practice-prompt", "jasmine", "/lab/practice/ps-ticket-summary"],
   ["practice-arena", "jasmine", "/lab/practice/ma-policy-summary"],
   ["practice-agent", "jasmine", "/lab/practice/ab-newhire-it"],
+  ["demo-research", "jasmine", "/lab/lesson/m3/research"],
+  ["demo-travel", "jasmine", "/lab/lesson/m3/travel"],
   ["check-start", "jasmine", "/lab/check/start"],
   ["check-final", "jasmine", "/lab/check/final"],
   ["skills", "jasmine", "/lab/skills"],
@@ -27,7 +29,7 @@ const ROUTES = [
   ["student", "rivera", "/lab/instructor/student/S-B-012"],
 ];
 
-const SIZES = [["d", 1440, 900], ["m", 390, 844]];
+const SIZES = [["d", 1440, 900], ["t", 1024, 768], ["m", 390, 844]];
 const browser = await chromium.launch();
 for (const [w, width, height] of SIZES) {
   const ctx = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: 1 });
@@ -44,6 +46,19 @@ for (const [w, width, height] of SIZES) {
     await page.goto(BASE + url, { waitUntil: "networkidle" });
     await page.waitForTimeout(900);
     await page.screenshot({ path: path.join(out, `${name}-${w}.png`), fullPage: true });
+    if (name.startsWith("demo-")) {
+      // The scripted demos at the approval step, then after approving (the end).
+      const go = page.getByTestId("demo-continue");
+      for (let i = 0; i < 12 && !(await page.getByTestId("demo-approve").isVisible()); i++) {
+        await go.click();
+        await page.waitForTimeout(150);
+      }
+      await page.waitForTimeout(500);
+      await page.screenshot({ path: path.join(out, `${name}-approve-${w}.png`), fullPage: true });
+      await page.getByTestId("demo-approve").click();
+      await page.waitForTimeout(700);
+      await page.screenshot({ path: path.join(out, `${name}-end-${w}.png`), fullPage: true });
+    }
   }
   if (!filter || "portfolio".includes(filter)) {
     // the public portfolio link, read from the skills page as Jasmine

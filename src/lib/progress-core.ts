@@ -27,7 +27,9 @@ export function computeProgress(attempts: AttemptRow[], lessonsDone: Set<string>
 
   const states: Record<string, StepState> = {};
   for (const step of ALL_STEPS) {
-    if (step.kind === "lesson") {
+    // A lesson counts when read to the end. A scripted demo counts when the student reaches its last step.
+    // Both are stored the same way, as a lesson_progress row with the step id.
+    if (step.kind === "lesson" || step.kind === "demo") {
       states[step.id] = { done: lessonsDone.has(step.id), started: lessonsDone.has(step.id) };
     } else if (step.kind === "practice") {
       const rows = byEx.get(step.exerciseId!) ?? [];

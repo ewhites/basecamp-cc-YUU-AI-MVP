@@ -9,6 +9,8 @@ import { arenaOutputsText, runBot, runStudentPrompt, transcriptText, type BotTur
 import { getExercise } from "./curriculum/exercises";
 import type { AttemptInput, Exercise } from "./curriculum/types";
 import type { UsageLike } from "./models";
+import { runSandboxBot } from "./sandbox/run";
+import { SANDBOX_EXERCISE, withToolsCheck, type SandboxResult } from "./sandbox/tools";
 import type { Viewer } from "./session";
 import { adminClient } from "./db";
 import { signingKey } from "./demo/secret";
@@ -39,7 +41,7 @@ export interface AttemptView {
 export type StoredOutput =
   | { text?: string; model?: string; latencyMs?: number; costUsd?: number }
   | { outputs: { model: string; text: string; latencyMs: number; costUsd: number; usage: UsageLike }[] }
-  | { transcript: { id: string; from: string; text: string; reply: string }[] };
+  | { transcript: { id: string; from: string; text: string; reply: string }[]; sandbox?: SandboxResult };
 
 function db() {
   return adminClient();
@@ -95,7 +97,7 @@ function scrubInput(input: AttemptInput, v: StudentViewer): { input: AttemptInpu
   if (input.studio === "prompt") out = { studio: "prompt", prompt: s(input.prompt) };
   else if (input.studio === "arena") out = { ...input, prompt: s(input.prompt), reasoning: s(input.reasoning) };
   else if (input.studio === "check") out = { studio: "check", answer: s(input.answer) };
-  else out = { studio: "agent", instructions: s(input.instructions) };
+  else out = { studio: "agent", instructions: s(input.instructions), ...(input.tools ? { tools: input.tools } : {}) };
   return { input: out, removed: removedSummary(all) };
 }
 
@@ -135,19 +137,30 @@ async function runAndGrade(ex: Exercise, input: AttemptInput, studentId: string,
     return { output: { outputs }, grade };
   }
   let turns: BotTurn[];
+  let sandbox: SandboxResult | undefined;
   if (existingOutput && "transcript" in existingOutput && existingOutput.transcript.length) {
     turns = existingOutput.transcript.map((t) => ({
       message: { id: t.id, kind: "normal", from: t.from, text: t.text },
       reply: { model: "", text: t.reply, usage: { input_tokens: 0, output_tokens: 0 }, costUsd: 0, latencyMs: 0, stopReason: null },
     }));
+    sandbox = existingOutput.sandbox;
+  } else if (ex.id === SANDBOX_EXERCISE && input.tools) {
+    // The tool sandbox: the bot gets only the tools the student chose. Every model call is recorded.
+    const run = await runSandboxBot(input.instructions, ex, input.tools);
+    for (const call of run.calls) await recordUsage(studentId, "bot", call);
+    turns = run.turns;
+    sandbox = run.sandbox;
   } else {
     turns = await runBot(input.instructions, ex);
     for (const t of turns) await recordUsage(studentId, "bot", t.reply);
   }
-  const grade = await gradeAttempt({ exercise: ex, attempt: input.instructions, output: transcriptText(turns) });
+  // The coach sees exactly what it saw before: the instructions and the bot's three final replies, same format.
+  let grade = await gradeAttempt({ exercise: ex, attempt: input.instructions, output: transcriptText(turns) });
   await recordUsage(studentId, "grade", grade);
+  // The tools check is decided in code, after the coach has graded. It is never sent to the coach.
+  if (ex.id === SANDBOX_EXERCISE && input.tools) grade = withToolsCheck(grade, input.tools);
   return {
-    output: { transcript: turns.map((t) => ({ id: t.message.id, from: t.message.from, text: t.message.text, reply: t.reply.text })) },
+    output: { transcript: turns.map((t) => ({ id: t.message.id, from: t.message.from, text: t.message.text, reply: t.reply.text })), ...(sandbox ? { sandbox } : {}) },
     grade,
   };
 }

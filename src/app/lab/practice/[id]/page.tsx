@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { AttemptResult } from "@/components/AttemptResult";
 import { ExerciseBrief, Material } from "@/components/ExercisePicker";
 import { Button } from "@/design/Button";
@@ -9,6 +9,7 @@ import { COURSE, MODULE_INFO } from "@/lib/curriculum/course";
 import { getExercise } from "@/lib/curriculum/exercises";
 import { lessonFor } from "@/lib/curriculum/lessons";
 import { myProgress } from "@/lib/progress";
+import { SANDBOX_EXERCISE } from "@/lib/sandbox/tools";
 import { requireRole } from "@/lib/session";
 import { myAttempts } from "@/lib/student-data";
 import { readIntro } from "../../intro";
@@ -25,7 +26,10 @@ export default async function PracticePage({ params }: { params: Promise<{ id: s
   const { id } = await params;
   const ex = getExercise(id);
   const group = COURSE.find((g) => g.steps.some((s) => s.kind === "practice" && s.exerciseId === id));
+  // The two other agent exercises stay in the data for the eval but left the course map: send old links to the live build.
+  if (ex?.studio === "agent" && !group) redirect(`/lab/practice/${SANDBOX_EXERCISE}`);
   if (!ex || !group || ex.studio === "check") notFound();
+  const sandbox = ex.id === SANDBOX_EXERCISE;
 
   const intro = readIntro(await cookies());
   const info = MODULE_INFO[ex.module];
@@ -44,9 +48,16 @@ export default async function PracticePage({ params }: { params: Promise<{ id: s
 
   const task = (
     <div className="ln-task">
-      <p className="ln-question">{ex.brief}</p>
+      <p className="ln-question">{sandbox ? "Write the bot's instructions and pick its tools. We test it on three messages from coworkers. Use the four-part spec: Job, Tools and limits, Stop rule, Handoff" : ex.brief}</p>
       <ExerciseBrief ex={ex} />
-      {ex.knowledge && <Material label="The bot's knowledge sheet" note="The only thing it may answer from" text={ex.knowledge} testId="knowledge-sheet" />}
+      {ex.knowledge && (
+        <Material
+          label={sandbox ? "The IT guide" : "The bot's knowledge sheet"}
+          note={sandbox ? "Your bot can read it only with the Spreadsheet tool" : "The only thing it may answer from"}
+          text={ex.knowledge}
+          testId="knowledge-sheet"
+        />
+      )}
       {ex.coworkerMessages && (
         <section className="ln-tests" aria-labelledby="tests-title">
           <h2 id="tests-title" className="ln-label">

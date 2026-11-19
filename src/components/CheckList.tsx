@@ -1,6 +1,7 @@
 import { Icon } from "@/design/icons";
 import { getExercise } from "@/lib/curriculum/exercises";
 import { SKILL_LABELS, type Skill } from "@/lib/curriculum/types";
+import { TOOLS_CHECK } from "@/lib/sandbox/tools";
 
 export interface CheckLike {
   key: string;
@@ -36,8 +37,9 @@ export function CheckList({
 }) {
   const ex = getExercise(exerciseId);
   const keys = texts ? Object.keys(texts) : (ex?.checks.map((c) => c.key) ?? []);
-  const text = (k: string) => texts?.[k] ?? ex?.checks.find((c) => c.key === k)?.text ?? k;
-  const order = (k: string) => keys.indexOf(k);
+  // The tools check is decided in code after the coach grades, so it is not in the exercise's own list. It shows last.
+  const text = (k: string) => texts?.[k] ?? ex?.checks.find((c) => c.key === k)?.text ?? (k === TOOLS_CHECK.key ? TOOLS_CHECK.text : k);
+  const order = (k: string) => (keys.includes(k) ? keys.indexOf(k) : keys.length);
   return (
     <ul className="ln-checks" data-testid="check-list">
       {[...checks]
