@@ -68,7 +68,7 @@ export default async function FacilitatorConsole({ searchParams }: { searchParam
 
   if (!section) {
     return (
-      <div className="ds-page st-page st-narrow">
+      <div className="ds-page st-page">
         <Sheet className="ds-rise">
           <header className="st-head">
             <div>
@@ -104,8 +104,8 @@ export default async function FacilitatorConsole({ searchParams }: { searchParam
   const progress = cohortProgress(ids, attempts);
 
   return (
-    <div className="ds-page st-page st-narrow">
-      <Sheet>
+    <div className="ds-page st-page">
+      <Sheet className="st-wide">
         <header className="st-head ds-rise" style={rise(0)}>
           <div>
             <p className="ds-kicker">Facilitator console{section.cycle ? ` · ${section.cycle}` : ""}</p>
@@ -120,38 +120,45 @@ export default async function FacilitatorConsole({ searchParams }: { searchParam
 
         <NeedsYou rows={needs} names={names} lessonSkill={overview.miniLesson?.skill ?? null} />
 
-        {overview.miniLesson ? (
-          <MostMissed lesson={overview.miniLesson} primary={ready === 0} />
-        ) : (
-          <Section title="Teach next" id="mini-lesson" data-testid="mini-lesson" className="ds-rise" style={rise(2)}>
-            <Panel>
-              <p>Not enough practice yet to pick a check to teach.</p>
-            </Panel>
-          </Section>
-        )}
+        <div className="st-grid st-grid-split">
+          {overview.miniLesson ? (
+            <MostMissed lesson={overview.miniLesson} primary={ready === 0} />
+          ) : (
+            <Section title="Teach next" id="mini-lesson" data-testid="mini-lesson" className="ds-rise" style={rise(2)}>
+              <Panel>
+                <p>Not enough practice yet to pick a check to teach.</p>
+              </Panel>
+            </Section>
+          )}
 
-        <Section title="Release scores" id="release" data-testid="gradebook" className="ds-rise" style={rise(3)}>
-          <Panel className="st-stack">
-            <p>
-              {ready === 0
-                ? "Every scored attempt is released."
-                : `${ready} scored ${ready === 1 ? "attempt is" : "attempts are"} waiting. Students see a score only after you release it.`}
-            </p>
-            {ready > 0 && <p className="st-fine">Scores that need your review stay back until you check them.</p>}
-            <ReleaseScores sectionId={section.id} disabled={ready === 0} primary={ready > 0} />
-          </Panel>
-        </Section>
+          <div className="st-col">
+            <Section title="Release scores" id="release" data-testid="gradebook" className="ds-rise" style={rise(3)}>
+              <Panel className="st-stack">
+                <p>
+                  {ready === 0
+                    ? "Every scored attempt is released."
+                    : `${ready} scored ${ready === 1 ? "attempt is" : "attempts are"} waiting. Students see a score only after you release it.`}
+                </p>
+                {ready > 0 && <p className="st-fine">Scores that need your review stay back until you check them.</p>}
+                <ReleaseScores sectionId={section.id} disabled={ready === 0} primary={ready > 0} />
+              </Panel>
+            </Section>
 
-        <LiftPanel lift={overview.lift} students={overview.students.length} />
+            <LiftPanel lift={overview.lift} students={overview.students.length} />
+          </div>
+        </div>
 
-        <LimitChanges rows={limitChanges} names={names} viewerId={viewer.userId} />
+        <div className="st-grid st-grid-split">
+          <LimitChanges rows={limitChanges} names={names} viewerId={viewer.userId} />
+          <Reliability data={reliability} />
+        </div>
 
         <Section title="Cohort progress" id="students" className="ds-rise" style={rise(5)}>
-          <ByLesson progress={progress} total={ids.length} />
-          <Heatmap overview={overview} progress={progress} />
+          <div className="st-fold-grid">
+            <ByLesson progress={progress} total={ids.length} />
+            <Heatmap overview={overview} progress={progress} />
+          </div>
         </Section>
-
-        <Reliability data={reliability} />
       </Sheet>
     </div>
   );
@@ -215,7 +222,7 @@ function NeedsYou({ rows, names, lessonSkill }: { rows: NeedsYouRow[]; names: Ma
             href={toLesson ? "#mini-lesson" : "#students"}
             data-testid="needs-you-row"
             data-kind={r.kind}
-            className="st-end-hide"
+            className="st-end-hide st-needs-row"
             title={r.headline}
             meta={
               <>
@@ -237,7 +244,7 @@ function NeedsYou({ rows, names, lessonSkill }: { rows: NeedsYouRow[]; names: Ma
           href={`${studentHref(r.student_id, r.attempt_id)}#why`}
           data-testid="needs-you-row"
           data-kind={r.kind}
-          className="st-end-hide"
+          className="st-end-hide st-needs-row"
           title={nameOf(r.student_id)}
           meta={
             <>

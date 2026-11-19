@@ -34,8 +34,8 @@ export default async function AdminCost() {
   const p = periods();
 
   return (
-    <div className="ds-page st-page st-narrow ad-page" data-testid="admin-cost">
-      <Sheet>
+    <div className="ds-page st-page ad-page" data-testid="admin-cost">
+      <Sheet className="st-wide">
         <header className="st-head ds-rise" style={rise(0)}>
           <div>
             <p className="ds-kicker">Admin console · Fall 2026</p>
@@ -49,11 +49,16 @@ export default async function AdminCost() {
           </div>
         </header>
 
-        <Budget summary={summary} />
-        <Numbers summary={summary} />
-        <TopSpenders summary={summary} />
-        <ByModel summary={summary} />
-        <TopLessons summary={summary} />
+        <div className="st-grid st-grid-even">
+          <Budget summary={summary} />
+          <Numbers summary={summary} />
+        </div>
+
+        <div className="st-grid ad-cols">
+          <TopSpenders summary={summary} />
+          <TopLessons summary={summary} />
+          <ByModel summary={summary} />
+        </div>
 
         <Section
           title="Daily limit changes"
@@ -221,7 +226,7 @@ function TopSpenders({ summary }: { summary: CostSummary }) {
 
 function ByModel({ summary }: { summary: CostSummary }) {
   return (
-    <Section title="Tokens by model" id="models" data-testid="tokens-by-model" className="ds-rise" style={rise(4)}>
+    <Section title="Tokens by model" id="models" data-testid="tokens-by-model" className="ds-rise ad-models" style={rise(4)}>
       <Panel className="ad-table-panel">
         <table className="ad-table">
           <caption className="ds-sr">Tokens, calls and cost for each model this month</caption>

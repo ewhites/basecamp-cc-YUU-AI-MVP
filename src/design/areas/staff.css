@@ -199,6 +199,34 @@
 .st-coach .ds-coach-checks { padding-bottom: 8px; }
 .st-coach .ds-tip { margin-bottom: 24px; }
 
+/* ------------------------------------------------------------------ wide layouts (console, student detail, admin)
+ * The sheet is a container ("sheet"), so columns depend on the room the sheet really has: with the rail open, or a coach
+ * panel beside it, that is less than the window. Under 860px of sheet everything is one column. DOM order is the reading
+ * order in both layouts (no CSS order). */
+.st-wide { container: sheet / inline-size; }
+.st-grid, .st-cols { display: grid; grid-template-columns: minmax(0, 1fr); gap: 44px 32px; align-items: start; margin-top: 44px; }
+.st-grid > .ds-section, .st-col > .ds-section:first-child { margin-top: 0; }
+.st-col { min-width: 0; }
+.st-grid > *, .st-cols > * { min-width: 0; }
+@container sheet (min-width: 860px) {
+  .st-grid-split { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); }
+  .st-grid-even { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .st-cols { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
+}
+
+/* Needs you today: the student, then what happened, side by side. */
+@container sheet (min-width: 720px) {
+  .st-needs-row .ds-rowlink-main { grid-template-columns: minmax(10em, 17em) minmax(0, 1fr); gap: 2px 24px; align-items: baseline; }
+}
+
+/* Cohort progress: the two folds sit side by side; one that is open takes the whole row. */
+.st-fold-grid { display: grid; gap: 12px; }
+.st-fold-grid > .ds-fold { margin-top: 0; }
+@container sheet (min-width: 860px) {
+  .st-fold-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+  .st-fold-grid > .ds-fold[open] { grid-column: 1 / -1; }
+}
+
 /* ------------------------------------------------------------------ skills and badge */
 .st-badge-panel { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; align-items: center; }
 @media (min-width: 640px) { .st-badge-panel { grid-template-columns: 200px minmax(0, 1fr); gap: 32px; } }
@@ -232,4 +260,4 @@
 .st-skills-panel .ds-skills { max-width: 40em; }
 
 /* ------------------------------------------------------------------ daily limit */
-.st-limit-bar { display: block; height: 6px; max-width: 40em; }
+.st-limit-bar { display: block; height: 6px; }
