@@ -28,14 +28,23 @@ async function studentDock(): Promise<{ places: DockPlace[]; next: { label: stri
 }
 
 /**
- * Instructor dock. The console is one page (student detail opens from its rows), so it does not split into three
- * places: one place, Class, and Next, which opens the first "needs you" row.
+ * Facilitator dock: Class (the console), Students (cohort progress on the console, and every student page),
+ * Coach (the reliability view on the console), and Next, which opens the first "needs you" row.
+ * Students and Coach are sections of the console, so they link to its anchors in the facilitator's section.
  */
 async function instructorDock(): Promise<{ places: DockPlace[]; next: { label: string; href: string } | null }> {
-  const places: DockPlace[] = [{ label: "Class", href: "/lab/instructor", icon: "class", match: ["/lab/instructor", "/lab$"] }];
+  const place = (sid: string | undefined): DockPlace[] => {
+    const home = sid ? sectionHref(sid) : "/lab/instructor";
+    return [
+      { label: "Class", href: home, icon: "home", match: ["/lab/instructor$", "/lab$"] },
+      { label: "Students", href: `${home}#students`, icon: "class", match: ["/lab/instructor/student"] },
+      { label: "Coach", href: `${home}#coach`, icon: "chat", match: [] },
+    ];
+  };
   try {
     const sections = await mySections();
     const sid = sections.some((s) => s.id === "B") ? "B" : sections[0]?.id;
+    const places = place(sid);
     if (!sid) return { places, next: null };
     const overview = await sectionOverview(sid);
     const first = (await needsYouToday(overview))[0];
@@ -46,7 +55,7 @@ async function instructorDock(): Promise<{ places: DockPlace[]; next: { label: s
         : `${studentHref(first.student_id, first.attempt_id)}#why`;
     return { places, next: { label: "Next", href } };
   } catch {
-    return { places, next: null };
+    return { places: place(undefined), next: null };
   }
 }
 

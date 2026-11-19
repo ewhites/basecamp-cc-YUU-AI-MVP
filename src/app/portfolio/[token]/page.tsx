@@ -5,6 +5,11 @@ import { SkillBars } from "@/components/SkillBars";
 import { SampleTag } from "@/components/Tags";
 import { skillCheck } from "@/lib/curriculum/skill-checks";
 import { SKILLS } from "@/lib/curriculum/types";
+import { Ground } from "@/design/Ground";
+import { Sheet } from "@/design/Sheet";
+import { Icon } from "@/design/icons";
+import { Badge } from "@/app/lab/skills/Badge";
+import { BADGE_LINE, SKILL_COUNT, SKILL_COUNT_WORD } from "@/app/lab/skills/count";
 import { adminClient } from "@/lib/db";
 import { checkScoresFrom } from "@/lib/student-data";
 import { looksLikeToken, tokenMatches } from "../token";
@@ -54,7 +59,7 @@ async function load(token: string) {
     track: student.track,
     start: checkScoresFrom(attempts, "start"),
     final,
-    earned: finalIds.every((id) => attempts.some((a) => a.exerciseId === id)) && SKILLS.every((s) => (final[s] ?? 0) >= 0.8),
+    earned: finalIds.every((id) => attempts.some((a) => a.exerciseId === id)) && SKILLS.every((s) => (final[s] ?? 0) >= BADGE_LINE),
     tookAny: attempts.length > 0,
   };
 }
@@ -63,58 +68,55 @@ export default async function SharedSkills({ params }: { params: Promise<{ token
   const { token } = await params;
   const p = await load(token);
   if (!p) notFound();
+  const line = `${Math.round(BADGE_LINE * 100)}%`;
 
   return (
-    <>
-      <header className="topbar">
-        <div className="topbar-inner">
-          <span className="brand">
-            <Image src="/year-up-united.png" alt="Year Up United" className="brand-logo" width={85} height={28} priority />
-            <span className="bar-v" aria-hidden />
-            <span>AI Lab</span>
+    <Ground strength="show">
+      <header className="ds-topbar">
+        <div className="ds-topbar-in">
+          <span className="ds-brand">
+            <span className="ds-logo ds-sq">
+              <Image src="/year-up-united.png" alt="Year Up United" width={85} height={28} priority />
+            </span>
+            <span className="ds-name">AI Lab</span>
           </span>
-          <span className="spacer" />
+          <span className="ds-gap" />
           <SampleTag />
         </div>
       </header>
-      <main className="public-wrap">
-        <div className="stack" style={{ gap: 24 }}>
-          <div>
-            <div className="eyebrow">Shared by the student · Read-only</div>
-            <h1>{p.name}</h1>
-            <p className="muted" style={{ margin: 0 }}>
-              {p.track} track · AI Foundations course
-            </p>
-          </div>
-
-          <section className="card" data-testid="public-badge" data-earned={p.earned ? "yes" : "no"}>
-            <div className="row" style={{ gap: 14, flexWrap: "nowrap" }}>
-              <span className={`badge-mark${p.earned ? " earned" : ""}`} aria-hidden>★</span>
+      <main id="main" className="ds-content st-public">
+        <div className="ds-page st-page">
+          <Sheet className="ds-rise">
+            <header className="st-head">
               <div>
-                <div className="row">
-                  <h2 style={{ margin: 0 }}>AI Fluency badge</h2>
-                  <span className={`tag ${p.earned ? "tag-pass" : "tag-quiet"}`}>{p.earned ? "Earned" : "In progress"}</span>
-                </div>
-                <p className="small muted" style={{ margin: "4px 0 0" }}>
-                  Earned by scoring 80% or better on all four AI skills in the course&apos;s final check.
-                </p>
+                <p className="ds-kicker">Shared by the student · Read-only</p>
+                <h1 className="ds-sheet-title">{p.name}</h1>
+                <p className="ds-brief">{p.track} track · AI Foundations course</p>
               </div>
-            </div>
-          </section>
+            </header>
 
-          <section className="card">
-            <h2 style={{ marginBottom: 4 }}>AI skills</h2>
-            <p className="small muted" style={{ marginBottom: 16 }}>
-              Starting point check at the beginning of the course, final check at the end. Same skills, different tasks.
-            </p>
-            {p.tookAny ? <SkillBars start={p.start} final={p.final} /> : <p className="small" style={{ margin: 0 }}>No skills checks taken yet.</p>}
-          </section>
+            <section className="st-sec st-sec-first st-badge-sec" data-testid="public-badge" data-earned={p.earned ? "yes" : "no"} aria-labelledby="badge-h">
+              <Badge earned={p.earned} count={SKILL_COUNT} />
+              <div className="st-badge-copy">
+                <h2 id="badge-h">AI Skills badge</h2>
+                <p className="st-goal">
+                  <Icon name={p.earned ? "check" : "minus"} />
+                  {p.earned ? "Earned" : "In progress"}
+                </p>
+                <p className="st-text">Earned by scoring {line} or better on all {SKILL_COUNT_WORD} AI skills in the course&apos;s final check.</p>
+              </div>
+            </section>
 
-          <p className="tiny muted" style={{ margin: 0 }}>
-            Scores are drafted by an AI coach and reviewed by Year Up instructors. The student&apos;s written work is not shown here.
-          </p>
+            <section className="st-sec" aria-labelledby="skills-h">
+              <h2 id="skills-h">AI skills</h2>
+              <p className="st-fine">Starting point check at the beginning of the course, final check at the end. Same skills, different tasks.</p>
+              {p.tookAny ? <SkillBars start={p.start} final={p.final} /> : <p className="st-text">No skills checks taken yet.</p>}
+            </section>
+
+            <p className="st-fine st-public-foot">Scores are drafted by an AI coach and reviewed by Year Up facilitators. The student&apos;s written work is not shown here.</p>
+          </Sheet>
         </div>
       </main>
-    </>
+    </Ground>
   );
 }
