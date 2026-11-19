@@ -233,3 +233,27 @@
 
 /* ------------------------------------------------------------------ daily limit */
 .st-limit-bar { display: block; height: 6px; max-width: 40em; }
+
+/* ================================================================== skills page: wide layout (2026-11-19, ux/wide-a)
+ * Only the skills page uses these (.st-skills). The layout follows the width of the page area (container "page"),
+ * because the side rail takes room from the page from 1200px up. Reading order is the visual order. */
+.st-skills .ds-sheet-body > .ds-section, .st-sk-top > .ds-section, .st-sk-col > .ds-section { margin-top: 0; }
+.st-skills .ds-sheet-body { display: grid; gap: 32px; }
+.st-sk-top { display: grid; grid-template-columns: minmax(0, 1fr); gap: 32px; }
+.st-sk-col { display: grid; gap: 28px; align-content: start; min-width: 0; }
+.st-sk-practice, .st-sk-share { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; align-items: start; }
+.st-sk-practice > .ds-fold, .st-sk-share > .ds-panel, .st-sk-share > .ds-fold { margin-top: 0; }
+@container page (min-width: 880px) {
+  .st-sk-top { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px; align-items: start; }
+  .st-sk-practice { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+  .st-sk-share { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 16px; }
+}
+@container page (min-width: 600px) and (max-width: 879px) {
+  .st-sk-practice { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+/* The badge panel is half the page wide beside the skills: the badge sits above its text until there is room. */
+@container page (min-width: 880px) and (max-width: 1099px) {
+  .st-skills .st-badge-panel { grid-template-columns: minmax(0, 1fr); justify-items: start; gap: 16px; }
+}
+.st-skills .st-head { margin-bottom: 28px; }
+.st-skills .st-head .ds-brief { margin-bottom: 12px; }
