@@ -66,6 +66,12 @@
   --thumb: var(--cream);
   --tick: var(--indigo);
   --focus: #FFB27A;
+  /* links and anything clickable that is not a button: one blue, the web's convention for "you can click this" */
+  --link: #8CC4FF;
+  --link-hover: #B8DBFF;
+  --panel: rgba(255, 255, 255, .05);
+  --panel-line: rgba(255, 255, 255, .10);
+  --hover: rgba(255, 255, 255, .07);
 
   /* shadows (inner highlights only, never coloured glows) */
   --sh-paper: inset 0 1px 0 rgba(255, 255, 255, .7);
@@ -82,6 +88,8 @@
   --fs-section: clamp(34px, 4vw, 56px);
   --fs-title: 32px;
   --fs-card: 27px;
+  --fs-h2: 24px;
+  --fs-h3: 17px;
   --fs-coach: 26px;
   --fs-firm: clamp(20px, 1.75vw, 25px);
   --fs-lead: 20px;
@@ -133,4 +141,10 @@
   --sh-thumb: 0 1px 3px rgba(23, 0, 85, .28);
   --tick: var(--cream);
   --focus: var(--indigo);
+  /* Year Up blue, darkened to 7:1 on the cream sheet so clickable text passes contrast */
+  --link: #00509E;
+  --link-hover: #003A75;
+  --panel: var(--linen);
+  --panel-line: rgba(23, 0, 85, .14);
+  --hover: rgba(0, 80, 158, .07);
 }

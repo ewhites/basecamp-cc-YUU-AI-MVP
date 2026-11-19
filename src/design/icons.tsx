@@ -17,6 +17,7 @@ const PATHS = {
   copy: { box: 16, d: "M5.5 5.5V3h7.5v7.5h-2.5M3 5.5h7.5V13H3z" },
   play: { box: 16, d: "M5 3.5v9l7-4.5z" },
   down: { box: 16, d: "M4 6l4 4 4-4" },
+  chev: { box: 18, d: "M7 4.5L11.5 9 7 13.5" },
   lock: { box: 16, d: "M4 7.5h8V13H4zM5.5 7.5V5.5a2.5 2.5 0 0 1 5 0v2" },
   chat: { box: 18, d: "M3 4h12v8H8l-3.5 3v-3H3z" },
   bot: { box: 18, d: "M4 6.5h10v8H4zM9 3.5v3M6.8 10h.01M11.2 10h.01" },

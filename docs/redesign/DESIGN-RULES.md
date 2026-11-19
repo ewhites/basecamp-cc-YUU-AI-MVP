@@ -123,6 +123,22 @@ Logan's words: "I kind of love this type of look for blue [woven blue linen] and
 30. On study screens motion is feedback only. No ambient motion and nothing that loops.
 31. While a student types, the dock dims and nothing moves.
 
+## Structure and clickability (added 2026-11-19, Logan's review)
+
+Logan's words: the visual hierarchy is confusing because "the headings of things and their encapsulated sections and subheadings and sections all morph together"; copy "too verbose in areas, too many underlines, not enough info is folded into sections"; and "when a section is something you should click into or a button in general is clickable, you need to make it obvious", using navigation standards. These rules override any older rule above that conflicts.
+
+32. Three heading levels, never mixed up: page title (h1, serif 32), section (h2, serif 24), sub-heading (h3, sans 17 bold). A sub-heading is never serif. Card-style titles (doors) are the only other size.
+33. A section is a heading with its content boxed under it (`Section` and `Panel` in `src/design/Structure.tsx`). Space separates sections; lines do not. Hairlines appear only between rows inside one panel.
+34. Blue means clickable. Links and clickable rows use `--link` (Year Up blue, darkened for contrast). Plain text is never blue, and clickable text is never indigo.
+35. A row that opens something is a `RowLink`: the whole row is the link, the title is blue, and a chevron sits at the end. A row that opens nothing has no chevron and no blue.
+36. Buttons look like buttons: the one main action is orange (`primary`); every other button is outlined (`secondary`). The quiet text-and-arrow style is only for navigation ("Back to Section B").
+37. Secondary detail is folded (`Fold`): how something is measured, long lists, extra examples, older attempts. The fold label is blue with a chevron that turns. A page shows its main task and main facts open; everything else is one click away.
+38. Every page below the top level shows breadcrumbs (`Crumbs`) above the sheet: Home / Module 1 / Help-desk ticket summary. The dock marks where you are.
+39. Underlines only on links inside a sentence. No decorative underlines, and no line under every row of a page.
+40. Copy: one line under a heading at most, and only when it stops a mistake. Explanations go into a fold.
+
+Reference page: `src/app/lab/how-it-works/page.tsx`.
+
 ## Where Logan's request overrides a source
 
 Stated once, then followed.

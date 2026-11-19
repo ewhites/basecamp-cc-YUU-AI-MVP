@@ -22,6 +22,7 @@ const ROUTES = [
   ["check-start", "jasmine", "/lab/check/start"],
   ["check-final", "jasmine", "/lab/check/final"],
   ["skills", "jasmine", "/lab/skills"],
+  ["howitworks", "jasmine", "/lab/how-it-works"],
   ["home-instructor", "rivera", "/home"],
   ["instructor", "rivera", "/lab/instructor?section=B"],
   ["student", "rivera", "/lab/instructor/student/S-B-012"],

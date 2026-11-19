@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { Icon } from "./icons";
 
-type Variant = "primary" | "paper" | "quiet";
+type Variant = "primary" | "secondary" | "paper" | "quiet";
 
 type Common = {
-  /** primary: the one orange main button on a screen. paper: cream, for the dark ground. quiet: text and an arrow. */
+  /** primary: the one orange main button on a screen. secondary: outlined, every other button. paper: cream, for the dark ground. quiet: text and an arrow, for navigation only. */
   variant?: Variant;
   /** The pressed-down button with a 4px lower edge (first visit). Primary only. */
   lift?: boolean;
