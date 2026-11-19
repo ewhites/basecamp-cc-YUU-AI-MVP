@@ -2,10 +2,17 @@
 
 import { useState, useTransition } from "react";
 import { runArenaAction, submitArenaAction } from "@/app/lab/actions";
-import { AttemptResultClient } from "@/components/AttemptResultClient";
+import { CoachSide } from "@/components/AskCoach";
+import { AttemptResult, attemptQuotes } from "@/components/AttemptResult";
+import { Button } from "@/design/Button";
+import { Icon } from "@/design/icons";
+import { AnswerList } from "@/design/AnswerList";
+import { Fold, Section } from "@/design/Structure";
 import type { AttemptView, StoredOutput } from "@/lib/attempts";
 import { ARENA_MODELS, modelLabel } from "@/lib/models";
+import { ErrorLine, Frame, Slab, type TaskHead } from "./Frame";
 import { attemptPassed, NextStep, type NextLink } from "./NextStep";
+import { WriteField } from "./WriteField";
 
 type ArenaOutputs = Extract<StoredOutput, { outputs: unknown }>["outputs"];
 type RunResult = Awaited<ReturnType<typeof runArenaAction>>;
@@ -33,24 +40,30 @@ function formatCost(usd: number): string {
   return usd < 0.001 ? `$${usd.toFixed(5)}` : `$${usd.toFixed(4)}`;
 }
 
-/** The three answers side by side, with measured time and estimated cost. */
+/** The three answers side by side (columns on wide screens, stacked on phones), with measured time and estimated cost. */
 function Answers({ outputs, picked }: { outputs: ArenaOutputs; picked?: string }) {
   return (
-    <div className="grid grid-3" data-testid="arena-outputs">
+    <div className="ln-answers" data-testid="arena-outputs">
       {byArenaOrder(outputs).map((o) => {
         const meta = ARENA_MODELS.find((m) => m.id === o.model);
         return (
-          <div key={o.model} className={`model-card${picked === o.model ? " picked" : ""}`} data-testid={`arena-output-${o.model}`}>
-            <div>
-              <h3 style={{ margin: 0 }}>{modelLabel(o.model)}</h3>
-              {meta && <div className="tiny muted">{meta.blurb}</div>}
+          <section key={o.model} className={`ln-answer ds-sq${picked === o.model ? " is-picked" : ""}`} data-testid={`arena-output-${o.model}`} aria-label={modelLabel(o.model)}>
+            <div className="ln-answer-head">
+              <h3>{modelLabel(o.model)}</h3>
+              {picked === o.model && (
+                <span className="ds-status">
+                  <Icon name="check" />
+                  Your pick
+                </span>
+              )}
             </div>
-            <pre className="model-text">{o.text}</pre>
-            <div className="model-meta tiny">
+            {meta && <p className="ln-answer-blurb">{meta.blurb}</p>}
+            <div className="ln-answer-text">{o.text}</div>
+            <p className="ln-answer-meta ds-num">
               <span>{(o.latencyMs / 1000).toFixed(1)} s</span>
               <span title="Estimated from list prices">{formatCost(o.costUsd)} est.</span>
-            </div>
-          </div>
+            </p>
+          </section>
         );
       })}
     </div>
@@ -58,7 +71,19 @@ function Answers({ outputs, picked }: { outputs: ArenaOutputs; picked?: string }
 }
 
 /** Module 2 practice, as a guided flow: write one prompt, compare three answers, pick one and say why. */
-export function ArenaForm({ exerciseId, latest, next, alreadyDone = false }: { exerciseId: string; latest: Latest; next: NextLink | null; alreadyDone?: boolean }) {
+export function ArenaForm({
+  exerciseId,
+  latest,
+  next,
+  alreadyDone = false,
+  head,
+}: {
+  exerciseId: string;
+  latest: Latest;
+  next: NextLink | null;
+  alreadyDone?: boolean;
+  head: TaskHead;
+}) {
   const [prompt, setPrompt] = useState(field(latest?.input, "prompt"));
   const [run, setRun] = useState<RunOk | null>(null);
   const [picked, setPicked] = useState("");
@@ -73,166 +98,170 @@ export function ArenaForm({ exerciseId, latest, next, alreadyDone = false }: { e
   const passed = alreadyDone || attemptPassed(attempt);
   const finished = !!run && submittedRun === run;
   const step = finished ? 4 : !run ? 1 : !picked ? 2 : 3;
-  // Outputs saved with the latest attempt, shown (collapsed) until the student runs again.
+  // Outputs saved with the latest attempt, shown (folded) until the student runs again.
   const savedOutputs = !run && attempt?.output && "outputs" in attempt.output ? attempt.output.outputs : null;
+  const quotes = attemptQuotes(attempt);
+  // One main button: Run until there is a run, then Submit, then Continue once passed.
+  const runMain = !run && !passed;
+  const submitMain = !!run && !passed;
 
   return (
-    <>
-      <ol className="steps-inline arena-steps" aria-label="Steps" data-testid="arena-steps">
+    <Frame
+      head={head}
+      coach={
+        <CoachSide
+          className="ds-rise ln-i2"
+          exerciseId={exerciseId}
+          module={head.module}
+          result={attempt ? <AttemptResult exerciseId={exerciseId} attempt={attempt} /> : undefined}
+          empty="Pick a model and say why to see what to fix"
+          earlier={head.earlier}
+          next={next}
+          arriveKey={attempt?.id}
+        />
+      }
+    >
+      <ol className="ln-steps" aria-label="Steps" data-testid="arena-steps">
         {STEPS.map((s, i) => (
-          <li key={s} className={i + 1 < step ? "done" : i + 1 === step ? "on" : ""} aria-current={i + 1 === step ? "step" : undefined}>
+          <li key={s} data-state={i + 1 < step ? "done" : i + 1 === step ? "on" : "off"} aria-current={i + 1 === step ? "step" : undefined}>
+            {i + 1 < step ? <Icon name="check" /> : <span className="ln-step-n ds-num">{i + 1}</span>}
             {s}
           </li>
         ))}
       </ol>
 
-      <section className="card">
+      <Section title="1. Write one prompt" id="arena-write">
+      <form
+        className="ln-work"
+        onSubmit={(e) => {
+          e.preventDefault();
+          setError(null);
+          setDistress(null);
+          startRun(async () => {
+            const r = await runArenaAction(exerciseId, prompt);
+            if ("distress" in r) {
+              setRun(null);
+              setDistress(r.message ?? null);
+            } else if ("error" in r) {
+              setError(r.error ?? "Something went wrong.");
+            } else {
+              setRun(r);
+              setPicked("");
+              setReasoning("");
+            }
+          });
+        }}
+      >
+        <Slab
+          note={running ? "Sending your prompt to all three models. About 10 to 20 seconds" : "The same prompt goes to Haiku, Sonnet and Opus"}
+          action={
+            <Button type="submit" variant={runMain ? "primary" : "secondary"} disabled={running || submitting || !prompt.trim()} data-testid="arena-run">
+              {running ? "Running" : run ? "Run prompt again" : "Run on 3 models"}
+            </Button>
+          }
+        >
+          <WriteField
+            id="arena-prompt"
+            label="Your prompt for all three models"
+            value={prompt}
+            onChange={setPrompt}
+            quotes={quotes}
+            quoteKey={attempt?.id}
+            placeholder="One prompt for the task. The attached material is added for you."
+            rows={4}
+            testId="arena-prompt"
+          />
+        </Slab>
+        {error && <ErrorLine>{error}</ErrorLine>}
+        {distress && (
+          <p className="ln-notice ln-pre" data-testid="distress-message">
+            {distress}
+          </p>
+        )}
+      </form>
+      </Section>
+
+      {run && (
+        <Section title="2. Compare three answers" id="arena-compare" desc="Each model got your prompt word for word. Time is measured, cost is estimated">
+          {run.piiRemoved && <p className="ln-notice">Personal details were removed before anything was sent to the AI: {run.piiRemoved}.</p>}
+          <Answers outputs={run.outputs} picked={picked} />
+        </Section>
+      )}
+
+      {run && (
+        <Section title="3. Pick one and say why" id="arena-pick">
         <form
-          className="stack"
+          className="ln-work"
           onSubmit={(e) => {
             e.preventDefault();
             setError(null);
-            setDistress(null);
-            startRun(async () => {
-              const r = await runArenaAction(exerciseId, prompt);
-              if ("distress" in r) {
-                setRun(null);
-                setDistress(r.message ?? null);
-              } else if ("error" in r) {
-                setError(r.error ?? "Something went wrong.");
-              } else {
-                setRun(r);
-                setPicked("");
-                setReasoning("");
-              }
+            const thisRun = run;
+            startSubmit(async () => {
+              const r = await submitArenaAction(exerciseId, { prompt: thisRun.prompt, pickedModel: picked, reasoning, outputs: thisRun.outputs, token: thisRun.token });
+              if (r.ok) {
+                setAttempt(r.attempt);
+                setSubmittedRun(thisRun);
+              } else setError(r.error);
             });
           }}
         >
-          <div>
-            <label htmlFor="arena-prompt" className="step-title">
-              1. Write one prompt
-            </label>
-            <textarea
-              id="arena-prompt"
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              placeholder="One prompt for the task. The attached material is added for you."
-              data-testid="arena-prompt"
-            />
-          </div>
-          <div className="form-foot">
-            <span className="small muted">The same prompt goes to Haiku, Sonnet and Opus.</span>
-            <button className={`btn ${run || passed ? "" : "btn-primary"}`} disabled={running || submitting || !prompt.trim()} data-testid="arena-run">
-              {running ? "Running on 3 models…" : run ? "Run again" : "Run on 3 models"}
-            </button>
-          </div>
-          {running && <div className="notice notice-info small">Sending your prompt to all three models at once. About 10 to 20 seconds.</div>}
-          {error && <div className="notice notice-fail">{error}</div>}
-          {distress && (
-            <div className="notice notice-warn" style={{ whiteSpace: "pre-wrap" }} data-testid="distress-message">
-              {distress}
-            </div>
-          )}
-        </form>
-      </section>
-
-      {run && (
-        <section className="card stack" aria-labelledby="arena-compare">
-          <div>
-            <h2 id="arena-compare" style={{ margin: 0 }}>2. Compare three answers</h2>
-            <p className="small muted" style={{ margin: "4px 0 0" }}>
-              Each model got your prompt word for word. Times are measured; costs are estimates from list prices.
-            </p>
-          </div>
-          {run.piiRemoved && <div className="notice notice-warn small">Personal details were removed before anything was sent to the AI: {run.piiRemoved}.</div>}
-          <Answers outputs={run.outputs} picked={picked} />
-        </section>
-      )}
-
-      {run && (
-        <section className="card">
-          <form
-            className="stack"
-            onSubmit={(e) => {
-              e.preventDefault();
-              setError(null);
-              const thisRun = run;
-              startSubmit(async () => {
-                const r = await submitArenaAction(exerciseId, { prompt: thisRun.prompt, pickedModel: picked, reasoning, outputs: thisRun.outputs, token: thisRun.token });
-                if (r.ok) {
-                  setAttempt(r.attempt);
-                  setSubmittedRun(thisRun);
-                } else setError(r.error);
-              });
-            }}
+          <AnswerList
+            label="Your pick"
+            className="ln-pick"
+            value={picked || null}
+            onChange={setPicked}
+            options={byArenaOrder(run.outputs).map((o) => ({
+              value: o.model,
+              label: <span data-testid={`arena-pick-${o.model}`}>{modelLabel(o.model)}</span>,
+            }))}
+          />
+          <Slab
+            note={submitting ? "The coach is checking your pick and reasoning. About 10 seconds" : "Trust breaks ties. Cost never outweighs it"}
+            action={
+              <Button type="submit" variant={submitMain ? "primary" : "secondary"} disabled={submitting || running || !picked || !reasoning.trim()} data-testid="arena-submit">
+                {submitting ? "Checking" : finished ? "Submit pick again" : "Submit your pick"}
+              </Button>
+            }
           >
-            <fieldset className="choices">
-              <legend>3. Pick one and say why</legend>
-              <div className="choice-row">
-                {byArenaOrder(run.outputs).map((o) => (
-                  <label key={o.model} className={`choice${picked === o.model ? " on" : ""}`}>
-                    <input
-                      type="radio"
-                      name="picked-model"
-                      value={o.model}
-                      checked={picked === o.model}
-                      onChange={() => setPicked(o.model)}
-                      data-testid={`arena-pick-${o.model}`}
-                    />
-                    {modelLabel(o.model)}
-                  </label>
-                ))}
-              </div>
-            </fieldset>
-            <div>
-              <label htmlFor="arena-reasoning">{picked ? `Why ${modelLabel(picked)}?` : "Why is your pick the best?"}</label>
-              <textarea
-                id="arena-reasoning"
-                value={reasoning}
-                onChange={(e) => setReasoning(e.target.value)}
-                maxLength={4000}
-                placeholder="Fit: … Trust: … Cost: …"
-                data-testid="arena-reasoning"
-              />
-              <ul className="hints">
-                {HINTS.map((h) => (
-                  <li key={h.label}>
-                    <b>{h.label}:</b> {h.text}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="form-foot">
-              <span className="small muted">Trust breaks ties. Cost never outweighs it.</span>
-              <button className={`btn ${passed ? "" : "btn-primary"}`} disabled={submitting || running || !picked || !reasoning.trim()} data-testid="arena-submit">
-                {submitting ? "Scoring…" : finished ? "Submit again" : "Submit for coaching"}
-              </button>
-            </div>
-            {submitting && <div className="notice notice-info small">The coach is checking your pick and reasoning. About 10 seconds.</div>}
-          </form>
-        </section>
+            <WriteField
+              id="arena-reasoning"
+              label={picked ? `Why ${modelLabel(picked)}` : "Why your pick is the best"}
+              value={reasoning}
+              onChange={setReasoning}
+              quotes={quotes}
+              quoteKey={attempt?.id}
+              maxLength={4000}
+              placeholder={picked ? `Why ${modelLabel(picked)}? Fit: … Trust: … Cost: …` : "Fit: … Trust: … Cost: …"}
+              testId="arena-reasoning"
+            />
+          </Slab>
+          <Fold label="What to look at: Fit, Trust, Cost">
+            <ul className="ln-hints">
+              {HINTS.map((h) => (
+                <li key={h.label}>
+                  <b>{h.label}</b>
+                  <span>{h.text}</span>
+                </li>
+              ))}
+            </ul>
+          </Fold>
+        </form>
+        </Section>
       )}
 
-      {attempt && (
-        <section className="card stack">
-          <AttemptResultClient exerciseId={exerciseId} attempt={attempt} />
-          {savedOutputs && savedOutputs.length > 0 && (
-            <details className="disclosure">
-              <summary>The three answers you compared</summary>
-              <div className="stack-sm" style={{ marginTop: 12 }}>
-                <Answers outputs={savedOutputs} picked={field(latest?.input, "pickedModel")} />
-                {field(latest?.input, "reasoning") && (
-                  <p className="small" style={{ margin: 0, whiteSpace: "pre-wrap" }}>
-                    <b>Your reasoning:</b> {field(latest?.input, "reasoning")}
-                  </p>
-                )}
-              </div>
-            </details>
+      {savedOutputs && savedOutputs.length > 0 && (
+        <Fold label="The three answers you compared" className="ln-saved">
+          <Answers outputs={savedOutputs} picked={field(latest?.input, "pickedModel")} />
+          {field(latest?.input, "reasoning") && (
+            <div className="ln-reasoning">
+              <h3>Your reasoning</h3>
+              <p className="ln-read">{field(latest?.input, "reasoning")}</p>
+            </div>
           )}
-        </section>
+        </Fold>
       )}
 
       {passed && <NextStep next={next} />}
-    </>
+    </Frame>
   );
 }

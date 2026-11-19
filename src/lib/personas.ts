@@ -1,11 +1,11 @@
 import type { Studio } from "./curriculum/types";
 
 /**
- * The two accounts you can sign in as (simulated Year Up sign-in). All names are invented.
- * Curriculum and admin accounts still exist in the data layer, so the four-role access rules
- * stay tested (tests/rls.test.ts, MCP server), but they have no screens in this demo.
+ * The three accounts you can sign in as (simulated Year Up sign-in). All names are invented.
+ * The curriculum account still exists in the data layer, so the four-role access rules
+ * stay tested (tests/rls.test.ts, MCP server), but it has no sign-in and no screens in this demo.
  */
-export type PersonaKey = "jasmine" | "rivera";
+export type PersonaKey = "jasmine" | "rivera" | "lee";
 export type Role = "student" | "instructor" | "curriculum" | "admin";
 
 export interface Persona {
@@ -35,15 +35,21 @@ export const PERSONAS: Persona[] = [
     role: "instructor",
     email: "m.rivera@staff.yearup.example",
     landing: "/home",
-    description: "Instructor · Sections B and C",
+    description: "Facilitator · Sections B and C",
+  },
+  {
+    key: "lee",
+    name: "Sam Lee",
+    initials: "SL",
+    role: "admin",
+    email: "s.lee@staff.yearup.example",
+    landing: "/lab/admin",
+    description: "Admin · Cost and usage",
   },
 ];
 
 /** Data-layer-only accounts (no sign-in, no screens). */
-export const BACKOFFICE_ACCOUNTS = [
-  { key: "okafor", name: "Dev Okafor", role: "curriculum" as Role },
-  { key: "lee", name: "Sam Lee", role: "admin" as Role },
-];
+export const BACKOFFICE_ACCOUNTS = [{ key: "okafor", name: "Dev Okafor", role: "curriculum" as Role }];
 
 /** A second instructor (Section A) so cross-section blocking can be shown. */
 export const SECTION_A_INSTRUCTOR = { key: "haddad", name: "Mr. Haddad", email: "o.haddad@staff.yearup.example" };

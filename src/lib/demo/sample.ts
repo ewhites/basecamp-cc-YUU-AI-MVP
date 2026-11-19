@@ -4,11 +4,12 @@
  *
  * One cycle, 3 sections of 40 invented students, ~2,000 attempts with believable patterns:
  *  - most students improve from first to later attempts
- *  - 3 students in Section B (and a few elsewhere) are stuck on Description
- *  - Section C lags on Discernment
+ *  - 3 students in Section B (and a few elsewhere) are stuck on Prompting
+ *  - Section C lags on Validation
  * Plus program rollups scaled to a 1,700-student cycle for the admin and curriculum views.
  * All names are invented. No real student data.
  */
+import { ALL_STEPS } from "../curriculum/course";
 import { EXERCISES } from "../curriculum/exercises";
 import type { Skill } from "../curriculum/types";
 import { SKILLS } from "../curriculum/types";
@@ -50,8 +51,8 @@ const DAY = 24 * 60 * 60 * 1000;
 const NOW = Date.now();
 const CYCLE = "Fall 2026";
 
-/** Students stuck on Description. Exactly three in Section B for the demo. */
-const STUCK_ON_DESCRIPTION = new Set(["S-B-003", "S-B-017", "S-B-029", "S-A-011", "S-C-024"]);
+/** Students stuck on Prompting. Exactly three in Section B for the demo. */
+const STUCK_ON_PROMPTING = new Set(["S-B-003", "S-B-017", "S-B-029", "S-A-011", "S-C-024"]);
 
 /** Fixed account IDs for the seeded personas (no auth service in the demo). */
 export const PERSONA_IDS: Record<string, string> = {
@@ -65,8 +66,11 @@ export const PERSONA_IDS: Record<string, string> = {
 /** Probability a given check passes, from the patterns the PRD asks for. */
 function passProb(opts: { skill: Skill; attemptNo: number; week: number; section: string; studentId: string; ability: number }) {
   let p = 0.5 + opts.ability + 0.1 * (opts.attemptNo - 1) + 0.09 * (opts.week - 1);
-  if (opts.skill === "description") p = STUCK_ON_DESCRIPTION.has(opts.studentId) ? 0.04 : Math.max(0.6, p + 0.08);
-  if (opts.skill === "discernment" && opts.section === "C") p -= 0.18;
+  // Only the planned story shows as stuck: everyone else gets a floor on every skill (five skills means
+  // fewer checks per skill, so chance alone would flag more students than the demo intends).
+  if (opts.skill === "prompting") p = STUCK_ON_PROMPTING.has(opts.studentId) ? 0.04 : Math.max(0.84, p + 0.08);
+  else p = Math.max(0.84, p);
+  if (opts.skill === "validation" && opts.section === "C") p -= 0.18;
   return Math.max(0.05, Math.min(0.96, p));
 }
 
@@ -183,6 +187,7 @@ export function seedStore(s: Store) {
         const runUsage = { input_tokens: between(300, 900), output_tokens: between(150, 500) };
         const row = (purpose: string, model: string, u: { input_tokens: number; output_tokens: number; cache_read_input_tokens?: number }) => ({
           student_id: st.id,
+          exercise_id: ex.id,
           purpose,
           model,
           input_tokens: u.input_tokens,
@@ -212,8 +217,8 @@ export function seedStore(s: Store) {
         const created = new Date(NOW - daysAgo * DAY - between(0, 50) * 60_000);
         const outcomes = ex.checks.map((c) => {
           let p = (kind === "start" ? 0.34 : 0.68) + ability;
-          if (c.skill === "description" && STUCK_ON_DESCRIPTION.has(st.id)) p = kind === "start" ? 0.1 : 0.2;
-          if (c.skill === "discernment" && st.section_id === "C") p -= 0.15;
+          if (c.skill === "prompting" && STUCK_ON_PROMPTING.has(st.id)) p = kind === "start" ? 0.1 : 0.2;
+          if (c.skill === "validation" && st.section_id === "C") p -= 0.15;
           return { check: c, pass: rand() < Math.max(0.05, Math.min(0.95, p)) };
         });
         const answer = checkAnswer(ex.id, outcomes);
@@ -244,9 +249,14 @@ export function seedStore(s: Store) {
     }
   }
 
-  insertRows(s, "attempts", attempts);
-  insertRows(s, "check_results", results);
-  insertRows(s, "usage_ledger", usage);
+  // Tasks that left the course map (Module 3 now has two demos and one live build) keep no sample history.
+  // Filtered after generation, so the random draws, and the class story, stay exactly the same.
+  const inCourse = new Set(ALL_STEPS.map((st) => st.exerciseId).filter(Boolean));
+  const offMap = new Set(EXERCISES.filter((e) => !inCourse.has(e.id)).map((e) => e.id));
+  const dropped = new Set((attempts as { id: string; exercise_id: string }[]).filter((a) => offMap.has(a.exercise_id)).map((a) => a.id));
+  insertRows(s, "attempts", (attempts as { id: string }[]).filter((a) => !dropped.has(a.id)) as Row[]);
+  insertRows(s, "check_results", (results as { attempt_id: string }[]).filter((r) => !dropped.has(r.attempt_id)) as Row[]);
+  insertRows(s, "usage_ledger", (usage as { exercise_id?: string }[]).filter((u) => !u.exercise_id || !offMap.has(u.exercise_id)) as Row[]);
 
   // ---------------- safety flags and audit history
   insertRows(s, "safety_flags", [
@@ -256,9 +266,24 @@ export function seedStore(s: Store) {
   ]);
   insertRows(s, "audit_log", [
     { actor: ids.rivera, actor_role: "instructor", action: "view_attempt", target: (attempts[1200] as { id: string }).id, created_at: new Date(NOW - 2 * DAY).toISOString() },
-    { actor: ids.rivera, actor_role: "instructor", action: "release_scores", target: "section B", reason: "212 attempts sent to gradebook (simulated)", created_at: new Date(NOW - 8 * DAY).toISOString() },
+    { actor: ids.rivera, actor_role: "instructor", action: "release_scores", target: "section B", reason: "212 scores released to students", created_at: new Date(NOW - 8 * DAY).toISOString() },
     { actor: ids.lee, actor_role: "admin", action: "admin_view_student_work", target: "S-C-021", reason: "Safety flag follow-up requested by Student Support", created_at: new Date(NOW - 3 * DAY + 3600_000).toISOString() },
   ]);
+
+  // ---------------- daily limit changes (Section B). Fixed values, no random draws, so the data above never shifts.
+  const overrides = [
+    { student_id: "S-B-033", daily_tokens: 75_000, reason: "Make-up session after missing Tuesday's class", days: 6 },
+    { student_id: "S-B-017", daily_tokens: 90_000, reason: "Extra Prompting practice before Friday's check-in", days: 4 },
+    { student_id: "S-B-024", daily_tokens: 80_000, reason: "Redoing the Model Arena task after a lost connection", days: 2 },
+  ];
+  insertRows(s, "cap_overrides", overrides.map((o) => ({
+    student_id: o.student_id, daily_tokens: o.daily_tokens, previous_tokens: 60_000, reason: o.reason, actor: ids.rivera,
+    created_at: new Date(NOW - o.days * DAY - 5 * 3600_000).toISOString(),
+  })));
+  insertRows(s, "audit_log", overrides.map((o) => ({
+    actor: ids.rivera, actor_role: "instructor", action: "set_daily_cap", target: `${o.student_id}: 60000 to ${o.daily_tokens} tokens`, reason: o.reason,
+    created_at: new Date(NOW - o.days * DAY - 5 * 3600_000).toISOString(),
+  })));
 
   // ---------------- program rollups scaled to 1,700 students
   const rollups: Row[] = [];
@@ -292,9 +317,12 @@ const CHECK_FRAGS: Record<string, Record<string, string[]>> = {
   j_spots_error: { "sp-judge": ["It says 3 years but the policy says 4 years.", "The policy says to use the service portal, not email your manager."], "fc-judge": ["The policy says badges at all times, not optional.", "The server room needs an IT escort, not just the log."] },
   j_decision: { _: ["I would not send it yet.", "Fix it first before it goes out."] },
   j_source: { _: ["I would check every line against the policy.", "Compare it to the original policy text."] },
-  g_hands_off: { "sp-delegate": ["I'd give the AI task A, the subject lines."], "fc-delegate": ["I'd give the AI task A, the to-do list."] },
-  g_keeps: { "sp-delegate": ["I'd keep B because approving a timesheet is a decision.", "Task C stays with me."], "fc-delegate": ["I'd keep B, picking who gets interviewed.", "Task C stays with me."] },
-  g_reason: { _: ["It has someone's personal data in it.", "A wrong call can't be undone.", "I can't check if the AI's answer is right."] },
+  x_role: { _: ["You are the store manager.", "Act as our customer service lead.", "You are the office manager writing to the team."] },
+  x_reader: { "sp-context": ["This is for our customers who shop in the evening."], "fc-context": ["Everyone on our floor will read this email."] },
+  x_facts: { "sp-context": ["We close at 7pm starting Monday March 2, and online orders still work."], "fc-context": ["The drill is Thursday at 10:30am and we meet in the north parking lot."] },
+  m_pick: { _: ["I'd use model A.", "I'd go with model C."] },
+  m_fit_trust: { "sp-models": ["B says 60 days with no receipt, which is wrong.", "A matches the 30-day receipt rule."], "fc-models": ["A says permits are free, which is wrong.", "B gets the $40 HR portal rule right."] },
+  m_cost: { _: ["We answer hundreds a week, so the cheaper one adds up.", "C costs more and says the same thing."] },
   p_removes: { _: ["First I'd remove the personal details.", "I'd replace the private info with placeholders."] },
   p_names_detail: { "sp-protect": ["Take out the account number and phone number.", "Remove her name and phone number."], "fc-protect": ["Take out the bank account and routing number.", "Remove the cell number."] },
   p_reviews: { _: ["Then I'd read the AI's draft before it goes out.", "I'd check and edit the reply before sending."] },

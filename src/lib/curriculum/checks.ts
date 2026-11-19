@@ -2,14 +2,14 @@ import type { RubricCheck } from "./types";
 
 /**
  * Rubric checks, yes/no, each tied to the sample curriculum (eval/corpus) and to one of the
- * four AI Fluency skills. Shared across the exercises in each studio.
+ * five coached AI skills. Shared across the exercises in each studio.
  */
 
 export const PROMPT_CHECKS: RubricCheck[] = [
   {
     key: "role",
     text: "States who the AI is acting as?",
-    skill: "description",
+    skill: "context",
     method: "coach",
     evidenceFrom: "attempt",
     guidance:
@@ -20,7 +20,7 @@ export const PROMPT_CHECKS: RubricCheck[] = [
   {
     key: "single_task",
     text: "Asks for one single outcome?",
-    skill: "delegation",
+    skill: "prompting",
     method: "coach",
     evidenceFrom: "attempt",
     guidance:
@@ -31,7 +31,7 @@ export const PROMPT_CHECKS: RubricCheck[] = [
   {
     key: "audience",
     text: "Says who the output is for?",
-    skill: "description",
+    skill: "context",
     method: "coach",
     evidenceFrom: "attempt",
     guidance:
@@ -42,7 +42,7 @@ export const PROMPT_CHECKS: RubricCheck[] = [
   {
     key: "format",
     text: "Asks for a specific format or length?",
-    skill: "description",
+    skill: "prompting",
     method: "coach",
     evidenceFrom: "attempt",
     guidance:
@@ -53,7 +53,7 @@ export const PROMPT_CHECKS: RubricCheck[] = [
   {
     key: "done_condition",
     text: "Says what the AI must not do, or what 'done' looks like?",
-    skill: "discernment",
+    skill: "prompting",
     method: "coach",
     evidenceFrom: "attempt",
     guidance:
@@ -64,7 +64,7 @@ export const PROMPT_CHECKS: RubricCheck[] = [
   {
     key: "protects_personal_data",
     text: "Keeps personal details out of the output?",
-    skill: "diligence",
+    skill: "responsible",
     method: "coach",
     evidenceFrom: "attempt",
     guidance:
@@ -75,7 +75,7 @@ export const PROMPT_CHECKS: RubricCheck[] = [
   {
     key: "under_200_words",
     text: "Under 200 words?",
-    skill: "description",
+    skill: "prompting",
     method: "code",
     evidenceFrom: "attempt",
     guidance: "Checked in code: the student's prompt (not the attached material) is under 200 words. M01-S5.",
@@ -88,7 +88,7 @@ export const ARENA_CHECKS: RubricCheck[] = [
   {
     key: "names_pick",
     text: "Names which output they picked and why, in their own words?",
-    skill: "discernment",
+    skill: "models",
     method: "coach",
     evidenceFrom: "attempt",
     guidance: "Yes if the reasoning gives at least one reason for the pick that is tied to the task, beyond 'it was better'.",
@@ -98,7 +98,7 @@ export const ARENA_CHECKS: RubricCheck[] = [
   {
     key: "judges_fit",
     text: "Judges Fit: does the output do the job asked?",
-    skill: "discernment",
+    skill: "validation",
     method: "coach",
     evidenceFrom: "attempt",
     guidance: "Yes if the reasoning says whether an output actually did the task (covered what was asked, right length or format, right reader). M02-S2 axis 1.",
@@ -108,7 +108,7 @@ export const ARENA_CHECKS: RubricCheck[] = [
   {
     key: "judges_trust",
     text: "Judges Trust: whether the output can be checked or made things up?",
-    skill: "discernment",
+    skill: "validation",
     method: "coach",
     evidenceFrom: "attempt",
     guidance: "Yes if the reasoning comments on accuracy against the source, invented details, or whether the model flagged uncertainty. M02-S2 axis 2.",
@@ -118,7 +118,7 @@ export const ARENA_CHECKS: RubricCheck[] = [
   {
     key: "considers_cost",
     text: "Considers Cost: money, time or speed?",
-    skill: "delegation",
+    skill: "models",
     method: "coach",
     evidenceFrom: "attempt",
     guidance: "Yes if the reasoning weighs price, speed or effort as a factor. M02-S2 axis 3.",
@@ -128,7 +128,7 @@ export const ARENA_CHECKS: RubricCheck[] = [
   {
     key: "trust_tiebreak",
     text: "Does not let Cost outweigh Trust?",
-    skill: "diligence",
+    skill: "responsible",
     method: "coach",
     evidenceFrom: "attempt",
     guidance:
@@ -139,7 +139,7 @@ export const ARENA_CHECKS: RubricCheck[] = [
   {
     key: "cites_detail",
     text: "Points to a specific detail in the outputs?",
-    skill: "discernment",
+    skill: "validation",
     method: "coach",
     evidenceFrom: "attempt",
     guidance: "Yes if the reasoning quotes or names a concrete detail from one of the outputs (a phrase, a missing item, a wrong fact) to back the judgment.",
@@ -152,7 +152,7 @@ export const AGENT_CHECKS: RubricCheck[] = [
   {
     key: "job",
     text: "Instructions state the bot's one job?",
-    skill: "delegation",
+    skill: "context",
     method: "coach",
     evidenceFrom: "attempt",
     guidance: "Yes if the instructions say in a sentence what the bot is for and who it serves. M03-S2 part 1 (Job).",
@@ -162,7 +162,7 @@ export const AGENT_CHECKS: RubricCheck[] = [
   {
     key: "limits",
     text: "Instructions say what the bot must not do?",
-    skill: "diligence",
+    skill: "responsible",
     method: "coach",
     evidenceFrom: "attempt",
     guidance: "Yes if the instructions set limits: things it must not do, share or access (for example 'never share passwords', 'only answer from the IT guide'). M03-S3, M03-S5.",
@@ -172,7 +172,7 @@ export const AGENT_CHECKS: RubricCheck[] = [
   {
     key: "stop_rule",
     text: "Instructions include a stop rule (when to stop or say it doesn't know)?",
-    skill: "diligence",
+    skill: "responsible",
     method: "coach",
     evidenceFrom: "attempt",
     guidance: "Yes if the instructions say when to stop, or to say it does not know instead of guessing. M03-S2 part 3, M03-S4.",
@@ -182,7 +182,7 @@ export const AGENT_CHECKS: RubricCheck[] = [
   {
     key: "handoff",
     text: "Instructions say who to hand off to, and how?",
-    skill: "diligence",
+    skill: "context",
     method: "coach",
     evidenceFrom: "attempt",
     guidance: "Yes if the instructions name a person, team or channel to send unresolved or out-of-scope requests to. M03-S2 part 4, the highest-weighted part.",
@@ -192,7 +192,7 @@ export const AGENT_CHECKS: RubricCheck[] = [
   {
     key: "handled_normal",
     text: "Bot answered the normal question from its guide?",
-    skill: "discernment",
+    skill: "validation",
     method: "coach",
     evidenceFrom: "output",
     guidance: "Look at the bot's reply to the normal message. Yes if it answered correctly using the knowledge sheet, without inventing steps.",
@@ -202,7 +202,7 @@ export const AGENT_CHECKS: RubricCheck[] = [
   {
     key: "handled_tricky",
     text: "Bot refused the risky request safely?",
-    skill: "diligence",
+    skill: "responsible",
     method: "coach",
     evidenceFrom: "output",
     guidance: "Look at the bot's reply to the tricky message. Yes if it did not hand over what it should not (passwords, admin access, policy exceptions) and pointed to the right path instead.",
@@ -212,7 +212,7 @@ export const AGENT_CHECKS: RubricCheck[] = [
   {
     key: "handled_out_of_scope",
     text: "Bot declined the out-of-scope request and handed off?",
-    skill: "delegation",
+    skill: "responsible",
     method: "coach",
     evidenceFrom: "output",
     guidance: "Look at the bot's reply to the out-of-scope message. Yes if it said this is not its job and pointed to the right person or team, without trying to do it.",

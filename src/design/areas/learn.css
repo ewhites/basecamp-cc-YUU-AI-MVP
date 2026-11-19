@@ -1,0 +1,292 @@
+/* Page styles for the learn area. Tokens only (src/design/tokens.css): no colour, radius or shadow values here.
+ * Lesson, practice (prompt, arena, agent), the starting point and final checks, and the coach side panel.
+ * Every class starts with ln- so it never meets an old globals.css class.
+ * Structure: pages are built from Section, Panel, Fold, RowLink and Crumbs (src/design/Structure.tsx). Space separates
+ * sections. A hairline appears only between rows inside one panel. */
+
+/* The dark-surface tokens, captured where they are defined (:root), so the dark slab inside the cream sheet
+   can read light again. Aliases only: the values stay in tokens.css. */
+:root {
+  --ln-d1: var(--t1);
+  --ln-d2: var(--t2);
+  --ln-d3: var(--t3);
+  --ln-dhair: var(--hair);
+  --ln-dhair-2: var(--hair-2);
+  --ln-dstep: var(--step);
+  --ln-dstep-2: var(--step-2);
+  --ln-dfocus: var(--focus);
+  --ln-dlink: var(--link);
+  --ln-dlink-hover: var(--link-hover);
+  --ln-dpanel: var(--panel);
+  --ln-dpanel-line: var(--panel-line);
+  --ln-dhover: var(--hover);
+}
+
+/* ------------------------------------------------------------------ the page */
+.ln-page { display: grid; gap: 12px; min-width: 0; }
+.ln-page > .ds-crumbs { margin: 4px 0 0; }
+.ln-page > .ln-where { margin: 0; }
+.ln-page .ds-sheet { container-type: inline-size; }
+.ln-solo { width: 100%; max-width: 820px; margin: 0 auto; }
+.ln-i1 { --i: 1; }
+.ln-i2 { --i: 2; }
+
+/* Text inside the sheet */
+.ln-label { display: block; margin: 0; font: 600 var(--fs-fine)/1.4 var(--sans); letter-spacing: 0; color: var(--t2); }
+.ln-hint { margin: 0; max-width: 36em; font-size: var(--fs-small); line-height: 1.42; color: var(--t2); }
+.ln-read { margin: 0; max-width: 36em; font-size: var(--fs-body); line-height: 1.55; text-wrap: pretty; }
+.ln-ask-line { margin: 12px 0 0; font-weight: 600; line-height: 1.5; }
+.ln-who { margin: 0 0 2px; font: 600 var(--fs-small)/1.42 var(--sans); color: var(--t2); }
+.ln-page .ds-panel > p + p { margin-top: 8px; }
+.ln-foot-line { margin-right: auto; font-size: var(--fs-small); line-height: 1.42; color: var(--t2); }
+/* A link inside a sentence: blue, underlined (the only place underlines are used). */
+.ln-link { color: var(--link); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.ln-link:hover { color: var(--link-hover); }
+.ln-notice {
+  margin: 0 0 12px; padding: 12px 16px; border-radius: var(--r-row); background: var(--panel); border: 1px solid var(--panel-line);
+  font-size: var(--fs-small); line-height: 1.42; max-width: 40em;
+}
+.ln-pre { white-space: pre-wrap; }
+.ln-error { margin: 0; font-size: var(--fs-small); line-height: 1.42; font-weight: 600; color: var(--t1); }
+.ln-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 12px 20px; }
+.ln-stack { display: grid; gap: 12px; min-width: 0; }
+.ln-help { margin-top: 12px; }
+.ln-after { margin-top: 12px; }
+/* A smaller secondary button, for help and demo controls that sit inside a section. */
+.ln-btn-sm { min-height: 44px; padding: 0 18px; font-size: var(--fs-small); }
+.ln-btn-sm .ds-icon { width: 16px; height: 16px; }
+
+/* ------------------------------------------------------------------ the task: material and test messages */
+.ln-material-text {
+  white-space: pre-wrap; overflow-wrap: anywhere; font-size: var(--fs-small); line-height: 1.5; max-width: 40em;
+  max-height: 340px; overflow-y: auto;
+}
+.ln-hints { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; max-width: 40em; }
+.ln-hints li { display: grid; grid-template-columns: 6.5em minmax(0, 1fr); gap: 12px; font-size: var(--fs-small); line-height: 1.42; }
+.ln-hints b { font-weight: 600; }
+.ln-hints span { color: var(--t2); }
+
+/* Coworker messages: rows inside one panel. They open nothing, so no chevron and no blue. */
+.ln-msgs > .ds-row { display: grid; align-items: start; justify-content: stretch; gap: 2px; padding-top: 14px; padding-bottom: 14px; }
+.ln-msg-who { margin: 0; font: 600 var(--fs-small)/1.42 var(--sans); }
+.ln-msg-who span { margin-left: 10px; font-weight: 400; color: var(--t2); }
+.ln-msg-text { margin: 0; max-width: 40em; font-size: var(--fs-body); line-height: 1.5; }
+
+/* ------------------------------------------------------------------ the dark write surface */
+.ln-work { display: grid; gap: 12px; }
+.ln-slab {
+  --t1: var(--ln-d1); --t2: var(--ln-d2); --t3: var(--ln-d3);
+  --hair: var(--ln-dhair); --hair-2: var(--ln-dhair-2); --step: var(--ln-dstep); --step-2: var(--ln-dstep-2);
+  --focus: var(--ln-dfocus);
+  --link: var(--ln-dlink); --link-hover: var(--ln-dlink-hover);
+  --panel: var(--ln-dpanel); --panel-line: var(--ln-dpanel-line); --hover: var(--ln-dhover);
+  color: var(--t1); min-width: 0;
+}
+.ln-slab:focus-within { outline: 2px solid var(--indigo); outline-offset: 3px; }
+.ln-slab-foot { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 12px 16px; margin-top: 12px; }
+.ln-foot-note { margin-right: auto; display: inline-flex; flex-wrap: wrap; gap: 4px 16px; min-width: 0; font-size: var(--fs-fine); line-height: 1.4; color: var(--t3); }
+.ln-over { color: var(--accent-soft); }
+
+.ln-field { position: relative; }
+.ln-write { display: grid; gap: 8px; }
+.ln-input, .ln-mirror {
+  margin: 0; padding: 0; border: 0; font: 400 var(--fs-body)/1.55 var(--sans); letter-spacing: normal;
+  white-space: pre-wrap; overflow-wrap: break-word; word-break: normal; tab-size: 4;
+}
+textarea.ln-input {
+  position: relative; z-index: 1; display: block; width: 100%; min-height: calc(1.55em * 5); max-height: 60vh;
+  background: transparent; color: var(--t1); caret-color: var(--accent-soft); resize: vertical; border-radius: 0;
+  field-sizing: content;
+}
+textarea.ln-input:focus, textarea.ln-input:focus-visible { outline: none; border-color: transparent; }
+textarea.ln-input::placeholder { color: var(--t3); opacity: 1; }
+textarea.ln-input:disabled { opacity: .7; }
+.ln-mirror { position: absolute; inset: 0; z-index: 0; overflow: hidden; color: transparent; pointer-events: none; }
+.ln-personal { margin: 0; font-size: var(--fs-fine); line-height: 1.4; font-weight: 600; color: var(--t1); }
+
+/* The evidence highlight: the student's quoted words light up in their own text, 180ms apart, in check order. */
+.ln-mirror mark, .ln-text mark, .ln-ex mark, .ln-answer-read mark, .ln-say mark {
+  background: var(--evidence); color: inherit; border-radius: var(--r-box); padding: 1px 3px; margin: 0 -3px;
+  -webkit-box-decoration-break: clone; box-decoration-break: clone;
+  animation: ln-evidence 520ms var(--ease) both; animation-delay: calc(var(--n, 0) * 180ms + 120ms);
+}
+.ln-mirror mark { color: transparent; }
+@keyframes ln-evidence { from { background-color: var(--evidence-off); } to { background-color: var(--evidence); } }
+
+/* The one looping thing: the typing caret in the demo's write surface. */
+.ln-caret {
+  display: inline-block; width: 2px; height: 1.15em; margin-left: 1px; vertical-align: -.2em;
+  background: var(--accent-soft); animation: ln-blink 1s steps(2, start) infinite;
+}
+@keyframes ln-blink { to { visibility: hidden; } }
+
+/* ------------------------------------------------------------------ output on the sheet */
+.ln-text { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: var(--fs-body); line-height: 1.55; max-height: 440px; overflow-y: auto; }
+.ln-passed { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 12px 20px; margin-top: 32px; }
+.ln-passed p { margin: 0 auto 0 0; font-size: var(--fs-small); line-height: 1.42; color: var(--t2); }
+
+/* Conversations: a coworker message, then the bot's reply, as rows inside one panel (no bubbles). */
+.ln-convo { list-style: none; margin: 0; padding: 0; display: grid; }
+.ln-convo > li { display: grid; gap: 10px; padding: 16px 0; border-top: 1px solid var(--panel-line); }
+.ln-convo > li:first-child { border-top: 0; padding-top: 0; }
+.ln-convo > li:last-child { padding-bottom: 0; }
+.ln-say { display: grid; gap: 2px; max-width: 40em; }
+.ln-say p { margin: 0; font-size: var(--fs-small); line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+.ln-say.is-bot { padding: 12px 16px; border-radius: var(--r-inner); background: var(--step); }
+
+/* ------------------------------------------------------------------ Model Arena */
+.ln-steps { list-style: none; margin: 44px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 24px; font-size: var(--fs-small); line-height: 1.42; }
+.ln-steps + .ds-section { margin-top: 16px; }
+.ln-steps li { display: inline-flex; align-items: center; gap: 8px; color: var(--t2); }
+.ln-steps li[data-state="on"] { color: var(--t1); font-weight: 600; }
+.ln-steps .ds-icon { width: 16px; height: 16px; }
+.ln-step-n { display: inline-block; min-width: 16px; text-align: center; font-weight: 600; }
+
+.ln-answers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.ln-answer { display: flex; flex-direction: column; gap: 8px; min-width: 0; padding: 18px 20px; border-radius: var(--r-card); background: var(--panel); border: 1px solid var(--panel-line); }
+.ln-answer.is-picked { box-shadow: inset 0 0 0 2px var(--link); }
+.ln-answer-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.ln-answer-head h3 { margin: 0; }
+.ln-answer-blurb { margin: 0; font-size: var(--fs-fine); line-height: 1.4; color: var(--t2); }
+.ln-answer-text { flex: 1; white-space: pre-wrap; overflow-wrap: anywhere; font-size: var(--fs-small); line-height: 1.5; max-height: 360px; overflow-y: auto; }
+.ln-answer-meta { display: flex; gap: 16px; margin: 0; font-size: var(--fs-fine); color: var(--t2); }
+.ln-reasoning { margin-top: 16px; }
+.ln-reasoning h3 { margin: 0 0 4px; }
+@container (max-width: 620px) {
+  .ln-answers { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ------------------------------------------------------------------ the lesson */
+.ln-demo-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; margin-top: 4px; }
+.ln-demo-bar h3 { margin: 0; }
+.ln-demo-ctl { display: flex; flex-wrap: wrap; gap: 8px; }
+.ln-demo { min-height: 120px; }
+.ln-demo-out { display: grid; gap: 8px; transition: opacity 420ms var(--ease); }
+.ln-demo-out h3 { margin: 0; }
+.ln-demo-out.is-waiting { opacity: 0; }
+
+/* The worked example as a labelled list: the part's name on the left, its words on the right. */
+.ln-ex { display: grid; gap: 14px; }
+.ln-ex-row { display: grid; grid-template-columns: 8em minmax(0, 1fr); gap: 2px 16px; align-items: baseline; }
+.ln-ex-label { font-size: var(--fs-small); line-height: 1.55; font-weight: 600; color: var(--t2); }
+.ln-ex-text { margin: 0; min-width: 0; font-size: var(--fs-body); line-height: 1.55; overflow-wrap: anywhere; }
+.ln-ex-row.is-slot { align-items: start; }
+.ln-ex-row.is-slot .ln-ex-label { padding-top: 9px; }
+.ln-ex-text .ln-personal { margin-top: 6px; }
+textarea.ln-input.ln-slot-input {
+  min-height: calc(1.55em * 3 + 18px); padding: 8px 10px; border-radius: var(--r-inner);
+  border: 1.5px dashed var(--hair-2); background: var(--step);
+}
+textarea.ln-input.ln-slot-input:focus { border-color: var(--t2); }
+
+.ln-notes { margin: 0; display: grid; gap: 10px; }
+.ln-notes > div { display: grid; grid-template-columns: 8em minmax(0, 1fr); gap: 2px 16px; }
+.ln-notes dt { font-weight: 600; font-size: var(--fs-small); line-height: 1.42; }
+.ln-notes dd { margin: 0; max-width: 36em; font-size: var(--fs-small); line-height: 1.42; color: var(--t2); }
+.ln-aside { margin-top: 12px; }
+.ln-model { display: grid; gap: 6px; }
+.ln-model h3 { margin: 0; }
+
+/* The rule: numbered rows inside one panel. */
+.ln-rule { counter-reset: ln-rule; }
+.ln-rule > .ds-row { counter-increment: ln-rule; align-items: flex-start; gap: 14px; padding-top: 14px; padding-bottom: 14px; max-width: none; line-height: 1.5; }
+.ln-rule > .ds-row::before { content: counter(ln-rule); flex: none; width: 22px; font-weight: 600; color: var(--t2); font-variant-numeric: tabular-nums; }
+
+.ln-compare { width: 100%; border-collapse: collapse; font-size: var(--fs-small); line-height: 1.42; }
+.ln-compare th, .ln-compare td { text-align: left; vertical-align: top; padding: 10px 14px 10px 0; border-top: 1px solid var(--panel-line); }
+.ln-compare thead th { border-top: 0; padding-top: 0; font-size: var(--fs-fine); font-weight: 600; color: var(--t2); }
+.ln-compare tbody th { font-weight: 600; }
+.ln-compare td:nth-child(3), .ln-compare td:nth-child(4) { white-space: nowrap; }
+
+@container (max-width: 560px) {
+  .ln-ex-row, .ln-notes > div, .ln-hints li { grid-template-columns: minmax(0, 1fr); }
+  .ln-ex-row.is-slot .ln-ex-label { padding-top: 0; }
+  .ln-compare thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .ln-compare, .ln-compare tbody { display: block; }
+  .ln-compare tr { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 2px 12px; padding: 10px 0; border-top: 1px solid var(--panel-line); }
+  .ln-compare th, .ln-compare td { padding: 0; border: 0; }
+  .ln-compare td:nth-child(2) { grid-column: 1 / -1; grid-row: 2; color: var(--t2); }
+}
+
+/* ------------------------------------------------------------------ the starting point and final checks */
+.ln-tasklist > .ds-row { gap: 14px; padding-top: 12px; padding-bottom: 12px; }
+.ln-task-n { display: inline-grid; place-items: center; width: 28px; flex: none; font-weight: 600; color: var(--t2); }
+.ln-task-name { display: grid; gap: 2px; font-size: var(--fs-body); line-height: 1.4; }
+.ln-task-skill { font-size: var(--fs-small); color: var(--t2); }
+.ln-answer-read { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: var(--fs-body); line-height: 1.55; }
+
+/* Lessons from a demo: rows inside one panel, a sub-heading and one line each. */
+.ln-lessons > .ds-row { display: grid; align-items: start; justify-content: stretch; gap: 2px; padding-top: 14px; padding-bottom: 14px; }
+.ln-lessons h3 { margin: 0; }
+.ln-lessons p { margin: 0; max-width: 36em; font-size: var(--fs-small); line-height: 1.42; color: var(--t2); }
+
+/* ------------------------------------------------------------------ the coach side panel
+ * Order: score, attempt, checks, one tip, earlier attempts (folded), the ask box, what's next. */
+.ln-coach { align-self: start; padding-bottom: 8px; }
+.ln-coach .ds-coach-score { font-size: var(--fs-body); font-weight: 600; }
+.ln-coach-h { margin: 22px 24px 10px; }
+.ln-attempt-line { display: flex; flex-wrap: wrap; gap: 4px 12px; padding: 0 24px 2px; font-size: var(--fs-small); line-height: 1.42; color: var(--t2); }
+.ln-attempt-line .ds-status { font-size: var(--fs-small); }
+.ln-coach-note { margin: 8px 24px 0; font-size: var(--fs-fine); line-height: 1.4; color: var(--t2); }
+.ln-coach-msg {
+  margin: 12px 24px 0; padding: 14px 16px; border-radius: var(--r-row); background: var(--panel); border: 1px solid var(--panel-line);
+  white-space: pre-wrap; overflow-wrap: anywhere; font-size: var(--fs-small); line-height: 1.42;
+}
+.ln-coach-msg.is-distress { border-color: var(--hair-2); }
+.ln-coach-fine { margin: 14px 24px 0; font-size: var(--fs-fine); line-height: 1.4; color: var(--t3); }
+.ln-coach .ds-tip { margin-top: 16px; }
+
+/* Checks: a tick or a minus, the check, the student's words, the reason. In the coach they sit together in one solid box. */
+.ln-checks { list-style: none; margin: 0; padding: 0 24px; }
+.ln-check { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 2px 12px; padding: 12px 0; border-top: 1px solid var(--hair); }
+.ln-check > .ds-icon { margin-top: 3px; color: var(--t2); }
+.ln-check > :not(.ds-icon) { grid-column: 2; }
+.ln-check b { font-weight: 600; font-size: var(--fs-small); line-height: 1.42; }
+.ln-check q { font-size: var(--fs-small); line-height: 1.42; color: var(--t2); quotes: "\201C" "\201D"; overflow-wrap: anywhere; }
+.ln-check-why, .ln-check-meta { font-size: var(--fs-fine); line-height: 1.4; color: var(--t3); }
+.ln-check-flag { font-size: var(--fs-fine); line-height: 1.4; font-weight: 600; color: var(--t1); }
+.ds-coach .ln-check[data-state="fail"] > .ds-icon, .ds-coach .ln-check[data-state="fail"] b { color: var(--accent-soft); }
+.ln-check[data-state="review"] > .ds-icon { color: var(--t1); }
+.ds-coach .ln-checks { margin: 0 24px; padding: 2px 18px; border-radius: var(--r-card); background: var(--panel); border: 1px solid var(--panel-line); }
+.ds-coach .ln-check { border-top-color: var(--panel-line); }
+.ds-coach .ln-check:first-child { border-top: 0; }
+
+/* Inside the coach the checks arrive 180ms apart, then the tip (components.css times the tip). */
+.ds-coach .ln-check { opacity: 0; transform: translateY(8px); transition: opacity 420ms var(--ease), transform 420ms var(--ease); transition-delay: calc(var(--n, 0) * 180ms); }
+.ds-coach.is-scored .ln-check { opacity: 1; transform: none; }
+
+/* Earlier attempts, folded under the latest */
+.ln-earlier { margin: 20px 24px 0; }
+.ln-attempt.is-compact { padding: 14px 0; border-top: 1px solid var(--panel-line); }
+.ln-earlier .ln-attempt.is-compact:first-child { border-top: 0; padding-top: 0; }
+.ln-attempt-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.ln-attempt-head h3 { margin: 0; }
+.ln-attempt.is-compact .ds-coach-score { font-size: var(--fs-small); }
+.ds-coach .ln-attempt.is-compact .ln-checks { margin: 8px 0 0; padding: 0; background: none; border: 0; border-radius: 0; }
+.ln-attempt.is-compact .ln-attempt-line { padding-left: 0; padding-right: 0; }
+.ln-attempt.is-compact .ln-coach-msg, .ln-attempt.is-compact .ln-coach-note { margin-left: 0; margin-right: 0; }
+.ln-attempt.is-compact .ds-tip { margin: 8px 0 0; }
+
+/* The ask thread: this session's questions and answers, newest at the bottom, the ask box under it. */
+.ln-thread { margin-top: 8px; }
+.ln-thread-hint { margin: 0 24px; font-size: var(--fs-small); line-height: 1.42; color: var(--t2); }
+.ln-thread-list { list-style: none; margin: 0; padding: 0 24px; display: grid; gap: 14px; max-height: 340px; overflow-y: auto; }
+.ln-thread-list > li { display: grid; gap: 10px; }
+.ln-turn { display: grid; gap: 2px; }
+.ln-turn span { font-size: var(--fs-fine); line-height: 1.4; font-weight: 600; color: var(--t3); }
+.ln-turn p { margin: 0; font-size: var(--fs-small); line-height: 1.42; white-space: pre-wrap; overflow-wrap: anywhere; }
+.ln-turn.is-you p { color: var(--t2); }
+.ln-turn.is-wait p { color: var(--t3); }
+.ln-thread .ds-ask { margin-top: 12px; margin-bottom: 16px; }
+.ln-thread-warn { padding: 0 24px; margin: -6px 0 16px; }
+.ln-thread-warn:empty { display: none; }
+.ln-coach-next { margin: 0 24px 20px; }
+
+.ln-picker { display: flex; flex-wrap: wrap; gap: 4px 20px; }
+
+/* ------------------------------------------------------------------ phones */
+@media (max-width: 520px) {
+  .ln-slab { padding: 16px; }
+  .ln-answer { padding: 16px; }
+  .ln-btn-sm { flex: 1 1 auto; }
+}

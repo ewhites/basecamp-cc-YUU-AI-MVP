@@ -1,8 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { Button } from "@/design/Button";
+import { Panel } from "@/design/Structure";
+import { looksPersonal, PersonalWarning } from "@/app/lab/practice/personal";
 import type { FadedExample as Faded, LessonPart } from "@/lib/curriculum/lessons";
-import { Comparison, ExampleText, Mark } from "./ui";
+import { Comparison, ExampleRows } from "./ui";
 
 /** "Your turn": a near-complete example with one part missing. Runs in the browser only, no AI call. */
 export function FadedExample({ faded, parts }: { faded: Faded; parts: LessonPart[] }) {
@@ -12,45 +15,44 @@ export function FadedExample({ faded, parts }: { faded: Faded; parts: LessonPart
 
   const slot = (
     <>
-      <label htmlFor="faded-input" className="sr-only">
+      <label htmlFor="faded-input" className="ds-sr">
         {part.label}
       </label>
       <textarea
         id="faded-input"
-        className={`faded-input mark-${faded.missing}-line`}
+        className="ln-input ln-slot-input"
         value={text}
         onChange={(e) => setText(e.target.value)}
         placeholder={faded.placeholder}
         rows={3}
+        aria-describedby={looksPersonal(text) ? "faded-personal" : undefined}
         data-testid="faded-input"
       />
+      <PersonalWarning text={text} id="faded-personal" />
     </>
   );
 
   return (
-    <div className="stack">
-      <p style={{ margin: 0 }}>{faded.scenario}</p>
-      {faded.comparison && <Comparison rows={faded.comparison} />}
-      <p style={{ marginBottom: 0 }}>
-        <b>{faded.ask}</b>
-      </p>
-      <div className="example">
-        <div className="example-head">{faded.head}</div>
-        <ExampleText segments={faded.segments} layout={faded.layout} missing={faded.missing} slot={slot} />
+    <div className="ln-stack">
+      <Panel>
+        <p className="ln-read">{faded.scenario}</p>
+        {faded.comparison && <Comparison rows={faded.comparison} />}
+        <p className="ln-read ln-ask-line">{faded.ask}</p>
+      </Panel>
+      <div className="ds-slab ds-sq ln-slab" aria-label={faded.head}>
+        <ExampleRows segments={faded.segments} parts={parts} missing={faded.missing} slot={slot} />
       </div>
       {shown ? (
-        <div className="model-answer" data-testid="faded-answer">
-          <div className="eyebrow">One good answer</div>
-          <p style={{ margin: "0 0 6px" }}>
-            <Mark part={faded.missing}>{faded.answer}</Mark>
-          </p>
-          <p className="small muted" style={{ margin: 0 }}>{faded.checkYours}</p>
-        </div>
+        <Panel className="ln-model" data-testid="faded-answer">
+          <h3>One good answer</h3>
+          <p className="ln-read">{faded.answer}</p>
+          <p className="ln-hint">{faded.checkYours}</p>
+        </Panel>
       ) : (
         <div>
-          <button type="button" className="btn" onClick={() => setShown(true)} data-testid="faded-reveal">
+          <Button variant="secondary" className="ln-btn-sm" onClick={() => setShown(true)} data-testid="faded-reveal">
             {text.trim() ? "Compare with a model answer" : "Show a model answer"}
-          </button>
+          </Button>
         </div>
       )}
     </div>

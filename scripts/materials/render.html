@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Material renderer</title>
+<style>html,body{margin:0;background:#000}canvas{display:block}</style></head>
+<body>
+<canvas id="c"></canvas>
+<script>
+/*
+ Renders the Year Up AI Lab materials once, at high resolution:
+   mode=ground  blue linen weave with orange marble ribbons flowing through it (the page ground)
+   mode=marble  orange marble on its own (the coach header, the lit door, the badge)
+   mode=linen   blue linen on its own
+ Usage: render.html?mode=ground&w=2560&h=1600&seed=3
+ scripts/materials/render.mjs opens this page in headless Chromium and saves WebP files to public/materials/.
+*/
+const q = new URLSearchParams(location.search);
+const W = +q.get('w') || 2560, H = +q.get('h') || 1600, SEED = +q.get('seed') || 3;
+const MODE = { ground: 0, marble: 1, linen: 2 }[q.get('mode') || 'ground'];
+const cv = document.getElementById('c'); cv.width = W; cv.height = H;
+const gl = cv.getContext('webgl', { preserveDrawingBuffer: true, antialias: false });
+
+const vs = `attribute vec2 p; void main(){ gl_Position = vec4(p, 0., 1.); }`;
+const fs = `
+precision highp float;
+uniform vec2 R; uniform float S; uniform int M;
+
+float h1(float n){ return fract(sin(n * 127.1 + S * 31.7) * 43758.5453); }
+float h2(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7)) + S * 17.3) * 43758.5453); }
+float noise(vec2 p){
+  vec2 i = floor(p), f = fract(p); vec2 u = f * f * (3. - 2. * f);
+  return mix(mix(h2(i), h2(i + vec2(1, 0)), u.x), mix(h2(i + vec2(0, 1)), h2(i + vec2(1, 1)), u.x), u.y);
+}
+float fbm(vec2 p){ float a = .5, s = 0.; mat2 m = mat2(1.6, 1.2, -1.2, 1.6); for (int i = 0; i < 6; i++){ s += a * noise(p); p = m * p; a *= .5; } return s; }
+
+/* Domain-warped field: the flow of the marble and of the ribbons */
+float warp(vec2 p, out vec2 q, out vec2 r){
+  q = vec2(fbm(p), fbm(p + vec2(5.2, 1.3)));
+  r = vec2(fbm(p + 3.6 * q + vec2(1.7, 9.2)), fbm(p + 3.6 * q + vec2(8.3, 2.8)));
+  return fbm(p + 3.2 * r);
+}
+
+float fbm3(vec2 p){ float a = .5, s = 0.; mat2 m = mat2(1.6, 1.2, -1.2, 1.6); for (int i = 0; i < 3; i++){ s += a * noise(p); p = m * p; a *= .5; } return s; }
+
+/* Laminar marble: long veins that flow one way and swirl gently, like poured stone */
+vec3 marble(vec2 p){
+  vec2 w = vec2(fbm3(p * .55 + vec2(1.3, 7.1)), fbm3(p * .55 + vec2(9.4, 2.2)));
+  vec2 s = p + 1.35 * (w - .5) * 2.;
+  float flow = s.y * 3.1 + 1.6 * fbm3(s * .8) + .35 * sin(s.x * 1.3);
+  float t = fract(flow);
+  float idx = floor(flow);
+  float tone = h1(idx * 3.7);                                  /* each band has its own depth */
+  float fine = fbm(s * 7.) - .5;                               /* grain inside a band */
+  vec3 burnt = vec3(.50, .15, .03), orange = vec3(.96, .42, .07), amber = vec3(1., .62, .25), cream = vec3(1., .94, .86);
+  vec3 c = mix(burnt, orange, smoothstep(.0, .7, tone));
+  c = mix(c, amber, smoothstep(.55, 1., tone) * .8);
+  /* soft shading across each band, darker near its lower edge */
+  c *= .78 + .3 * smoothstep(0., .6, t) - .12 * smoothstep(.75, 1., t);
+  c += fine * .06;
+  /* cream veins on some band edges, thin and crisp */
+  float edge = min(t, 1. - t);
+  float vein = (1. - smoothstep(.0, .035, edge)) * step(.45, h1(idx * 1.9 + 5.));
+  c = mix(c, cream, vein * .85);
+  /* a few wide cream drifts, like the white in the reference */
+  c = mix(c, cream * .97, smoothstep(.70, .9, fbm3(s * 1.1 + 4.)) * .8);
+  return clamp(c, 0., 1.);
+}
+
+/* A silk ribbon of marble. It twists: its width runs through zero and the face turns over, so the back
+   (darker, cooler) shows for a while. Veins run along it, a sheen runs along the fold, and the edges feather. */
+vec4 ribbon(vec2 uv, float y0, float amp, float fq, float ph, float wid, float seed, out float shadow){
+  float yc = y0 + amp * sin(uv.x * fq + ph) + amp * .35 * sin(uv.x * fq * 2.3 + ph * 1.7);
+  float slope = amp * fq * cos(uv.x * fq + ph) + amp * .35 * fq * 2.3 * cos(uv.x * fq * 2.3 + ph * 1.7);
+  float tw = cos(uv.x * 1.15 + seed);                    /* -1 to 1: the twist */
+  float wv = wid * (.18 + .82 * abs(tw));
+  float d = (uv.y - yc) / sqrt(1. + slope * slope);
+  float a = d / wv;
+  float feather = .82 + .1 * noise(vec2(uv.x * 90., a * 3.));   /* frayed silk edge */
+  float inside = 1. - smoothstep(feather, 1.04, abs(a));
+  float face = smoothstep(-.35, .35, tw);                             /* front or back of the silk */
+  float fold = .74 + .34 * cos(a * 1.5708) ;
+  float sheen = pow(max(0., cos((a - .35 * tw) * 2.4)), 14.) * (.35 + .5 * abs(tw));
+  vec3 m = marble(vec2(uv.x * 1.1 + seed, a * .5 * tw / max(abs(tw), .3) + seed * .3));
+  m = mix(m * vec3(.62, .55, .52), m, face * .7 + .3);   /* the back is darker */
+  m = m * fold + vec3(1., .88, .74) * sheen * .55;
+  shadow = (1. - smoothstep(1., 2.6, abs(a) * (wv / wid))) * (1. - inside);
+  return vec4(clamp(m, 0., 1.), inside);
+}
+
+vec3 linen(vec2 px, vec2 uv){
+  /* threads about 3 px apart; each thread has its own tone, and the tone drifts along it */
+  float t = 3.;
+  float row = floor(px.y / t), col = floor(px.x / t);
+  float fy = fract(px.y / t), fx = fract(px.x / t);
+  float rowTone = h1(row) * .6 + noise(vec2(px.x * .012, row * .7)) * .6;
+  float colTone = h1(col + 911.) * .6 + noise(vec2(col * .7, px.y * .012)) * .6;
+  float rowShape = smoothstep(0., .45, fy) * smoothstep(1., .55, fy);
+  float colShape = smoothstep(0., .45, fx) * smoothstep(1., .55, fx);
+  float over = mod(row + col, 2.);                         /* plain weave: over, under */
+  float thread = mix(rowTone * rowShape, colTone * colShape, over);
+  float slub = smoothstep(.72, 1., noise(vec2(px.x * .03, row * 3.1))) * .35;   /* the odd thicker thread */
+  float mott = fbm(uv * 3.2) ;
+  vec3 deep = vec3(.04, .15, .38), mid = vec3(.10, .32, .66), hi = vec3(.30, .55, .86);
+  vec3 c = mix(deep, mid, smoothstep(.15, .85, uv.y * -.6 + .75 + (mott - .5) * .5));
+  c = mix(c, hi, (thread - .45) * .32 + slub * .25);
+  c *= .9 + .12 * thread;
+  return c;
+}
+
+void main(){
+  vec2 px = gl_FragCoord.xy; px.y = R.y - px.y;
+  vec2 uv = px / R.y;                              /* square units, height = 1 */
+  if (M == 1){ gl_FragColor = vec4(marble(uv * 2.4 + vec2(S)), 1.); return; }
+  vec3 cloth = linen(px, uv);
+  if (M == 2){ gl_FragColor = vec4(cloth, 1.); return; }
+
+  /* Two silk ribbons cross the cloth: a wide one low, a thin one crossing it */
+  float s1, s2;
+  vec4 r1 = ribbon(uv, .80, .10, 2.1, .4, .075, 1.3, s1);
+  vec4 r2 = ribbon(uv, .62, .14, 1.55, 2.6, .028, 7.7, s2);
+  float weave = dot(cloth, vec3(.3, .5, .2));
+  vec3 c = cloth * (1. - .32 * s2);
+  c = mix(c, r2.rgb * (.92 + .16 * weave), r2.a);
+  c *= 1. - .38 * s1;
+  c = mix(c, r1.rgb * (.92 + .16 * weave), r1.a);
+  /* a fine dither, so gradients never band */
+  c += (h2(px) - .5) / 255.;
+  gl_FragColor = vec4(c, 1.);
+}`;
+
+function sh(type, src){ const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; }
+const pr = gl.createProgram(); gl.attachShader(pr, sh(gl.VERTEX_SHADER, vs)); gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, fs)); gl.linkProgram(pr); gl.useProgram(pr);
+const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+const loc = gl.getAttribLocation(pr, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+gl.uniform2f(gl.getUniformLocation(pr, 'R'), W, H);
+gl.uniform1f(gl.getUniformLocation(pr, 'S'), SEED);
+gl.uniform1i(gl.getUniformLocation(pr, 'M'), MODE);
+gl.viewport(0, 0, W, H);
+gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+window.rendered = true;
+</script>
+</body>
+</html>

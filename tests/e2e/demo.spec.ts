@@ -15,19 +15,39 @@ async function fillReady(page: Page, input: string, button: string, text: string
   }).toPass({ timeout: 30_000 });
 }
 
-test("sign-in offers only the student and the instructor, then opens Brightspace", async ({ page }) => {
+test("sign-in offers the student, the facilitator and the admin, then the first visit opens the course", async ({ page }) => {
   await page.goto("/signout");
   await expect(page.getByText(/Simulated/).first()).toBeVisible();
   await expect(page.getByText("Sample data").first()).toBeVisible();
-  await expect(page.locator(".account")).toHaveCount(2);
+  await expect(page.locator(".account")).toHaveCount(3);
+  await expect(page.getByTestId("signin-lee")).toBeVisible();
   await expect(page.getByText("Dev Okafor")).toHaveCount(0);
+  await page.context().clearCookies({ name: "ailab_intro" });
   await page.getByTestId("signin-jasmine").click();
-  await expect(page).toHaveURL(/\/home$/);
+  // First visit (no answers saved, no attempts yet): welcome, acceptable use, two questions, starting point.
+  await expect(page).toHaveURL(/\/lab\/welcome$/);
   await expect(page.getByText("Welcome, Jasmine")).toBeVisible();
-  await page.getByTestId("course-tile").click();
+  await expect(page.getByText("Sample data").first()).toBeVisible();
+  const go = page.getByTestId("welcome-continue");
+  // The first click can land before hydration: retry until the next screen shows.
+  await expect(async () => {
+    await go.click();
+    await expect(page.getByText(/can be wrong/)).toBeVisible({ timeout: 1500 });
+  }).toPass({ timeout: 30_000 });
+  await go.click();
+  await expect(go).toBeDisabled();
+  await page.getByRole("radio", { name: "IT support" }).click();
+  await go.click();
+  await page.getByRole("radio", { name: "A few times" }).click();
+  await go.click();
+  await page.getByRole("radio", { name: "Start at the beginning" }).click();
+  await go.click();
   await expect(page).toHaveURL(/\/lab$/);
   await expect(page.getByTestId("up-next")).toContainText(/Starting point check|Up next/);
   await expect(page.getByText("Security check")).toHaveCount(0);
+  // The first visit shows once: the course home now opens directly.
+  await page.goto("/lab");
+  await expect(page).toHaveURL(/\/lab$/);
 });
 
 test("starting point check: one task is coached and counts toward progress", async ({ page }) => {
@@ -68,7 +88,8 @@ test("Prompt Studio: weak attempt is coached, tip applied, second attempt improv
 
 test("student pages render, and old studio links redirect to the course", async ({ page }) => {
   await page.goto("/launch?as=jasmine");
-  for (const url of ["/lab", "/lab/check/start", "/lab/check/final", "/lab/lesson/m1", "/lab/lesson/m2", "/lab/lesson/m3", "/lab/practice/ps-ticket-summary", "/lab/practice/ma-policy-summary", "/lab/practice/ab-newhire-it", "/lab/skills"]) {
+  await page.waitForLoadState("networkidle"); // let the redirect after sign-in finish before the next goto
+  for (const url of ["/lab", "/lab/check/start", "/lab/check/final", "/lab/lesson/m1", "/lab/lesson/m2", "/lab/lesson/m3", "/lab/practice/ps-ticket-summary", "/lab/practice/ma-policy-summary", "/lab/practice/ab-newhire-it", "/lab/lesson/m3/research", "/lab/lesson/m3/travel", "/lab/skills"]) {
     const res = await page.goto(url);
     expect(res?.status(), url).toBe(200);
     await expect(page.getByText("Sample data").first()).toBeVisible();
@@ -90,11 +111,12 @@ test("lesson: worked example first, then Start practice opens the first task", a
 
 test("instructor console leads with who needs help, then the lift", async ({ page }) => {
   await page.goto("/launch?as=rivera");
-  await expect(page).toHaveURL(/\/home$/);
+  // No Brightspace page any more: a facilitator lands on their console.
+  await expect(page).toHaveURL(/\/lab\/instructor/);
   await page.goto("/lab/instructor?section=B");
   await expect(page.getByTestId("needs-you")).toBeVisible();
   await expect(page.getByTestId("needs-you-row").first()).toBeVisible();
-  await expect(page.getByText(/3 students stuck on Description/i).first()).toBeVisible();
+  await expect(page.getByText(/3 students stuck on Prompting/i).first()).toBeVisible();
   await expect(page.getByTestId("lift-panel")).toBeVisible();
   await expect(page.getByTestId("coach-reliability")).toBeVisible();
   const res = await page.goto("/lab/instructor?section=A");
@@ -103,13 +125,119 @@ test("instructor console leads with who needs help, then the lift", async ({ pag
 });
 
 test("removed screens and accounts are gone", async ({ page }) => {
-  for (const who of ["okafor", "lee"]) {
+  await page.goto("/launch?as=okafor");
+  await expect(page).toHaveURL(/\/$/);
+  await page.goto("/launch?as=lee");
+  await expect(page).toHaveURL(/\/lab\/admin$/);
+  for (const who of ["rivera", "jasmine"]) {
     await page.goto(`/launch?as=${who}`);
-    await expect(page).toHaveURL(/\/$/);
+    // Let the sign-in redirect land before leaving, or the next navigation aborts the one still in flight.
+    await page.waitForURL(/\/lab/);
+    await page.waitForLoadState("networkidle");
+    for (const url of ["/lab/admin", "/lab/curriculum", "/lab/security-check"]) {
+      const res = await page.goto(url);
+      expect(res?.status(), `${who} ${url}`).toBe(404);
+    }
   }
-  await page.goto("/launch?as=rivera");
-  for (const url of ["/lab/admin", "/lab/curriculum", "/lab/security-check"]) {
-    const res = await page.goto(url);
-    expect(res?.status(), url).toBe(404);
-  }
+});
+
+test("admin sees the cost view: budget and alert, totals, top spenders by ID, tokens by model, the limit log", async ({ page }) => {
+  await page.goto("/signout");
+  await page.getByTestId("signin-lee").click();
+  await expect(page).toHaveURL(/\/lab\/admin$/);
+  await expect(page.getByTestId("admin-cost")).toBeVisible();
+  await expect(page.getByText("Sample data").first()).toBeVisible();
+  await expect(page.getByTestId("admin-spend")).toHaveText(/^\$\d/);
+  await expect(page.getByTestId("budget-alert")).toContainText(/alert|Budget reached/);
+  await expect(page.getByTestId("admin-active")).toContainText(/\d+ of 120/);
+  await expect(page.getByTestId("admin-cache")).toHaveText(/\d+%/);
+  await expect(page.getByTestId("spender-row").first()).toContainText(/S-[ABC]-\d{3}/);
+  // Admins see pseudonymous IDs only: no student names on this page.
+  await expect(page.getByText("Jasmine Carter")).toHaveCount(0);
+  await expect(page.getByTestId("tokens-by-model").getByRole("columnheader", { name: "Model" })).toBeAttached();
+  await expect(page.getByTestId("tokens-by-model")).toContainText("Claude Haiku 5.5");
+  await expect(page.getByTestId("lesson-row").first()).toBeVisible();
+  await expect(page.getByTestId("override-log").getByTestId("limit-row")).not.toHaveCount(0);
+  await expect(page.getByTestId("override-log")).toContainText("Ms. Rivera");
+  await expect(page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Overrides" })).toHaveAttribute("href", "/lab/admin#overrides");
+});
+
+test("facilitator sets a student's daily limit with a reason, and it is logged", async ({ page }) => {
+  await page.goto("/launch?as=rivera&next=/lab/instructor/student/S-B-040");
+  const box = page.getByTestId("daily-limit");
+  await expect(box).toBeVisible();
+  await expect(page.getByTestId("limit-current")).toContainText("tokens");
+  const tokens = String(70_000 + Math.floor(Math.random() * 9) * 1000);
+  // A reason is required: the form refuses without one.
+  await expect(async () => {
+    await page.getByTestId("limit-tokens").fill(tokens);
+    await page.getByTestId("set-limit").click();
+    await expect(page.getByTestId("limit-result")).toContainText(/reason/i, { timeout: 1500 });
+  }).toPass({ timeout: 30_000 });
+  await page.getByTestId("limit-reason").fill("Make-up session after missing class");
+  await page.getByTestId("set-limit").click();
+  const shown = Number(tokens).toLocaleString("en-US");
+  await expect(page.getByTestId("limit-result")).toContainText(`Limit set to ${shown}`);
+  await expect(page.getByTestId("limit-current")).toContainText(shown);
+  // The recent changes sit in a fold: open it, then the new change is the first row.
+  await box.getByText("Recent changes").click();
+  await expect(box.getByTestId("limit-row").first()).toBeVisible();
+  await expect(box.getByTestId("limit-row").first()).toContainText("Make-up session after missing class");
+  // The console lists the change in the section.
+  await page.goto("/lab/instructor?section=B");
+  await expect(page.getByTestId("limit-changes").getByTestId("limit-row").first()).toContainText(shown);
+  await expect(page.getByText(/3 students stuck on Prompting/i).first()).toBeVisible();
+});
+
+test("agent demo 1: step to the outbox draft, approve it, and the demo counts as done", async ({ page }) => {
+  await page.goto("/launch?as=jasmine&next=/lab/lesson/m3/research");
+  const demo = page.getByTestId("sandbox-demo");
+  await expect(demo).toBeVisible();
+  await expect(page.getByTestId("tool-panel-sheet")).toBeVisible();
+  await expect(page.getByTestId("tool-panel-outbox")).toBeVisible();
+  await expect(page.getByTestId("tool-panel-notes")).toBeVisible();
+  await expect(page.getByTestId("tool-panel-memory")).toBeVisible();
+  await expect(page.getByText("Simulated").first()).toBeVisible();
+  // Continue works only after hydration: retry the first click until the first step shows.
+  const next = page.getByTestId("demo-continue");
+  await expect(async () => {
+    await next.click();
+    await expect(page.getByTestId("demo-step-1")).toBeVisible({ timeout: 1500 });
+  }).toPass({ timeout: 30_000 });
+  // The sheet is read, then notes and memory fill, then the draft waits for the student.
+  await expect(page.getByTestId("tool-panel-sheet")).toContainText("Greenfork Catering");
+  while (!(await page.getByTestId("demo-approve").isVisible())) await next.click();
+  await expect(demo).toHaveAttribute("data-state", "gate");
+  await expect(page.getByTestId("tool-panel-notes")).toContainText("Allergen labels");
+  await expect(page.getByTestId("tool-panel-memory")).toContainText("Dana");
+  await expect(page.getByTestId("tool-panel-outbox")).toContainText("Waiting for approval");
+  await expect(next).toBeDisabled();
+  // Send back: the agent revises, then the student approves.
+  await page.getByTestId("demo-send-back").click();
+  await expect(page.getByTestId("demo-revised")).toBeVisible();
+  await expect(page.getByTestId("demo-send-back")).toHaveCount(0);
+  await page.getByTestId("demo-approve").click();
+  await expect(page.getByTestId("demo-sent")).toContainText("Sent (simulated)");
+  await expect(page.getByTestId("tool-panel-outbox")).toContainText("Sent (simulated)");
+  await expect(page.getByTestId("demo-learned")).toBeVisible();
+  await expect(page.getByTestId("demo-next")).toHaveAttribute("href", /\/lab\/lesson\/m3\/travel$/);
+  // The demo is saved as done: the course home row shows it.
+  // (A student with no first-visit answers is sent to the welcome screens, so set them as the first visit would.)
+  await page.context().addCookies([{ name: "ailab_intro", value: "it.few", domain: new URL(page.url()).hostname, path: "/" }]);
+  await page.goto("/lab");
+  const row = page.locator(".en-row", { hasText: "Research assistant" });
+  await expect(row).toContainText("Done");
+});
+
+test("live build: pick tools, and the picker is a labeled group of four check boxes", async ({ page }) => {
+  await page.goto("/launch?as=jasmine&next=/lab/practice/ab-newhire-it");
+  const picker = page.getByTestId("tool-picker");
+  await expect(picker).toBeVisible();
+  await expect(picker.getByRole("checkbox")).toHaveCount(4);
+  const sheet = page.getByTestId("tool-pick-sheet");
+  await expect(async () => {
+    await sheet.click();
+    await expect(sheet).toHaveAttribute("aria-checked", "true", { timeout: 1000 });
+  }).toPass({ timeout: 30_000 });
+  await expect(page.getByTestId("tool-pick-notes")).toHaveAttribute("aria-checked", "false");
 });

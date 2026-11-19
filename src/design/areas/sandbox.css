@@ -1,0 +1,85 @@
+/* Page styles for the Agent Builder tool sandbox: the tool picker, the four tool boxes, and the scripted demos.
+ * Tokens only (src/design/tokens.css): no colour, radius or shadow values here. Every class starts with sb-.
+ * Everything sits on the cream sheet: each tool is its own labelled box, the agent's steps are numbered rows in one box. */
+
+/* ------------------------------------------------------------------ the tool picker (live build): four checkboxes in one box */
+.sb-picks { overflow: hidden; }
+.sb-picks .ds-check {
+  align-items: flex-start; width: 100%; padding: 14px 22px; border-radius: 0; cursor: pointer;
+  transition: background-color var(--t-hover) var(--ease);
+}
+.sb-picks .ds-check + .ds-check { border-top: 1px solid var(--panel-line); }
+.sb-picks .ds-check:hover { background: var(--hover); }
+.sb-picks .ds-check[aria-checked="true"] { background: var(--hover); }
+.sb-picks .ds-check:focus-visible { outline-offset: -3px; }
+.sb-picks .ds-box { margin-top: 1px; }
+.sb-pick { display: grid; flex: 1; gap: 2px; min-width: 0; }
+.sb-pick-name { font-weight: 600; font-size: var(--fs-body); line-height: 1.4; }
+.sb-pick-note { font-size: var(--fs-small); line-height: 1.42; color: var(--t2); }
+.sb-sim { flex: none; font-size: var(--fs-fine); line-height: 1.4; font-weight: 400; color: var(--t2); white-space: nowrap; }
+
+/* ------------------------------------------------------------------ the four tool boxes */
+/* Spreadsheet and outbox across, notes doc and memory side by side. */
+.sb-tools { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+.sb-tools > .sb-panel.sb-panel { margin-top: 0; padding: 18px 20px; }
+.sb-panel[data-tool="sheet"], .sb-panel[data-tool="outbox"] { grid-column: 1 / -1; }
+.sb-panel[data-granted="no"] { background: transparent; border-style: dashed; }
+.sb-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0 12px; margin-bottom: 10px; }
+.sb-head h3 { margin: 0; }
+.sb-off, .sb-empty { margin: 0; font-size: var(--fs-small); line-height: 1.42; color: var(--t2); }
+.sb-meta { display: block; font-size: var(--fs-fine); line-height: 1.4; color: var(--t2); }
+
+.sb-table { width: 100%; margin: 4px 0; border-collapse: collapse; font-size: var(--fs-small); line-height: 1.42; }
+.sb-table th, .sb-table td { text-align: left; vertical-align: top; padding: 8px 14px 8px 0; border-top: 1px solid var(--panel-line); overflow-wrap: anywhere; }
+.sb-table thead th { border-top: 0; padding-top: 0; font-size: var(--fs-fine); font-weight: 600; color: var(--t2); }
+.sb-table tbody td:first-child { font-weight: 600; }
+
+.sb-lines { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.sb-lines li { display: grid; gap: 2px; font-size: var(--fs-small); line-height: 1.42; overflow-wrap: anywhere; }
+
+.sb-drafts { list-style: none; margin: 0; padding: 0; display: grid; gap: 20px; }
+.sb-drafts > li { display: grid; gap: 4px; }
+.sb-draft { display: grid; gap: 10px; max-width: 40em; }
+.sb-addr { margin: 0; display: grid; gap: 2px; font-size: var(--fs-small); line-height: 1.42; }
+.sb-addr > div { display: grid; grid-template-columns: 5em minmax(0, 1fr); gap: 12px; }
+.sb-addr dt { color: var(--t2); }
+.sb-addr dd { margin: 0; overflow-wrap: anywhere; }
+.sb-body { margin: 0; padding: 12px 14px; border-radius: var(--r-inner); background: var(--step); font-size: var(--fs-small); line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+.sb-status { display: flex; align-items: center; gap: 8px; margin: 0; font-size: var(--fs-small); line-height: 1.42; font-weight: 600; }
+.sb-status .ds-icon { width: 16px; height: 16px; }
+.sb-controls { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 4px; }
+
+/* ------------------------------------------------------------------ the agent's steps (demos): numbered rows in one box */
+.sb-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 12px; }
+.sb-trace.ds-panel { list-style: none; margin: 0; padding: 0; display: grid; min-width: 0; }
+.sb-idle { padding: 18px 22px; font-size: var(--fs-small); line-height: 1.42; color: var(--t2); }
+.sb-beat { display: grid; gap: 8px; padding: 18px 22px; min-width: 0; animation: sb-in 320ms var(--ease) both; }
+.sb-beat + .sb-beat { border-top: 1px solid var(--panel-line); }
+.sb-beat h3 { margin: 0; }
+.sb-beat p { margin: 0; max-width: 40em; font-size: var(--fs-small); line-height: 1.5; overflow-wrap: anywhere; }
+.sb-tag { margin-right: 8px; font-weight: 600; color: var(--t2); }
+.sb-call { display: grid; gap: 8px; padding: 12px 14px; border-radius: var(--r-inner); background: var(--step); min-width: 0; max-width: 40em; }
+.sb-uses { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0 12px; font-weight: 600; }
+.sb-input { margin: 0; display: grid; gap: 2px; font-size: var(--fs-small); line-height: 1.42; }
+.sb-input > div { display: grid; grid-template-columns: 5.5em minmax(0, 1fr); gap: 12px; }
+.sb-input dt { color: var(--t2); }
+.sb-input dd { margin: 0; overflow-wrap: anywhere; }
+.sb-result { display: flex; align-items: flex-start; gap: 8px; }
+.sb-result .ds-icon { width: 16px; height: 16px; margin-top: 3px; }
+@keyframes sb-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* ------------------------------------------------------------------ narrow */
+@container (max-width: 560px) {
+  .sb-tools { grid-template-columns: minmax(0, 1fr); }
+  .sb-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .sb-table, .sb-table tbody { display: block; }
+  .sb-table tr { display: grid; gap: 2px; padding: 8px 0; border-top: 1px solid var(--panel-line); }
+  .sb-table td { display: block; padding: 0; border: 0; }
+  .sb-table td:not(:first-child)::before { content: attr(data-label) ": "; color: var(--t2); }
+  .sb-addr > div, .sb-input > div { grid-template-columns: minmax(0, 1fr); gap: 0; }
+}
+@media (max-width: 520px) {
+  .sb-controls .ds-btn { flex: 1 1 100%; }
+  .sb-picks .ds-check { padding: 14px 16px; }
+  .sb-beat { padding: 16px; }
+}

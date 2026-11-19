@@ -40,3 +40,6 @@ eval/reports/*.json
 Thumbs.db
 .vercel
 .env*
+
+# Playwright MCP screenshots
+.playwright-mcp/

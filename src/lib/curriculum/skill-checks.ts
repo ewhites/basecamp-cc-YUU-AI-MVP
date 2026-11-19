@@ -2,7 +2,8 @@ import type { Exercise, RubricCheck, Skill } from "./types";
 
 /**
  * The starting point check (before Module 1) and the final check (after Module 3).
- * Four short tasks each, one per fluency skill. The final check is a parallel form:
+ * Five short tasks each, one per coached skill (prompting, validation, context engineering,
+ * comparing models, responsible use). The final check is a parallel form:
  * same checks, new scenarios, so the lift from start to finish is measured fairly
  * without teaching to the test. Graded by the same coach pipeline; the starting point
  * is never graded for credit.
@@ -19,49 +20,61 @@ const c = (key: string, skill: Skill, text: string, guidance: string, miniLesson
 });
 
 const describeChecks = (facts: string): RubricCheck[] => [
-  c("d_task_audience", "description", "Says what to write and who it's for",
+  c("d_task_audience", "prompting", "Says what to write and who it's for",
     "The prompt names the thing to produce (a message, email, reminder) and the reader (the team, new hires).",
     "Have students rewrite a vague prompt by adding one line: what it is and who reads it."),
-  c("d_format", "description", "Sets a format, length or tone",
+  c("d_format", "prompting", "Sets a format, length or tone",
     "The prompt asks for a measurable shape: a length, a number of bullets or sentences, or a named tone. 'Make it good' does not count.",
     "Show two outputs from the same task, with and without a length limit, and compare."),
-  c("d_key_facts", "description", "Gives the AI the facts it needs",
+  c("d_key_facts", "prompting", "Gives the AI the facts it needs",
     `The prompt includes the key facts the AI could not guess: ${facts}. At least one must be stated.`,
     "Context is not memory (M01-S3): list the facts the AI can't know before writing the prompt."),
 ];
 
 const judgeChecks = (errors: string): RubricCheck[] => [
-  c("j_spots_error", "discernment", "Points to a detail that doesn't match the source",
+  c("j_spots_error", "validation", "Points to a detail that doesn't match the source",
     `The answer names a specific wrong detail in the AI draft: ${errors}. Either one counts. A general 'it might be wrong' does not.`,
     "Pair up: one student plants a wrong detail in an AI summary, the other finds it using only the source."),
-  c("j_decision", "discernment", "Makes a clear call on whether to send it",
+  c("j_decision", "validation", "Makes a clear call on whether to send it",
     "The answer clearly says send it, fix it first, or don't send it.",
     "Practice a one-line verdict: 'Fix before sending, because...'"),
-  c("j_source", "discernment", "Says how they'd confirm it",
+  c("j_source", "validation", "Says how they'd confirm it",
     "The answer says to check the draft against the source policy or text (not against memory or the AI itself).",
     "Trust is the tiebreaker (M02-S2): show how to check a claim against the source line by line."),
 ];
 
-const delegateChecks = (handOff: string, keep: string): RubricCheck[] => [
-  c("g_hands_off", "delegation", "Hands AI a task that suits it",
-    `The answer picks ${handOff} as the task to give the AI.`,
-    "Sort ten workplace tasks into 'AI drafts it' and 'a person decides' as a class."),
-  c("g_keeps", "delegation", "Keeps a task for a person",
-    `The answer keeps ${keep} for a person.`,
-    "Walk through the three stop conditions (M01-S6) on the tasks students kept."),
-  c("g_reason", "delegation", "Gives a reason based on the stop conditions",
-    "The reason says one of: you can't check the answer, it involves someone's personal data, or a wrong answer can't be undone. A reason like 'AI is bad at that' does not count.",
-    "Have students name which stop condition (M01-S6) applies to each task they kept."),
+const contextChecks = (facts: string): RubricCheck[] => [
+  c("x_role", "context", "Tells the AI who it is acting as",
+    "The answer gives the AI a role or point of view (for example 'You are the office manager'). 'Help me' does not count.",
+    "Rewrite one context block three times with a different role each time and compare the drafts."),
+  c("x_reader", "context", "Says who will read the result",
+    "The answer names the reader of the output (the team, a customer, new hires) or what they need from it.",
+    "Have students name the reader first, before anything else in the context."),
+  c("x_facts", "context", "Gives facts the AI could not guess",
+    `The answer passes on at least one fact from the notes that the AI could not know: ${facts}.`,
+    "Context is not memory (M01-S3): circle every fact in the notes the AI can't know, then check each made it in."),
+];
+
+const modelChecks = (fitFact: string): RubricCheck[] => [
+  c("m_pick", "models", "Picks one model for the job",
+    "The answer names exactly one of the three models (A, B or C) to use for this job.",
+    "Give pairs one job and three outputs; each pair must commit to one pick in one line."),
+  c("m_fit_trust", "models", "Bases the pick on fit or accuracy",
+    `The reason points to whether the output does the job or matches the facts: ${fitFact}. 'It sounds better' does not count.`,
+    "Fit, Trust, Cost (M02): score each output on Fit and Trust before looking at the price."),
+  c("m_cost", "models", "Weighs cost or speed against quality",
+    "The answer mentions cost, speed or volume and says whether it changes the pick. Picking the cheapest model while admitting it is wrong does not count.",
+    "Trust is the tiebreaker (M02-S2): show a cheap wrong answer and count what it costs to fix."),
 ];
 
 const protectChecks = (details: string): RubricCheck[] => [
-  c("p_removes", "diligence", "Removes personal details before pasting",
+  c("p_removes", "responsible", "Removes personal details before pasting",
     "The answer says to remove, replace or hide personal details before giving the text to the AI.",
     "Live demo: scrub a real-looking (sample) email together, replacing details with [placeholders]."),
-  c("p_names_detail", "diligence", "Names a specific detail to remove",
+  c("p_names_detail", "responsible", "Names a specific detail to remove",
     `The answer names at least one specific detail to remove: ${details}.`,
     "List every personal detail in a sample message; compare lists to find what people missed."),
-  c("p_reviews", "diligence", "Checks the AI's work before it goes out",
+  c("p_reviews", "responsible", "Checks the AI's work before it goes out",
     "The answer says they'll read, check or edit the AI's draft before it is sent or shared.",
     "Discuss who is responsible when an AI draft goes out with a mistake: the sender."),
 ];
@@ -99,19 +112,38 @@ AI SUMMARY: Laptops are replaced every 3 years. If a repair would cost more than
   },
   {
     ...base,
-    id: "sp-delegate",
+    id: "sp-context",
     checkKind: "start",
     module: "M01",
-    title: "Decide what to hand off",
-    scenario: "Three tasks are on your list today.",
-    brief: "Which one would you hand to AI, and which would you keep for yourself? Say why.",
+    title: "Give the AI context",
+    scenario: "You will ask AI to draft a note to customers about a change in store hours. These are your notes.",
+    brief: "Write the context you would give the AI before the request.",
     material: {
-      label: "Today's tasks (sample)",
-      text: `A. Draft three subject lines for the monthly team newsletter.
-B. Decide whether a coworker's late timesheet should be approved.
-C. Summarize a customer's complaint email that includes their account number and home address.`,
+      label: "Your notes (sample)",
+      text: `- Store closes at 7pm instead of 9pm, starting Monday March 2
+- Reason: staffing change, weekend hours stay the same
+- Customers can still order online any time
+- The note goes on the website and in the weekly email`,
     },
-    checks: delegateChecks("task A (the newsletter subject lines)", "task B (the timesheet decision) or task C (the email with personal data)"),
+    checks: contextChecks("the new 7pm closing time, the Monday March 2 start date, or that online orders still work"),
+  },
+  {
+    ...base,
+    id: "sp-models",
+    checkKind: "start",
+    module: "M02",
+    title: "Pick a model",
+    scenario: "Your team will use AI to answer 500 customer questions a week about return dates. One prompt was run on three models.",
+    brief: "Which model would you use for this job, and why?",
+    material: {
+      label: "Three outputs and their cost (sample)",
+      text: `The policy: returns are accepted within 30 days with a receipt.
+
+Model A (cheapest, fastest): "You can return items within 30 days if you have a receipt."
+Model B (middle price): "Returns are accepted for 60 days, no receipt needed."
+Model C (most expensive, slowest): "Our policy lets you return items within 30 days of purchase, as long as you keep your receipt. Thanks for shopping with us."`,
+    },
+    checks: modelChecks("A and C match the 30-day receipt rule, B gets it wrong"),
   },
   {
     ...base,
@@ -158,19 +190,38 @@ AI SUMMARY: Visitors sign in at the front desk. Badges are optional after the fi
   },
   {
     ...base,
-    id: "fc-delegate",
+    id: "fc-context",
     checkKind: "final",
     module: "M01",
-    title: "Decide what to hand off",
-    scenario: "Three tasks are on your list today.",
-    brief: "Which one would you hand to AI, and which would you keep for yourself? Say why.",
+    title: "Give the AI context",
+    scenario: "You will ask AI to draft a message to the team about a fire drill. These are your notes.",
+    brief: "Write the context you would give the AI before the request.",
     material: {
-      label: "Today's tasks (sample)",
-      text: `A. Turn your meeting notes into a bulleted to-do list.
-B. Decide which job applicant gets an interview.
-C. Draft a reply to a coworker's message that mentions the dates of their medical leave.`,
+      label: "Your notes (sample)",
+      text: `- Fire drill Thursday at 10:30am, about 15 minutes
+- Meet in the north parking lot, not the front lawn
+- Leave laptops and bags at your desk
+- The message goes to the whole floor by email`,
     },
-    checks: delegateChecks("task A (the to-do list)", "task B (the interview decision) or task C (the message with medical details)"),
+    checks: contextChecks("Thursday at 10:30am, the north parking lot, or leaving bags at desks"),
+  },
+  {
+    ...base,
+    id: "fc-models",
+    checkKind: "final",
+    module: "M02",
+    title: "Pick a model",
+    scenario: "Your team will use AI to answer 300 questions a week from employees about the parking policy. One prompt was run on three models.",
+    brief: "Which model would you use for this job, and why?",
+    material: {
+      label: "Three outputs and their cost (sample)",
+      text: `The policy: parking permits cost $40 a month and are bought through the HR portal.
+
+Model A (cheapest, fastest): "Permits are free. Ask your manager for one."
+Model B (middle price): "A parking permit is $40 a month. Buy it in the HR portal."
+Model C (most expensive, slowest): "Parking permits cost $40 per month and you can purchase one through the HR portal. Let HR know if you have questions."`,
+    },
+    checks: modelChecks("B and C match the $40 HR portal rule, A gets it wrong"),
   },
   {
     ...base,

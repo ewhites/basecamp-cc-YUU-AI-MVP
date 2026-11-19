@@ -1,0 +1,101 @@
+/*
+ * Base styles: reset, type, focus ring, reduced motion and the ground.
+ * Loaded after the old globals.css, so these rules win for html, body, headings and focus.
+ */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--page);
+  color: var(--t1);
+  font: 400 var(--fs-body)/1.55 var(--sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4 {
+  margin: 0;
+  font-family: var(--serif);
+  font-variation-settings: var(--soft);
+  font-optical-sizing: auto;
+  font-weight: 300;
+  letter-spacing: -.022em;
+  text-wrap: balance;
+  color: inherit;
+}
+h1 { font-size: var(--fs-title); font-weight: 400; line-height: 1.08; letter-spacing: -.02em; }
+/* Three clear levels: page title (serif 32), section (serif 24), sub-heading (sans 17 bold). A sub-heading is
+   never serif, so it can never be mistaken for a new section. */
+h2 { font-size: var(--fs-h2); font-weight: 400; line-height: 1.15; letter-spacing: -.016em; }
+h3 { font: 600 var(--fs-h3)/1.35 var(--sans); letter-spacing: -.005em; }
+h4 { font: 600 var(--fs-small)/1.42 var(--sans); letter-spacing: 0; color: var(--t2); }
+
+/* Links: blue, underlined inside sentences (the standard), plain in navigation and rows. */
+a { color: var(--link); }
+a:hover { color: var(--link-hover); }
+p a:not([class]), .ds-link { color: var(--link); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+
+button, input, textarea, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+img, svg { display: block; }
+
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; border-radius: var(--r-box); }
+:focus:not(:focus-visible) { outline: none; }
+
+.ds-serif { font-family: var(--serif); font-variation-settings: var(--soft); font-optical-sizing: auto; }
+.ds-num { font-variant-numeric: tabular-nums; }
+.ds-fine { font-size: var(--fs-fine); color: var(--t3); }
+.ds-muted { color: var(--t2); }
+.ds-sr {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0;
+  overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+}
+
+.ds-icon {
+  width: 18px; height: 18px; flex: none;
+  fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;
+}
+
+@supports (corner-shape: squircle) {
+  .ds-sq { corner-shape: squircle; }
+}
+
+/* The ground: blue linen with orange marble ribbons, fixed to the viewport. A fixed pseudo-element (not
+   background-attachment: fixed) so it also holds still on iOS. The ribbons sit in the lower part; the calm
+   upper area is behind the progress line and any other text on the bare ground.
+   data-ground="show": full ribbons, under a light veil that keeps text on it at 4.5:1 (entry, course home, skills).
+   data-ground="study" (default): a deep navy wash, so the ribbons read only as a faint warm glow (lessons, practice,
+   checks, instructor pages). The sheet is the only bright surface. */
+.ds-ground { position: relative; min-height: 100vh; min-height: 100dvh; isolation: isolate; --veil: var(--ground-wash); }
+.ds-ground[data-ground="show"] { --veil: var(--ground-veil); }
+.ds-ground::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(var(--veil), var(--veil)), var(--ground-img) center bottom / cover no-repeat, var(--ground-fallback);
+}
+@media (orientation: portrait) {
+  .ds-ground::before {
+    background: linear-gradient(var(--veil), var(--veil)), var(--ground-tall-img) center bottom / cover no-repeat, var(--ground-fallback);
+  }
+}
+
+/* One entrance per page: a 10px rise with a 60ms stagger (set --i on up to six items). */
+.ds-rise { animation: ds-rise 700ms var(--ease) both; animation-delay: calc(var(--i, 0) * 60ms); }
+@keyframes ds-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+/* Skip link: hidden until focused */
+.ds-skip {
+  position: absolute; left: 16px; top: -100px; z-index: 100;
+  padding: 12px 16px; border-radius: var(--r-ctl);
+  background: var(--cream); color: var(--indigo); font: 600 var(--fs-btn)/1 var(--sans); text-decoration: none;
+}
+.ds-skip:focus { top: 12px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}

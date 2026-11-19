@@ -1,0 +1,150 @@
+/*
+ * Design tokens for the AI Lab (the Kaleos HQ look in Year Up United colours).
+ * Source: docs/redesign/DESIGN-RULES.md and docs/redesign/vision/board.src.html.
+ * Every colour, radius, shadow and curve lives here. No other file holds a colour value.
+ * Names avoid the old globals.css tokens (--ink, --line, --accent, --surface) until Phase 5 deletes them.
+ */
+:root {
+  /* Year Up United colours, sampled from their banner */
+  --indigo: #170055;
+  --blue: #007EF2;
+  --orange: #FE6500;
+
+  /* one neutral ramp, tinted toward navy */
+  --page: #05070F;
+  --ground: #080B1C;
+  --t1: #F2F4FA;
+  --t2: #B6BED6;
+  --t3: #8C95B2;
+  --hair: rgba(242, 244, 250, .10);
+  --hair-2: rgba(242, 244, 250, .18);
+  --step: rgba(255, 255, 255, .05);
+  --step-2: rgba(255, 255, 255, .09);
+
+  /* the ground: woven blue linen with two orange marble ribbons (rendered once, public/materials), Logan 2026-11-19 */
+  --ground-fallback: #0E3678;
+  --ground-img: url("/materials/ground.webp");
+  --ground-tall-img: url("/materials/ground-tall.webp");
+  --marble-img: url("/materials/marble.webp");
+  /* two strengths: show (full ribbons) and study (a deep navy wash calms them to a faint glow) */
+  --ground-veil: rgba(5, 10, 30, .25);
+  --ground-wash: rgba(12, 34, 92, .62);
+
+  /* glass: deep navy tint, so the ribbons blur through it */
+  --glass: linear-gradient(180deg, rgba(12, 24, 60, .58), rgba(8, 18, 48, .55));
+  /* the top bar and dock: denser, because the cream sheet scrolls under them and their labels must stay at 4.5:1 */
+  --glass-bar: rgba(8, 18, 48, .9);
+  --glass-solid: #0C1838;
+  --glass-line: rgba(255, 255, 255, .14);
+  --glass-edge: inset 0 1px 0 rgba(255, 255, 255, .12);
+  --glass-edge-bar: inset 0 1px 0 rgba(255, 255, 255, .10);
+  --blur: blur(28px) saturate(1.2);
+  --blur-bar: blur(28px) saturate(1.2);
+  --well: rgba(5, 10, 30, .45);
+  --coach-fade: rgba(10, 21, 54, 1);
+  --marble-veil: rgba(8, 18, 48, .22);
+
+  /* the light sheet: Kaleos cream and linen, Year Up indigo as ink */
+  --cream: #F2ECE1;
+  --linen: #FAF6EF;
+  --white: #FFFFFF;
+  --slab: #0C1026;
+
+  /* accent: orange is for the main button, the coach and progress only */
+  --accent-fill: #F46A12;
+  --accent-hover: var(--orange);
+  --on-accent: #1A0B3D;
+  --accent-edge: #A84300;
+  --accent-soft: #FFB27A;
+  --evidence: rgba(0, 126, 242, .34);
+  --evidence-off: rgba(0, 126, 242, 0);
+
+  /* the selected shape (elastic marker) and the controls on dark surfaces */
+  --mark: var(--cream);
+  --mark-ink: var(--indigo);
+  --mark-quiet: rgba(242, 244, 250, .10);
+  --thumb: var(--cream);
+  --tick: var(--indigo);
+  --focus: #FFB27A;
+  /* links and anything clickable that is not a button: one blue, the web's convention for "you can click this" */
+  --link: #8CC4FF;
+  --link-hover: #B8DBFF;
+  --panel: rgba(255, 255, 255, .05);
+  --panel-line: rgba(255, 255, 255, .10);
+  --hover: rgba(255, 255, 255, .07);
+
+  /* shadows (inner highlights only, never coloured glows) */
+  --sh-paper: inset 0 1px 0 rgba(255, 255, 255, .7);
+  --sh-accent: inset 0 1px 0 rgba(255, 222, 196, .5);
+  --sh-thumb: inset 0 1px 0 rgba(255, 255, 255, .8);
+  --sh-orb-ring: 0 0 0 4px rgba(8, 18, 48, .9);
+  --sh-menu: 0 18px 40px rgba(2, 3, 10, .45);
+
+  /* type: the Kaleos HQ fonts and sizes, unchanged */
+  --serif: var(--font-fraunces), Georgia, "Times New Roman", serif;
+  --sans: var(--font-hanken), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --soft: "SOFT" 100;
+  --fs-display: clamp(38px, 4.25vw, 61px);
+  --fs-section: clamp(34px, 4vw, 56px);
+  --fs-title: 32px;
+  --fs-card: 27px;
+  --fs-h2: 24px;
+  --fs-h3: 17px;
+  --fs-coach: 26px;
+  --fs-firm: clamp(20px, 1.75vw, 25px);
+  --fs-lead: 20px;
+  --fs-body: 17px;
+  --fs-small: 15.5px;
+  --fs-fine: 13px;
+  --fs-btn: 16px;
+  --fs-dock: 11.5px;
+
+  /* shape and space (4px grid) */
+  --r-box: 8px;
+  --r-inner: 10px;
+  --r-ctl: 12px;
+  --r-row: 14px;
+  --r-pill-track: 18px;
+  --r-thumb: 13px;
+  --r-dock-item: 20px;
+  --r-card: 22px;
+  --r-panel: 28px;
+  --r-dock: 30px;
+  --h-ctl: 52px;
+  --h-row: 56px;
+  --coach-w: 360px;
+  --wrap: 1200px;
+  --gutter: clamp(16px, 4vw, 48px);
+  --dock-room: 140px;
+
+  /* motion: one curve */
+  --ease: cubic-bezier(.2, .7, .2, 1);
+  --t-press: 160ms;
+  --t-hover: 200ms;
+  --t-color: 300ms;
+}
+
+/* The light sheet (and anything marked .ds-light): the same token names, read as indigo on cream. */
+.ds-sheet,
+.ds-light {
+  --t1: #170055;
+  --t2: rgba(23, 0, 85, .76);
+  --t3: rgba(23, 0, 85, .62);
+  --hair: rgba(23, 0, 85, .16);
+  --hair-2: rgba(23, 0, 85, .34);
+  --step: rgba(23, 0, 85, .05);
+  --step-2: rgba(23, 0, 85, .10);
+  --mark: var(--indigo);
+  --mark-ink: var(--cream);
+  --mark-quiet: rgba(23, 0, 85, .10);
+  --thumb: var(--white);
+  --sh-thumb: 0 1px 3px rgba(23, 0, 85, .28);
+  --tick: var(--cream);
+  --focus: var(--indigo);
+  /* Year Up blue, darkened to 7:1 on the cream sheet so clickable text passes contrast */
+  --link: #00509E;
+  --link-hover: #003A75;
+  --panel: var(--linen);
+  --panel-line: rgba(23, 0, 85, .14);
+  --hover: rgba(0, 80, 158, .07);
+}

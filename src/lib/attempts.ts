@@ -1,6 +1,6 @@
 import "server-only";
 import { createHmac, timingSafeEqual } from "node:crypto";
-import { checkBudget, budgetConfig } from "./coach/budget";
+import { checkBudget, budgetConfig, dailyLimit } from "./coach/budget";
 import { CoachUnavailableError, toCoachError } from "./coach/client";
 import { detectDistress, DISTRESS_RESPONSE } from "./coach/distress";
 import { gradeAttempt, type CheckOutcome, type GradeResult } from "./coach/grade";
@@ -9,6 +9,8 @@ import { arenaOutputsText, runBot, runStudentPrompt, transcriptText, type BotTur
 import { getExercise } from "./curriculum/exercises";
 import type { AttemptInput, Exercise } from "./curriculum/types";
 import type { UsageLike } from "./models";
+import { runSandboxBot } from "./sandbox/run";
+import { SANDBOX_EXERCISE, withToolsCheck, type SandboxResult } from "./sandbox/tools";
 import type { Viewer } from "./session";
 import { adminClient } from "./db";
 import { signingKey } from "./demo/secret";
@@ -39,15 +41,17 @@ export interface AttemptView {
 export type StoredOutput =
   | { text?: string; model?: string; latencyMs?: number; costUsd?: number }
   | { outputs: { model: string; text: string; latencyMs: number; costUsd: number; usage: UsageLike }[] }
-  | { transcript: { id: string; from: string; text: string; reply: string }[] };
+  | { transcript: { id: string; from: string; text: string; reply: string }[]; sandbox?: SandboxResult };
 
 function db() {
   return adminClient();
 }
 
-export async function recordUsage(studentId: string | null, purpose: string, run: { model: string; usage: UsageLike; costUsd: number }) {
+/** Logs one model call's token counts and cost (never its content). exerciseId lets the admin view rank lessons by usage. */
+export async function recordUsage(studentId: string | null, purpose: string, run: { model: string; usage: UsageLike; costUsd: number }, exerciseId: string | null = null) {
   await db().from("usage_ledger").insert({
     student_id: studentId,
+    exercise_id: exerciseId,
     purpose,
     model: run.model,
     input_tokens: run.usage.input_tokens,
@@ -66,13 +70,16 @@ export async function budgetFor(studentId: string) {
   const now = new Date();
   const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-  const [{ data: today }, { data: month }] = await Promise.all([
+  const [{ data: today }, { data: month }, { data: override }] = await Promise.all([
     db().from("usage_ledger").select("input_tokens, output_tokens").eq("student_id", studentId).gte("created_at", dayStart),
     db().from("usage_ledger").select("cost_usd").gte("created_at", monthStart),
+    // A facilitator's latest limit change for this student, if any, replaces the default daily limit.
+    db().from("cap_overrides").select("daily_tokens").eq("student_id", studentId).order("created_at", { ascending: false }).order("id", { ascending: false }).limit(1).maybeSingle(),
   ]);
   const studentTokensToday = (today ?? []).reduce((n, r) => n + r.input_tokens + r.output_tokens, 0);
   const monthSpendUsd = (month ?? []).reduce((n, r) => n + Number(r.cost_usd), 0);
-  return checkBudget({ studentTokensToday, monthSpendUsd, ...budgetConfig() });
+  const config = budgetConfig();
+  return checkBudget({ studentTokensToday, monthSpendUsd, ...config, dailyTokensPerStudent: dailyLimit(override, config.dailyTokensPerStudent) });
 }
 
 /** Text the student wrote, per studio (the part that is scrubbed and checked for distress). */
@@ -95,7 +102,7 @@ function scrubInput(input: AttemptInput, v: StudentViewer): { input: AttemptInpu
   if (input.studio === "prompt") out = { studio: "prompt", prompt: s(input.prompt) };
   else if (input.studio === "arena") out = { ...input, prompt: s(input.prompt), reasoning: s(input.reasoning) };
   else if (input.studio === "check") out = { studio: "check", answer: s(input.answer) };
-  else out = { studio: "agent", instructions: s(input.instructions) };
+  else out = { studio: "agent", instructions: s(input.instructions), ...(input.tools ? { tools: input.tools } : {}) };
   return { input: out, removed: removedSummary(all) };
 }
 
@@ -111,7 +118,7 @@ async function runAndGrade(ex: Exercise, input: AttemptInput, studentId: string,
   if (input.studio === "check") {
     // Skills check: nothing runs on a model; only the student's answer is graded.
     const grade = await gradeAttempt({ exercise: ex, attempt: input.answer, output: ex.material?.text ?? "(no material for this task)" });
-    await recordUsage(studentId, "grade", grade);
+    await recordUsage(studentId, "grade", grade, ex.id);
     return { output: {}, grade };
   }
   if (input.studio === "prompt") {
@@ -119,11 +126,11 @@ async function runAndGrade(ex: Exercise, input: AttemptInput, studentId: string,
     let text = existingOutput && "text" in existingOutput ? existingOutput.text : undefined;
     if (!text) {
       run = await runStudentPrompt(input.prompt, ex);
-      await recordUsage(studentId, "run_prompt", run);
+      await recordUsage(studentId, "run_prompt", run, ex.id);
       text = run.text;
     }
     const grade = await gradeAttempt({ exercise: ex, attempt: input.prompt, output: text });
-    await recordUsage(studentId, "grade", grade);
+    await recordUsage(studentId, "grade", grade, ex.id);
     return { output: run ? { text, model: run.model, latencyMs: run.latencyMs, costUsd: run.costUsd } : existingOutput!, grade };
   }
   if (input.studio === "arena") {
@@ -131,23 +138,34 @@ async function runAndGrade(ex: Exercise, input: AttemptInput, studentId: string,
     const runs: RunOutput[] = outputs.map((o) => ({ ...o, stopReason: null }));
     const verdict = `Picked: ${input.pickedModel}\n\n${input.reasoning}`;
     const grade = await gradeAttempt({ exercise: ex, attempt: verdict, output: `Prompt (same for all three):\n${input.prompt}\n\n${arenaOutputsText(runs)}` });
-    await recordUsage(studentId, "grade", grade);
+    await recordUsage(studentId, "grade", grade, ex.id);
     return { output: { outputs }, grade };
   }
   let turns: BotTurn[];
+  let sandbox: SandboxResult | undefined;
   if (existingOutput && "transcript" in existingOutput && existingOutput.transcript.length) {
     turns = existingOutput.transcript.map((t) => ({
       message: { id: t.id, kind: "normal", from: t.from, text: t.text },
       reply: { model: "", text: t.reply, usage: { input_tokens: 0, output_tokens: 0 }, costUsd: 0, latencyMs: 0, stopReason: null },
     }));
+    sandbox = existingOutput.sandbox;
+  } else if (ex.id === SANDBOX_EXERCISE && input.tools) {
+    // The tool sandbox: the bot gets only the tools the student chose. Every model call is recorded.
+    const run = await runSandboxBot(input.instructions, ex, input.tools);
+    for (const call of run.calls) await recordUsage(studentId, "bot", call, ex.id);
+    turns = run.turns;
+    sandbox = run.sandbox;
   } else {
     turns = await runBot(input.instructions, ex);
-    for (const t of turns) await recordUsage(studentId, "bot", t.reply);
+    for (const t of turns) await recordUsage(studentId, "bot", t.reply, ex.id);
   }
-  const grade = await gradeAttempt({ exercise: ex, attempt: input.instructions, output: transcriptText(turns) });
-  await recordUsage(studentId, "grade", grade);
+  // The coach sees exactly what it saw before: the instructions and the bot's three final replies, same format.
+  let grade = await gradeAttempt({ exercise: ex, attempt: input.instructions, output: transcriptText(turns) });
+  await recordUsage(studentId, "grade", grade, ex.id);
+  // The tools check is decided in code, after the coach has graded. It is never sent to the coach.
+  if (ex.id === SANDBOX_EXERCISE && input.tools) grade = withToolsCheck(grade, input.tools);
   return {
-    output: { transcript: turns.map((t) => ({ id: t.message.id, from: t.message.from, text: t.message.text, reply: t.reply.text })) },
+    output: { transcript: turns.map((t) => ({ id: t.message.id, from: t.message.from, text: t.message.text, reply: t.reply.text })), ...(sandbox ? { sandbox } : {}) },
     grade,
   };
 }
@@ -291,7 +309,7 @@ export async function runArenaFor(v: StudentViewer, exerciseId: string, rawPromp
   const { runArena } = await import("./coach/runner");
   try {
     const runs = await runArena(prompt, ex);
-    for (const r of runs) await recordUsage(v.student.id, "arena", r);
+    for (const r of runs) await recordUsage(v.student.id, "arena", r, ex.id);
     const outputs: ArenaOutputs = runs.map((r) => ({ model: r.model, text: r.text, latencyMs: r.latencyMs, costUsd: r.costUsd, usage: r.usage }));
     return { prompt, piiRemoved: removedSummary(removed) || undefined, outputs, token: arenaSignature(v.student.id, ex.id, prompt, outputs) };
   } catch (err) {

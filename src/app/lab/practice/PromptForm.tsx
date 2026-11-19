@@ -2,9 +2,14 @@
 
 import { useState, useTransition } from "react";
 import { submitPromptAction } from "@/app/lab/actions";
-import { AttemptResultClient } from "@/components/AttemptResultClient";
+import { CoachSide } from "@/components/AskCoach";
+import { AttemptResult, attemptQuotes } from "@/components/AttemptResult";
+import { Button } from "@/design/Button";
+import { Panel, Section } from "@/design/Structure";
 import type { AttemptView } from "@/lib/attempts";
+import { ErrorLine, Frame, Slab, type TaskHead } from "./Frame";
 import { attemptPassed, NextStep, type NextLink } from "./NextStep";
+import { Highlighted, WriteField } from "./WriteField";
 
 type Latest = (AttemptView & { input?: unknown }) | null;
 
@@ -14,7 +19,19 @@ function lastPrompt(latest: Latest): string {
 }
 
 /** Module 1 practice: write a prompt, see what the AI does with it, get scored. */
-export function PromptForm({ exerciseId, latest, next, alreadyDone = false }: { exerciseId: string; latest: Latest; next: NextLink | null; alreadyDone?: boolean }) {
+export function PromptForm({
+  exerciseId,
+  latest,
+  next,
+  alreadyDone = false,
+  head,
+}: {
+  exerciseId: string;
+  latest: Latest;
+  next: NextLink | null;
+  alreadyDone?: boolean;
+  head: TaskHead;
+}) {
   const [prompt, setPrompt] = useState(lastPrompt(latest));
   const [attempt, setAttempt] = useState<AttemptView | null>(latest);
   const [error, setError] = useState<string | null>(null);
@@ -22,60 +39,78 @@ export function PromptForm({ exerciseId, latest, next, alreadyDone = false }: { 
   const words = prompt.trim() ? prompt.trim().split(/\s+/).length : 0;
   const output = attempt?.output && "text" in attempt.output ? attempt.output : null;
   const passed = alreadyDone || attemptPassed(attempt);
+  const quotes = attemptQuotes(attempt);
 
   return (
-    <>
-      <section className="card">
-        <form
-          className="stack"
-          onSubmit={(e) => {
-            e.preventDefault();
-            setError(null);
-            start(async () => {
-              const r = await submitPromptAction(exerciseId, prompt);
-              if (r.ok) setAttempt(r.attempt);
-              else setError(r.error);
-            });
-          }}
+    <Frame
+      head={head}
+      coach={
+        <CoachSide
+          className="ds-rise ln-i2"
+          exerciseId={exerciseId}
+          module={head.module}
+          result={attempt ? <AttemptResult exerciseId={exerciseId} attempt={attempt} /> : undefined}
+          empty="Run your prompt to see what to fix"
+          earlier={head.earlier}
+          next={next}
+          arriveKey={attempt?.id}
+        />
+      }
+    >
+      <Section title="Your prompt" id="work">
+      <form
+        className="ln-work"
+        onSubmit={(e) => {
+          e.preventDefault();
+          setError(null);
+          start(async () => {
+            const r = await submitPromptAction(exerciseId, prompt);
+            if (r.ok) setAttempt(r.attempt);
+            else setError(r.error);
+          });
+        }}
+      >
+        <Slab
+          note={
+            pending ? (
+              "Running your prompt, then checking it. About 10 seconds"
+            ) : (
+              <>
+                {attempt && <span>Try {attempt.attemptNo + 1}</span>}
+                <span className={words > 200 ? "ln-over" : undefined}>{words} of 200 words</span>
+              </>
+            )
+          }
+          action={
+            <Button type="submit" variant={passed ? "secondary" : "primary"} disabled={pending || !prompt.trim()} data-testid="submit-prompt">
+              {pending ? "Running" : attempt ? "Run new version" : "Run prompt"}
+            </Button>
+          }
         >
-          <div>
-            <label htmlFor="prompt">Your prompt</label>
-            <textarea
-              id="prompt"
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              placeholder="Role, then Task, then Guardrails. The attached material is added for you."
-              data-testid="prompt-input"
-            />
-          </div>
-          <div className="form-foot">
-            <span className={`small ${words > 200 ? "text-bad" : "muted"}`}>{words} of 200 words</span>
-            <button className={`btn ${passed ? "" : "btn-primary"}`} disabled={pending || !prompt.trim()} data-testid="submit-prompt">
-              {pending ? "Running and scoring…" : attempt ? "Run my new version" : "Run and score"}
-            </button>
-          </div>
-          {pending && <div className="notice notice-info small">Running your prompt, then checking it. About 10 seconds.</div>}
-          {error && <div className="notice notice-fail">{error}</div>}
-        </form>
-      </section>
+          <WriteField
+            id="prompt"
+            label="Your prompt"
+            value={prompt}
+            onChange={setPrompt}
+            quotes={quotes}
+            quoteKey={attempt?.id}
+            placeholder="Role, then Task, then Guardrails. The attached material is added for you."
+            testId="prompt-input"
+          />
+        </Slab>
+        {error && <ErrorLine>{error}</ErrorLine>}
+      </form>
+      </Section>
 
       {output?.text && (
-        <section className="card stack-sm">
-          <div className="row between">
-            <h2 style={{ margin: 0 }}>What the AI wrote</h2>
-            {output.model && <span className="tiny muted">{output.model}</span>}
-          </div>
-          <pre data-testid="ai-output">{output.text}</pre>
-        </section>
-      )}
-
-      {attempt && (
-        <section className="card">
-          <AttemptResultClient exerciseId={exerciseId} attempt={attempt} />
-        </section>
+        <Section title="What the AI wrote" id="ai-wrote" aside={output.model}>
+          <Panel key={attempt?.id} className="ln-text" data-testid="ai-output">
+            <Highlighted text={output.text} quotes={quotes} />
+          </Panel>
+        </Section>
       )}
 
       {passed && <NextStep next={next} />}
-    </>
+    </Frame>
   );
 }

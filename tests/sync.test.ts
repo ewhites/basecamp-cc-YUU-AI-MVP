@@ -54,7 +54,7 @@ describe("shared change log across servers", () => {
       .insert({ student_id: "S-B-012", exercise_id: "sp-describe", studio: "check", attempt_no: 1, input: { studio: "check", answer: "x" }, status: "scored", passed: 2, total: 3 })
       .select("id")
       .single();
-    await svcA.from("check_results").insert({ attempt_id: data!.id, check_key: "d_task_audience", skill: "description", pass: true });
+    await svcA.from("check_results").insert({ attempt_id: data!.id, check_key: "d_task_audience", skill: "prompting", pass: true });
     expect(log.length).toBeGreaterThan(0);
 
     await new Promise((r) => setTimeout(r, 60));

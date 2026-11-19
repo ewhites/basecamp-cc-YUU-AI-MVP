@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Materials: blue linen and orange marble</title>
+<style>
+:root{
+  /* Blue linen: a fine, even weave. Two stretched noise fields make the warp and weft threads. */
+  --weave:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='h' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.006 1.1' numOctaves='2' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .85 0 0 0 0 .92 0 0 0 0 1 0 0 0 2 -1'/%3E%3C/filter%3E%3Cfilter id='v' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1 .006' numOctaves='2' seed='9' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 .03 0 0 0 0 .14 0 0 0 2 -.95'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23h)' opacity='.13'/%3E%3Crect width='100%25' height='100%25' filter='url(%23v)' opacity='.26'/%3E%3C/svg%3E");
+  /* Orange marble: a slow noise field warps a second one, and a table that rises and falls turns its levels into flowing bands and cream veins. */
+  --marble:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1400' height='1400'%3E%3Cfilter id='f' x='0' y='0' width='100%25' height='100%25' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.0016 .0028' numOctaves='2' seed='11' result='w'/%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.0024 .0042' numOctaves='4' seed='4' result='t'/%3E%3CfeDisplacementMap in='t' in2='w' scale='520' xChannelSelector='R' yChannelSelector='G' result='d'/%3E%3CfeColorMatrix in='d' type='matrix' values='.33 .33 .33 0 0 .33 .33 .33 0 0 .33 .33 .33 0 0 0 0 0 0 1' result='g'/%3E%3CfeComponentTransfer in='g'%3E%3CfeFuncR type='table' tableValues='.62 .93 .99 1 .99 .93 .99 1 1 .96 .99 1 .99 .9 .62'/%3E%3CfeFuncG type='table' tableValues='.20 .36 .48 .64 .48 .34 .47 .80 .94 .52 .44 .62 .45 .32 .20'/%3E%3CfeFuncB type='table' tableValues='.04 .02 .04 .16 .05 .02 .05 .55 .84 .10 .04 .14 .04 .02 .04'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
+  /* Where the marble shows: two long ribbons crossing the page, with soft edges. */
+  --ribbons:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1600 1000' preserveAspectRatio='none'%3E%3Cfilter id='b'%3E%3CfeGaussianBlur stdDeviation='26'/%3E%3C/filter%3E%3Cg filter='url(%23b)' fill='none' stroke='%23000' stroke-linecap='round'%3E%3Cpath d='M-120 820 C 260 640 520 980 860 760 S 1360 300 1760 420' stroke-width='150'/%3E%3Cpath d='M1100 -120 C 1020 160 1340 260 1260 520 S 1500 900 1700 980' stroke-width='70' opacity='.85'/%3E%3C/g%3E%3C/svg%3E");
+}
+*{box-sizing:border-box}
+body{margin:0;font:400 17px/1.55 "Hanken Grotesk",system-ui,sans-serif;color:#F2F4FA;background:#0A2560}
+.ground{position:relative;min-height:100vh;overflow:hidden;isolation:isolate;
+  background:var(--weave),
+    radial-gradient(60% 55% at 15% 0%, rgba(90,160,240,.32), transparent 70%),
+    linear-gradient(165deg,#1B57A8 0%,#14468F 40%,#0E3678 72%,#0A2860 100%)}
+.ribbon{position:absolute;inset:0;z-index:-1;background:var(--marble) 30% 40%/1400px 1400px;
+  -webkit-mask:var(--ribbons) center/100% 100% no-repeat;mask:var(--ribbons) center/100% 100% no-repeat}
+/* the weave runs over the marble too, so both read as one cloth */
+.ribbon::after{content:"";position:absolute;inset:0;background:var(--weave);opacity:.8;mix-blend-mode:multiply}
+.wrap{position:relative;max-width:1100px;margin:0 auto;padding:48px 24px 24px;display:grid;grid-template-columns:1.3fr 1fr;gap:20px;align-items:start}
+.bar{position:relative;max-width:1100px;margin:0 auto;padding:20px 24px 0;display:flex;align-items:center;gap:14px;font-weight:650;font-size:20px;letter-spacing:-.04em}
+.tile{width:44px;height:36px;border-radius:12px;background:#F2ECE1}
+.sheet{border-radius:28px;padding:32px;background:#F2ECE1;color:#170055;box-shadow:0 30px 60px -30px rgba(4,12,40,.6)}
+.sheet h1{font-family:Fraunces,Georgia,serif;font-weight:300;font-size:32px;margin:0 0 10px;letter-spacing:-.02em}
+.coach{border-radius:28px;overflow:hidden;background:rgba(8,18,48,.55);border:1px solid rgba(255,255,255,.16);box-shadow:inset 0 1px 0 rgba(255,255,255,.12);backdrop-filter:blur(28px) saturate(1.2);-webkit-backdrop-filter:blur(28px) saturate(1.2)}
+.coach .top{height:110px;background:var(--marble) 62% 36%/1100px 1100px;position:relative}
+.coach .top::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,18,48,0) 30%,rgba(8,18,48,.92))}
+.coach .top h3{position:absolute;left:24px;bottom:12px;margin:0;z-index:1;font-family:Fraunces,Georgia,serif;font-weight:350;font-size:26px}
+.coach p{margin:0;padding:16px 24px 24px}
+.btn{display:inline-flex;align-items:center;min-height:52px;padding:0 26px;border-radius:12px;font-weight:600;color:#1A0B3D;background:#F46A12;box-shadow:inset 0 1px 0 rgba(255,236,214,.6)}
+.swatch{position:relative;display:flex;gap:12px;padding:24px;max-width:1100px;margin:0 auto 40px}
+.swatch div{flex:1;height:200px;border-radius:22px;border:1px solid rgba(255,255,255,.14)}
+</style>
+</head>
+<body>
+<div class="ground">
+  <div class="ribbon"></div>
+  <div class="bar"><span class="tile"></span>AI Lab</div>
+  <div class="wrap">
+    <main class="sheet"><h1>Help-desk ticket summary</h1><p>Your shift ends in 10 minutes. Write a prompt that gets the AI to summarize this ticket for the next-shift technician.</p><p style="margin-top:24px"><span class="btn">Run prompt</span></p></main>
+    <aside class="coach"><div class="top"><h3>Coach</h3></div><p>Tell the AI what shape and length you want back</p></aside>
+  </div>
+  <div class="swatch">
+    <div style="background:var(--weave),linear-gradient(165deg,#1B57A8,#0E3678)"></div>
+    <div style="background:var(--marble) 30% 40%/1400px 1400px"></div>
+  </div>
+</div>
+</body>
+</html>

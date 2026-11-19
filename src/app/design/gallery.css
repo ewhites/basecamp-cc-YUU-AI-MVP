@@ -1,0 +1,17 @@
+/* Layout for the /design review page only. Colours come from the tokens in src/design/tokens.css. */
+.gal { display: grid; grid-template-columns: minmax(0, 1fr); gap: 48px; }
+.gal-sec > h2 { margin-bottom: 16px; }
+.gal-sec > p { margin: -8px 0 16px; font-size: var(--fs-small); color: var(--t2); max-width: 36em; }
+.gal-row { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 24px; }
+.gal-row + .gal-row { margin-top: 20px; }
+.gal-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 28px 32px; }
+.gal-cell { display: grid; gap: 10px; align-content: start; justify-items: start; min-width: 0; }
+.gal-cell > span { font-size: var(--fs-fine); color: var(--t2); }
+.gal-menu { min-height: 230px; }
+.gal-foot { margin-top: 8px; }
+/* Text never sits on a bare ribbon: the gallery's ground examples sit on a solid navy step. */
+.gal-panel { border-radius: var(--r-card); padding: 24px; background: var(--glass-solid); border: 1px solid var(--glass-line); }
+.gal-foot { font-size: var(--fs-fine); color: var(--t2); }
+.gal-mat { margin: 0; }
+.gal-mat img { width: 100%; height: 180px; object-fit: cover; border-radius: var(--r-ctl); }
+.gal-mat figcaption { font-size: var(--fs-fine); color: var(--t2); }

@@ -1,0 +1,235 @@
+/* Page styles for the staff area. Tokens only (src/design/tokens.css): no colour, radius or shadow values here. */
+/* Screens: facilitator console, student detail, skills and badge, public portfolio. Every class starts with st-. */
+/* Structure comes from src/design/Structure.tsx (Section, Panel, RowLink, Fold, Crumbs). This file only adds what those pieces do not cover. */
+
+/* ------------------------------------------------------------------ page frame */
+.st-page { min-width: 0; }
+.st-page p, .st-page ul, .st-page ol, .st-page dl, .st-page dd { margin: 0; }
+.st-page ul, .st-page ol { padding: 0; list-style: none; }
+.st-page .ds-work > * { min-width: 0; }
+.st-narrow .ds-sheet { max-width: 56em; margin-inline: auto; }
+.st-public { padding-top: 32px; }
+.st-public .st-page { max-width: 860px; margin: 0 auto; }
+
+/* Sheet head: kicker, title, one meta line; section tabs on the right when there are any. */
+.st-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 16px 24px; }
+.st-head .ds-sheet-title { margin-bottom: 8px; }
+.st-head .ds-brief { margin-bottom: 8px; }
+.st-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; font-size: var(--fs-small); color: var(--t2); }
+
+/* Section tabs: every tab is outlined and blue, so each one reads as something to click; the current one is filled. */
+.st-tabs {
+  position: relative; isolation: isolate; display: inline-flex; gap: 8px; max-width: 100%; overflow-x: auto; padding: 2px;
+}
+.st-tabs > a {
+  display: inline-flex; align-items: center; min-height: 44px; padding: 0 20px; border-radius: var(--r-inner);
+  font: 600 var(--fs-small)/1 var(--sans); color: var(--link); white-space: nowrap; text-decoration: none;
+  box-shadow: inset 0 0 0 1.5px currentColor; transition: color var(--t-color) var(--ease), background-color var(--t-hover) var(--ease);
+}
+.st-tabs > a:hover { background: var(--hover); color: var(--link-hover); }
+.st-tabs > a[aria-current="page"] { color: var(--mark-ink); box-shadow: none; background: transparent; }
+.st-tabs.kmk-on > a[aria-current="page"]:hover { background: transparent; }
+.st-tabs > .kmk { border-radius: var(--r-inner); background: var(--mark); }
+
+/* ------------------------------------------------------------------ text inside panels and folds */
+.ds-panel p, .ds-fold-body p { line-height: 1.5; max-width: 40em; text-wrap: pretty; }
+.ds-fold-body p + p { margin-top: 8px; }
+.st-stack { display: grid; gap: 12px; align-content: start; }
+.st-lead { font: 600 var(--fs-body)/1.45 var(--sans); }
+.st-fine { font-size: var(--fs-fine); line-height: 1.45; color: var(--t2); }
+.st-sub { display: grid; gap: 8px; min-width: 0; }
+.st-sub > h3 { margin: 0; }
+.st-line { display: block; }
+.st-line b { font-weight: 600; color: var(--t1); }
+
+/* Rows that open nothing: no blue, no chevron (the clickable twin is RowLink). */
+.st-row { gap: 16px; padding-top: 12px; padding-bottom: 12px; }
+.st-row-main { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.st-row-title { font-weight: 600; line-height: 1.35; color: var(--t1); }
+.st-row-meta { font-size: var(--fs-small); line-height: 1.42; color: var(--t2); }
+.st-row-end { flex: none; font-size: var(--fs-small); color: var(--t2); text-align: right; font-variant-numeric: tabular-nums; }
+
+/* Rows inside a fold run edge to edge of the fold, so they line up with the fold's own label. */
+.st-flush { margin: 0 -20px -20px; }
+.st-flush > li > .ds-rowlink, .st-flush > .ds-row { padding-left: 20px; padding-right: 20px; border-radius: 0; }
+.st-flush > li + li, .st-flush > .ds-row + .ds-row { border-top: 1px solid var(--panel-line); }
+.st-flush > li:last-child > .ds-rowlink { border-radius: 0 0 var(--r-card) var(--r-card); }
+.ds-fold-body > .st-flush:first-child { margin-top: -4px; }
+
+/* On a phone the text gets the width: a student ID is dropped, a date wraps under the name of who changed it. */
+@media (max-width: 520px) {
+  .st-end-hide .ds-rowlink-end { display: none; }
+  .st-limrow .ds-rowlink-end { max-width: 4.5em; white-space: normal; }
+  .st-page .ds-rowlink { gap: 12px; }
+}
+
+/* Feedback after an action: plain text and an icon. */
+.st-said { display: flex; align-items: flex-start; gap: 8px; font-size: var(--fs-small); line-height: 1.42; color: var(--t1); max-width: 40em; }
+.st-said .ds-icon { margin-top: 1px; color: var(--t2); }
+
+/* ------------------------------------------------------------------ actions */
+.st-act { display: grid; gap: 10px; }
+.st-act-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; }
+
+/* ------------------------------------------------------------------ the lift and other big numbers */
+.st-stat { display: flex; align-items: baseline; gap: 10px; color: var(--t2); font-size: var(--fs-small); }
+.st-stat-n { font: 400 var(--fs-card)/1 var(--serif); font-variation-settings: var(--soft); letter-spacing: -.018em; color: var(--t1); }
+.st-goal { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-small); color: var(--t1); }
+.st-goal .ds-icon { width: 16px; height: 16px; }
+.st-lift-row { display: grid; gap: 8px; padding: 12px 0; border-top: 1px solid var(--panel-line); }
+.st-lift > .st-lift-row:first-child { border-top: 0; padding-top: 0; }
+.st-lift-head { display: grid; grid-template-columns: minmax(0, 1fr) auto 4em; gap: 12px; align-items: baseline; font-size: var(--fs-small); }
+.st-lift-head b { font-weight: 600; }
+.st-lift-head span { color: var(--t2); white-space: nowrap; }
+.st-lift-head .st-lift-delta { color: var(--t1); font-weight: 600; text-align: right; }
+.st-bars { position: relative; display: grid; gap: 4px; }
+.st-bars .ds-track { display: block; flex: none; height: 6px; }
+.st-goal-mark { position: absolute; top: -3px; bottom: -3px; width: 2px; margin-left: -1px; border-radius: 1px; background: var(--t1); }
+.st-key { flex-wrap: wrap; margin-top: 12px; }
+.st-key-goal { width: 2px !important; height: 12px !important; background: var(--t1); }
+.st-fold-note { margin-top: 12px; }
+
+/* ------------------------------------------------------------------ cohort progress by lesson */
+.st-lesson { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 16px; align-items: center; }
+.st-lesson-name { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; min-width: 0; }
+.st-lesson-name b { font-weight: 600; font-size: var(--fs-small); }
+.st-lesson-name span { font-size: var(--fs-fine); color: var(--t2); }
+.st-lesson-bar { grid-column: 1 / -1; grid-row: 2; display: block; height: 6px; }
+.st-lesson-n { font-size: var(--fs-small); color: var(--t2); white-space: nowrap; text-align: right; }
+.st-lesson-n b { color: var(--t1); font-weight: 600; }
+.st-lesson-sub { display: block; font-size: var(--fs-fine); }
+@media (min-width: 768px) {
+  .st-lesson { grid-template-columns: minmax(12em, 1.3fr) minmax(8em, 1fr) 9.5em; }
+  .st-lesson-bar { grid-column: auto; grid-row: auto; }
+}
+
+/* ------------------------------------------------------------------ students by skill (table) */
+.st-scroll { overflow-x: auto; max-width: 100%; border-radius: var(--r-row); border: 1px solid var(--panel-line); }
+.st-scroll:focus-visible { outline-offset: 2px; }
+.st-table { width: 100%; border-collapse: collapse; font-size: var(--fs-small); font-variant-numeric: tabular-nums; }
+.st-table thead th {
+  position: sticky; top: 0; text-align: left; font: 600 var(--fs-fine)/1.3 var(--sans); color: var(--t2);
+  padding: 12px 12px; border-bottom: 1px solid var(--hair-2); background: var(--panel); white-space: nowrap;
+}
+.st-table tbody th, .st-table td { padding: 8px 12px; border-top: 1px solid var(--panel-line); vertical-align: middle; }
+.st-table tbody tr:first-child > * { border-top: 0; }
+.st-table tbody th { text-align: left; font-weight: 400; white-space: nowrap; }
+.st-table tbody th a { font-weight: 600; color: var(--link); text-decoration: none; }
+.st-table tbody th a:hover { color: var(--link-hover); text-decoration: underline; text-underline-offset: 3px; }
+.st-table tbody th span { margin-left: 8px; font-size: var(--fs-fine); color: var(--t2); }
+.st-table .st-c { text-align: center; white-space: nowrap; }
+.ds-fold-body > .st-key-heat { margin-top: 12px; }
+
+/* Pass-rate bands: shade plus the printed number (and a minus under 40%), never shade alone. */
+.st-cell {
+  display: inline-flex; align-items: center; justify-content: center; gap: 4px; min-width: 4.2em; min-height: 32px; padding: 0 10px;
+  border-radius: var(--r-box); font-size: var(--fs-small); color: var(--t1); white-space: nowrap;
+}
+.st-cell .ds-icon { width: 14px; height: 14px; }
+.st-cell[data-band="low"] { background: var(--hair); font-weight: 700; }
+.st-cell[data-band="mid"] { background: var(--step-2); }
+.st-cell[data-band="high"] { background: var(--step); }
+.st-cell[data-band="na"] { color: var(--t2); }
+.st-key-heat { display: flex; flex-wrap: wrap; gap: 8px 12px; }
+.st-key-heat .st-cell { font-size: var(--fs-fine); min-height: 28px; }
+
+/* ------------------------------------------------------------------ facts: label on the left, value and a note on the right */
+.st-kv .ds-row, .st-kv .st-kv-row { justify-content: space-between; flex-wrap: wrap; }
+.st-kv .st-kv-row { display: flex; align-items: center; gap: 4px 16px; min-height: 40px; }
+.st-kv .st-kv-row + .st-kv-row { border-top: 1px solid var(--panel-line); }
+.st-kv dt { font-size: var(--fs-small); color: var(--t1); }
+.st-kv dd { display: flex; align-items: center; gap: 16px; }
+.st-kv dd b { font-weight: 600; font-size: var(--fs-body); }
+.st-kv dd span { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-small); color: var(--t2); }
+.st-kv dd .ds-icon { width: 16px; height: 16px; }
+
+/* ------------------------------------------------------------------ student detail */
+.st-flagtext { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-fine); color: var(--t1); font-weight: 600; white-space: nowrap; }
+.st-flagtext .ds-icon { width: 14px; height: 14px; }
+.ds-rowlink.is-open { background: var(--hover); }
+.st-attempt-end { display: inline-flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 4px 16px; }
+.st-attempt-score { font-weight: 600; min-width: 3.5em; text-align: right; color: var(--t1); }
+
+/* One reason: its panel, and the fold with the tries under it. */
+.st-reason + .st-reason { margin-top: 24px; }
+.st-reason > .ds-panel + .ds-fold { margin-top: 8px; }
+.st-reason-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px; }
+.st-reason-head h3 { display: inline-flex; align-items: center; gap: 8px; margin: 0; }
+.st-reason-head h3 .ds-icon { width: 18px; height: 18px; color: var(--t2); }
+.st-reason-head > span { font-size: var(--fs-small); color: var(--t2); }
+.st-try-icon { width: 16px; height: 16px; margin-right: 8px; vertical-align: -2px; color: var(--t2); }
+.st-handled + .st-handled { margin-top: 8px; }
+
+.st-pre {
+  margin: 0; max-width: 46em; max-height: 360px; overflow: auto; white-space: pre-wrap; word-break: break-word;
+  padding: 14px 16px; border-radius: var(--r-row); background: var(--cream); border: 1px solid var(--panel-line);
+  font: 400 var(--fs-small)/1.5 var(--sans); color: var(--t1);
+}
+.st-pre-ai { background: var(--step); border-color: transparent; }
+.st-outs { display: grid; gap: 16px; }
+.st-out-head { font-size: var(--fs-small); margin-bottom: 6px; }
+.st-out-head b { font-weight: 600; }
+.st-out-head span { color: var(--t2); }
+
+/* Forms: a label above each field, outlined buttons (the one main action on a screen is orange). */
+.st-ovs { display: grid; gap: 4px; }
+.st-ov { display: grid; gap: 10px; padding: 16px 0; border-top: 1px solid var(--panel-line); }
+.st-ovs > .st-ov:first-child { border-top: 0; padding-top: 4px; }
+.st-limit-form { padding: 0; border: 0; }
+.st-ov-flag { padding: 0; border: 0; width: 100%; }
+.st-ov-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.st-ov-head h3 { margin: 0; }
+.st-ov-head span { font-size: var(--fs-small); color: var(--t2); }
+.st-ov-fields { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; }
+.st-field { display: grid; gap: 6px; }
+.st-field label { display: block; margin: 0; font: 600 var(--fs-fine)/1.3 var(--sans); color: var(--t1); }
+.st-field-score { width: 8rem; }
+.st-field-grow { flex: 1 1 14rem; min-width: 0; }
+.st-field-tokens { width: 12rem; }
+.st-page .st-field input, .st-page .st-field select, .st-copy input {
+  width: 100%; min-height: var(--h-ctl); padding: 0 14px; border-radius: var(--r-ctl);
+  background: var(--cream); border: 1.5px solid var(--hair-2); color: var(--t1); font: 400 var(--fs-small)/1.2 var(--sans);
+  transition: border-color var(--t-hover) var(--ease);
+}
+.st-page .st-field input::placeholder { color: var(--t3); }
+.st-page .st-field input:focus, .st-page .st-field select:focus, .st-copy input:focus { outline: 2px solid var(--focus); outline-offset: 2px; border-color: var(--t2); }
+
+/* The coach draft in the side panel: it stays in view while the facilitator reads the attempt. */
+@media (min-width: 980px) { .st-coach { position: sticky; top: 88px; } }
+.st-coach .ds-coach-checks { padding-bottom: 8px; }
+.st-coach .ds-tip { margin-bottom: 24px; }
+
+/* ------------------------------------------------------------------ skills and badge */
+.st-badge-panel { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; align-items: center; }
+@media (min-width: 640px) { .st-badge-panel { grid-template-columns: 200px minmax(0, 1fr); gap: 32px; } }
+.st-badge-copy { display: grid; gap: 14px; min-width: 0; align-content: center; }
+.st-todo-now { display: grid; gap: 2px; }
+.st-todo-now b { font-weight: 600; }
+.st-todo-now span { font-size: var(--fs-small); color: var(--t2); }
+.st-badge-stage { display: grid; justify-items: center; gap: 8px; perspective: 700px; }
+.st-badge {
+  width: 168px; height: 168px; border-radius: 50%; display: grid; place-items: center;
+  transform-style: preserve-3d; will-change: transform; touch-action: none; user-select: none;
+}
+.st-badge-stage[data-earned="yes"] .st-badge { cursor: grab; background: var(--indigo); box-shadow: inset 0 0 0 4px var(--accent-fill), inset 0 0 0 9px var(--indigo), inset 0 0 0 10px var(--hair-2); }
+.st-badge-stage[data-earned="yes"] .st-badge[data-held] { cursor: grabbing; }
+.st-badge-stage[data-earned="no"] .st-badge { background: var(--step); box-shadow: inset 0 0 0 1.5px var(--hair-2); }
+.st-badge-face { display: grid; justify-items: center; gap: 4px; text-align: center; padding: 0 16px; }
+.st-badge-top { font: 600 11px/1.2 var(--sans); letter-spacing: .04em; }
+.st-badge-name { font: 400 26px/1.05 var(--serif); font-variation-settings: var(--soft); letter-spacing: -.018em; }
+.st-badge-sub { font: 600 var(--fs-fine)/1.2 var(--sans); }
+.st-badge-stage[data-earned="yes"] .st-badge-face { color: var(--cream); }
+.st-badge-stage[data-earned="no"] .st-badge-face { color: var(--t2); }
+.st-badge-hint { text-align: center; }
+@media (prefers-reduced-motion: reduce) {
+  .st-badge-stage[data-earned="yes"] .st-badge { cursor: default; }
+  .st-badge-hint { display: none; }
+}
+
+.st-copy { display: flex; flex-wrap: wrap; gap: 12px; max-width: 46em; }
+.st-copy input { flex: 1 1 16rem; min-width: 0; }
+.st-copy .ds-btn { flex: none; }
+.st-skills-panel .ds-skills { max-width: 40em; }
+
+/* ------------------------------------------------------------------ daily limit */
+.st-limit-bar { display: block; height: 6px; max-width: 40em; }

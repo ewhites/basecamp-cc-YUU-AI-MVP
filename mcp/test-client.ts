@@ -51,14 +51,14 @@ async function main() {
   );
   expectThat(tools.tools.every((t) => t.annotations?.readOnlyHint === true), "every tool is annotated read-only");
 
-  const help = await call(rivera, "list_students_needing_help", { section: "B", skill: "description" });
+  const help = await call(rivera, "list_students_needing_help", { section: "B", skill: "prompting" });
   const stuck = ((help.json?.students as { student: string }[] | undefined) ?? []).map((s) => s.student).sort();
   console.log(`  list_students_needing_help(B, description) -> ${stuck.join(", ") || "(none)"}`);
   for (const s of (help.json?.students as Json[] | undefined) ?? []) {
     const c = s.mostFailedCheck as Json | null;
     console.log(`    ${s.student}: current ${s.currentPct}%, most-failed "${c?.key}" (${c?.failed}/${c?.of}); mini-lesson: ${String(s.miniLesson).slice(0, 70)}...`);
   }
-  expectThat(JSON.stringify(stuck) === JSON.stringify(["S-B-003", "S-B-017", "S-B-029"]), "Section B stuck on Description = S-B-003, S-B-017, S-B-029");
+  expectThat(JSON.stringify(stuck) === JSON.stringify(["S-B-003", "S-B-017", "S-B-029"]), "Section B stuck on Prompting = S-B-003, S-B-017, S-B-029");
   expectThat(!/"display_name"|Jasmine|Carter/.test(help.text), "no student names in the output");
   expectThat(((help.json?.students as Json[] | undefined) ?? []).every((s) => typeof s.miniLesson === "string" && (s.miniLesson as string).length > 20), "each flag carries a mini-lesson");
 
@@ -93,7 +93,7 @@ async function main() {
   expectThat(jMe.json?.visible === true && jMe.json?.student === "S-B-012", "can read her own progress");
   const jOther = await call(jasmine, "get_student_progress", { student: "S-B-003" });
   expectThat(jOther.json?.visible === false, "cannot read a classmate's progress");
-  const jHelp = await call(jasmine, "list_students_needing_help", { section: "B", skill: "description" });
+  const jHelp = await call(jasmine, "list_students_needing_help", { section: "B", skill: "prompting" });
   const jStuck = ((jHelp.json?.students as { student: string }[] | undefined) ?? []).map((s) => s.student);
   expectThat(jStuck.every((s) => s === "S-B-012"), "needing-help list never shows classmates", jStuck.join(", ") || "empty");
   const jEx = await call(jasmine, "get_exercise_stats", { exercise: "ps-meeting-recap" });

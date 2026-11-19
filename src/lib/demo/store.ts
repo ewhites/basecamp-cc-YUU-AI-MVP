@@ -11,7 +11,7 @@ export type Row = Record<string, unknown>;
 export type TableName =
   | "profiles" | "sections" | "section_instructors" | "students" | "exercises" | "rubric_checks"
   | "attempts" | "check_results" | "audit_log" | "safety_flags" | "usage_ledger"
-  | "eval_runs" | "eval_results" | "program_rollups" | "lesson_progress";
+  | "eval_runs" | "eval_results" | "program_rollups" | "lesson_progress" | "cap_overrides";
 
 export interface Store {
   tables: Record<TableName, Row[]>;
@@ -50,12 +50,13 @@ const DEFAULTS: Partial<Record<TableName, (s: Store) => Row>> = {
   check_results: () => ({ coach_pass: null, evidence: "", evidence_verified: false, reason: "", needs_review: false, overridden: false, override_note: null, overridden_by: null, overridden_at: null }),
   audit_log: (s) => ({ id: next(s, "audit_log"), target: null, reason: null, created_at: now() }),
   safety_flags: (s) => ({ id: next(s, "safety_flags"), status: "open", created_at: now() }),
-  usage_ledger: (s) => ({ id: next(s, "usage_ledger"), student_id: null, input_tokens: 0, output_tokens: 0, cache_read_tokens: 0, cache_write_tokens: 0, cost_usd: "0", created_at: now() }),
+  usage_ledger: (s) => ({ id: next(s, "usage_ledger"), student_id: null, exercise_id: null, input_tokens: 0, output_tokens: 0, cache_read_tokens: 0, cache_write_tokens: 0, cost_usd: "0", created_at: now() }),
   rubric_checks: (s) => ({ id: next(s, "rubric_checks"), version: 1, method: "coach", status: "published", eval_run_id: null, created_by: null, created_at: now() }),
   eval_runs: () => ({ id: randomUUID(), rubric_draft_id: null, created_at: now() }),
   eval_results: () => ({ rep: 1 }),
   profiles: () => ({ created_at: now() }),
   lesson_progress: () => ({ created_at: now() }),
+  cap_overrides: (s) => ({ id: next(s, "cap_overrides"), previous_tokens: null, created_at: now() }),
 };
 
 function next(s: Store, t: string): number {
@@ -71,7 +72,7 @@ export function emptyStore(): Store {
     tables: {
       profiles: [], sections: [], section_instructors: [], students: [], exercises: [], rubric_checks: [],
       attempts: [], check_results: [], audit_log: [], safety_flags: [], usage_ledger: [],
-      eval_runs: [], eval_results: [], program_rollups: [], lesson_progress: [],
+      eval_runs: [], eval_results: [], program_rollups: [], lesson_progress: [], cap_overrides: [],
     },
     seq: {},
     journal: [],
