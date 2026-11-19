@@ -2,7 +2,6 @@ import { Sheet } from "@/design/Sheet";
 
 /** What the server page hands every practice form: the sheet's head, the task material, and the earlier attempts. */
 export interface TaskHead {
-  kicker: string;
   title: string;
   brief: string;
   /** Material, knowledge sheet, test messages, the checklist and the worked-example link (server-rendered). */
@@ -16,7 +15,7 @@ export interface TaskHead {
 export function Frame({ head, coach, children }: { head: TaskHead; coach: React.ReactNode; children: React.ReactNode }) {
   return (
     <div className="ds-work">
-      <Sheet className="ds-rise ln-i1" kicker={head.kicker} title={head.title} brief={head.brief}>
+      <Sheet className="ds-rise ln-i1" title={head.title} brief={head.brief}>
         {head.task}
         {children}
       </Sheet>

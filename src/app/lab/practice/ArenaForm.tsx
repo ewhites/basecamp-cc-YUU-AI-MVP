@@ -7,6 +7,7 @@ import { AttemptResult, attemptQuotes } from "@/components/AttemptResult";
 import { Button } from "@/design/Button";
 import { Icon } from "@/design/icons";
 import { AnswerList } from "@/design/AnswerList";
+import { Fold, Section } from "@/design/Structure";
 import type { AttemptView, StoredOutput } from "@/lib/attempts";
 import { ARENA_MODELS, modelLabel } from "@/lib/models";
 import { ErrorLine, Frame, Slab, type TaskHead } from "./Frame";
@@ -46,7 +47,7 @@ function Answers({ outputs, picked }: { outputs: ArenaOutputs; picked?: string }
       {byArenaOrder(outputs).map((o) => {
         const meta = ARENA_MODELS.find((m) => m.id === o.model);
         return (
-          <section key={o.model} className={`ln-answer${picked === o.model ? " is-picked" : ""}`} data-testid={`arena-output-${o.model}`} aria-label={modelLabel(o.model)}>
+          <section key={o.model} className={`ln-answer ds-sq${picked === o.model ? " is-picked" : ""}`} data-testid={`arena-output-${o.model}`} aria-label={modelLabel(o.model)}>
             <div className="ln-answer-head">
               <h3>{modelLabel(o.model)}</h3>
               {picked === o.model && (
@@ -129,6 +130,7 @@ export function ArenaForm({
         ))}
       </ol>
 
+      <Section title="1. Write one prompt" id="arena-write">
       <form
         className="ln-work"
         onSubmit={(e) => {
@@ -150,11 +152,10 @@ export function ArenaForm({
           });
         }}
       >
-        <h2 className="ds-sr">1. Write one prompt</h2>
         <Slab
           note={running ? "Sending your prompt to all three models. About 10 to 20 seconds" : "The same prompt goes to Haiku, Sonnet and Opus"}
           action={
-            <Button type="submit" variant={runMain ? "primary" : "paper"} disabled={running || submitting || !prompt.trim()} data-testid="arena-run">
+            <Button type="submit" variant={runMain ? "primary" : "secondary"} disabled={running || submitting || !prompt.trim()} data-testid="arena-run">
               {running ? "Running" : run ? "Run prompt again" : "Run on 3 models"}
             </Button>
           }
@@ -178,19 +179,17 @@ export function ArenaForm({
           </p>
         )}
       </form>
+      </Section>
 
       {run && (
-        <section className="ln-work" aria-labelledby="arena-compare">
-          <h2 id="arena-compare" className="ln-step-title">
-            2. Compare three answers
-          </h2>
-          <p className="ln-hint">Each model got your prompt word for word. Times are measured. Costs are estimates</p>
+        <Section title="2. Compare three answers" id="arena-compare" desc="Each model got your prompt word for word. Time is measured, cost is estimated">
           {run.piiRemoved && <p className="ln-notice">Personal details were removed before anything was sent to the AI: {run.piiRemoved}.</p>}
           <Answers outputs={run.outputs} picked={picked} />
-        </section>
+        </Section>
       )}
 
       {run && (
+        <Section title="3. Pick one and say why" id="arena-pick">
         <form
           className="ln-work"
           onSubmit={(e) => {
@@ -206,9 +205,6 @@ export function ArenaForm({
             });
           }}
         >
-          <h2 className="ln-step-title" id="arena-pick">
-            3. Pick one and say why
-          </h2>
           <AnswerList
             label="Your pick"
             className="ln-pick"
@@ -222,7 +218,7 @@ export function ArenaForm({
           <Slab
             note={submitting ? "The coach is checking your pick and reasoning. About 10 seconds" : "Trust breaks ties. Cost never outweighs it"}
             action={
-              <Button type="submit" variant={submitMain ? "primary" : "paper"} disabled={submitting || running || !picked || !reasoning.trim()} data-testid="arena-submit">
+              <Button type="submit" variant={submitMain ? "primary" : "secondary"} disabled={submitting || running || !picked || !reasoning.trim()} data-testid="arena-submit">
                 {submitting ? "Checking" : finished ? "Submit pick again" : "Submit your pick"}
               </Button>
             }
@@ -239,33 +235,30 @@ export function ArenaForm({
               testId="arena-reasoning"
             />
           </Slab>
-          <ul className="ln-hints">
-            {HINTS.map((h) => (
-              <li key={h.label}>
-                <b>{h.label}</b>
-                <span>{h.text}</span>
-              </li>
-            ))}
-          </ul>
+          <Fold label="What to look at: Fit, Trust, Cost">
+            <ul className="ln-hints">
+              {HINTS.map((h) => (
+                <li key={h.label}>
+                  <b>{h.label}</b>
+                  <span>{h.text}</span>
+                </li>
+              ))}
+            </ul>
+          </Fold>
         </form>
+        </Section>
       )}
 
       {savedOutputs && savedOutputs.length > 0 && (
-        <details className="ln-fold">
-          <summary>
-            The three answers you compared
-            <Icon name="down" />
-          </summary>
-          <div className="ln-fold-body">
-            <Answers outputs={savedOutputs} picked={field(latest?.input, "pickedModel")} />
-            {field(latest?.input, "reasoning") && (
-              <div className="ds-inset ds-sq ln-text">
-                <span className="ln-label">Your reasoning</span>
-                {field(latest?.input, "reasoning")}
-              </div>
-            )}
-          </div>
-        </details>
+        <Fold label="The three answers you compared" className="ln-saved">
+          <Answers outputs={savedOutputs} picked={field(latest?.input, "pickedModel")} />
+          {field(latest?.input, "reasoning") && (
+            <div className="ln-reasoning">
+              <h3>Your reasoning</h3>
+              <p className="ln-read">{field(latest?.input, "reasoning")}</p>
+            </div>
+          )}
+        </Fold>
       )}
 
       {passed && <NextStep next={next} />}

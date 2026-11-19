@@ -5,6 +5,7 @@ import { submitPromptAction } from "@/app/lab/actions";
 import { CoachSide } from "@/components/AskCoach";
 import { AttemptResult, attemptQuotes } from "@/components/AttemptResult";
 import { Button } from "@/design/Button";
+import { Panel, Section } from "@/design/Structure";
 import type { AttemptView } from "@/lib/attempts";
 import { ErrorLine, Frame, Slab, type TaskHead } from "./Frame";
 import { attemptPassed, NextStep, type NextLink } from "./NextStep";
@@ -56,6 +57,7 @@ export function PromptForm({
         />
       }
     >
+      <Section title="Your prompt" id="work">
       <form
         className="ln-work"
         onSubmit={(e) => {
@@ -80,7 +82,7 @@ export function PromptForm({
             )
           }
           action={
-            <Button type="submit" variant={passed ? "paper" : "primary"} disabled={pending || !prompt.trim()} data-testid="submit-prompt">
+            <Button type="submit" variant={passed ? "secondary" : "primary"} disabled={pending || !prompt.trim()} data-testid="submit-prompt">
               {pending ? "Running" : attempt ? "Run new version" : "Run prompt"}
             </Button>
           }
@@ -98,17 +100,14 @@ export function PromptForm({
         </Slab>
         {error && <ErrorLine>{error}</ErrorLine>}
       </form>
+      </Section>
 
       {output?.text && (
-        <section className="ln-output" aria-labelledby="ai-wrote">
-          <div className="ln-output-head">
-            <h2 id="ai-wrote" className="ln-h">What the AI wrote</h2>
-            {output.model && <span className="ds-fine">{output.model}</span>}
-          </div>
-          <div key={attempt?.id} className="ds-inset ds-sq ln-text" data-testid="ai-output">
+        <Section title="What the AI wrote" id="ai-wrote" aside={output.model}>
+          <Panel key={attempt?.id} className="ln-text" data-testid="ai-output">
             <Highlighted text={output.text} quotes={quotes} />
-          </div>
-        </section>
+          </Panel>
+        </Section>
       )}
 
       {passed && <NextStep next={next} />}

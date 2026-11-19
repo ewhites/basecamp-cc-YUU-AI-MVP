@@ -14,7 +14,7 @@ export function attemptPassed(a: Pick<AttemptView, "passed" | "total"> | null | 
   return !!a && a.passed !== null && !!a.total && a.passed / a.total >= PASS_MARK;
 }
 
-/** Shown once a practice task is passed: one line, and Continue (the one main button on the screen). */
+/** Shown once a practice task is passed: one line, and Continue (it becomes the one main button on the screen). */
 export function NextStep({ next }: { next: NextLink | null }) {
   return (
     <div className="ln-passed" data-testid="practice-passed">

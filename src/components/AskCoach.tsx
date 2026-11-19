@@ -4,9 +4,9 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { askLessonCoachAction } from "@/app/lab/actions";
 import { useArrive } from "@/app/lab/practice/WriteField";
 import { looksPersonal, PersonalWarning } from "@/app/lab/practice/personal";
-import { Button } from "@/design/Button";
 import { Glass } from "@/design/Glass";
 import { Icon } from "@/design/icons";
+import { Panel, RowLink } from "@/design/Structure";
 
 const EXAMPLE_QUESTION: Record<string, string> = {
   M01: "Ask about this lesson, like what a guardrail is",
@@ -51,7 +51,10 @@ export function AskCoach({ exerciseId, module }: { exerciseId: string; module?: 
 
   const warn = looksPersonal(q);
   return (
-    <section className="ln-thread" data-testid="ask-coach" aria-label="Ask the coach">
+    <section className="ln-thread" data-testid="ask-coach" aria-labelledby="ask-coach-h">
+      <h3 className="ln-coach-h" id="ask-coach-h">
+        Ask the coach
+      </h3>
       {thread.length === 0 ? (
         <p className="ln-thread-hint">Questions about this lesson only. The coach won&apos;t write your answer</p>
       ) : (
@@ -105,7 +108,7 @@ export function AskCoach({ exerciseId, module }: { exerciseId: string; module?: 
  * The coach side panel on lesson, practice and check screens (the one warm element on the screen).
  * result: the latest attempt (with its own coach heading), or nothing yet. When `arriveKey` changes, the checks
  * arrive 180ms apart and then the tip. Earlier attempts fold under the result. Then the ask thread, then
- * a quiet "What's next" link to the same place as the screen's Continue.
+ * a "What's next" row link (blue, with a chevron) to the same place as the screen's Continue.
  */
 export function CoachSide({
   exerciseId,
@@ -127,7 +130,8 @@ export function CoachSide({
   /** One line when there is nothing to show yet. */
   empty?: React.ReactNode;
   earlier?: React.ReactNode;
-  next?: { href: string } | null;
+  /** Where Continue goes. `title` names it under "What's next". */
+  next?: { href: string; title?: string } | null;
   arriveKey?: unknown;
   /** Extra coach content under the heading (the lesson demo's notes). */
   children?: React.ReactNode;
@@ -147,11 +151,13 @@ export function CoachSide({
       {earlier}
       <AskCoach exerciseId={exerciseId} module={module} />
       {next && (
-        <div className="ln-coach-foot">
-          <Button variant="quiet" href={next.href}>
-            What&apos;s next
-          </Button>
-        </div>
+        <Panel list className="ln-coach-next">
+          <ul className="ds-rows">
+            <li>
+              <RowLink href={next.href} title="What's next" meta={next.title} data-testid="coach-next" />
+            </li>
+          </ul>
+        </Panel>
       )}
     </Glass>
   );
